@@ -9,6 +9,10 @@
 // cmake --build build --verbose; build/main.exe
 
 const bool GFVL_DEBUG_MODE = true;
+enum GFVL_PREFERRED_GPU {
+  GFVL_PREFERRED_GPU_INTEGRATED_GRAPHICS,
+  GFVL_PREFERRED_GPU_DEDICATED_GRAPHICS,
+};
 
 void error() {
   std::cout << "Error, Exiting program..." <<  "\n";
@@ -68,7 +72,8 @@ VkResult CheckVkResult(VkResult result) {
 
   return result;
 }
-VkInstance GFVL_InitializeInstance(VkApplicationInfo* appInfo) {
+
+VkInstance GFVL_InitializeVkInstance(VkApplicationInfo* appInfo) {
   uint32_t instanceExtensionCount = 0;
   const char *const *instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&instanceExtensionCount);
 
@@ -96,45 +101,20 @@ VkInstance GFVL_InitializeInstance(VkApplicationInfo* appInfo) {
 
   return instance;
 }
-int main() {
-  SDL_Init(SDL_INIT_VIDEO); // initialize video drivers
-
-  SDL_Window *window = SDL_CreateWindow("goofyVLib Example", 800, 600, SDL_WINDOW_VULKAN); // initialize a window with VULKAN flags
-
-  VkApplicationInfo appInfo{ // structure specifying application information
-    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, // honestly dont know why it exists its just the type of the struct
-    .pNext = NULL, // can be a pointer to a structure extending this structure
-    .pApplicationName = "goofyVLib Example", // name
-    .applicationVersion = 1, // version of application
-    .pEngineName = "goofyVLib", // engine name
-    .engineVersion = 1, // engine version
-    .apiVersion = VK_API_VERSION_1_3 // version of vulkan
-  };
-
-  VkInstance instance = GFVL_InitializeInstance(&appInfo);
+VkSurfaceKHR GFVL_InitializeVkSurface(VkInstance instance, SDL_Window *window) {
   VkSurfaceKHR surface;
-
-  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface)) {
-    std::cout << SDL_GetError() << '\n';
-    return 1;
-  }
+  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface)) std::cout << "[GFVL] SDL error : " << SDL_GetError() << '\n';
+  return surface;
+}
+std::vector<VkPhysicalDevice> GFVL_EnumeratePhysicalDevices(VkInstance instance) {
   uint32_t availablePhysicalDevicesCount = 0;
 
-  // First call: get count
   CheckVkResult(vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, nullptr));
+  std::cout << "[GFVL] Found " << availablePhysicalDevicesCount << " supported devices. \n";
 
-  std::cout << "[GFVL] Physical device count: " << availablePhysicalDevicesCount
-            << "\n";
+  if (availablePhysicalDevicesCount == 0) std::cout << "[GFVL] No Vulkan-compatible GPUs found.\n";
 
-  if (availablePhysicalDevicesCount == 0) {
-    std::cout << "[GFVL] No Vulkan-compatible GPUs found.\n";
-    return 1;
-  }
-
-  // Allocate storage
   std::vector<VkPhysicalDevice> availablePhysicalDevices(availablePhysicalDevicesCount);
-
-  // Second call: get devices
   CheckVkResult(vkEnumeratePhysicalDevices(instance, &availablePhysicalDevicesCount, availablePhysicalDevices.data()));
 
   if (GFVL_DEBUG_MODE) {
@@ -176,37 +156,48 @@ int main() {
       std::cout << '\n';
     }
   }
-
-  uint32_t selectedPhysicalDeviceIndex = 0;
-  std::cout << "Pick a device." << "\n";
-  std::cin >> selectedPhysicalDeviceIndex;
-
-  VkPhysicalDevice selectedPhysicalDevice = availablePhysicalDevices[selectedPhysicalDeviceIndex];
-
+}
+std::vector<VkQueueFamilyProperties> GFVL_EnumerateDeviceQueueFamilyProperties(VkPhysicalDevice device) {
   uint32_t queueFamilyCount = 0;
-
-  vkGetPhysicalDeviceQueueFamilyProperties(selectedPhysicalDevice, &queueFamilyCount, nullptr);
-
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
   std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-
-  vkGetPhysicalDeviceQueueFamilyProperties(selectedPhysicalDevice, &queueFamilyCount, queueFaamilies.data());
-
-  for (uint32_t i = 0; i < queueFamilyCount; i++) {
-    std::cout << "Queue Family " << i << '\n';
-
-    if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-      std::cout << " Graphics\n";
-
-    if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
-      std::cout << " Compute\n";
-
-    if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
-      std::cout << " Transfer\n";
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+  if (GFVL_DEBUG_MODE) {
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+      std::cout << "Queue Family " << i << '\n';
+      if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) std::cout << " Graphics\n";
+      if (queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) std::cout << " Compute\n";
+      if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT) std::cout << " Transfer\n";
+    }
   }
+  return queueFamilies;
+}
+int main() {
+  SDL_Init(SDL_INIT_VIDEO); // initialize video drivers
+
+  SDL_Window *window = SDL_CreateWindow("goofyVLib Example", 800, 600, SDL_WINDOW_VULKAN); // initialize a window with VULKAN flags
+
+  VkApplicationInfo appInfo{ // structure specifying application information
+    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO, // honestly dont know why it exists its just the type of the struct
+    .pNext = NULL, // can be a pointer to a structure extending this structure
+    .pApplicationName = "goofyVLib Example", // name
+    .applicationVersion = 1, // version of application
+    .pEngineName = "goofyVLib", // engine name
+    .engineVersion = 1, // engine versions
+    .apiVersion = VK_API_VERSION_1_3 // version of vulkan
+  };
+
+  VkInstance instance = GFVL_InitializeVkInstance(&appInfo);
+  VkSurfaceKHR surface = GFVL_InitializeVkSurface(instance, window);
+  std::vector<VkPhysicalDevice> availablePhysicalDevices = GFVL_EnumeratePhysicalDevices(instance);
+  
+  uint32_t selectedPhysicalDeviceIndex = 0;
+  VkPhysicalDevice selectedPhysicalDevice = availablePhysicalDevices[selectedPhysicalDeviceIndex];
+  std::vector<VkQueueFamilyProperties> queueFamilies = GFVL_EnumerateDeviceQueueFamilyProperties(selectedPhysicalDevice);
 
   uint32_t graphicsQueueFamily = UINT32_MAX;
 
-  for (uint32_t i = 0; i < queueFamilyCount; i++) {
+  for (uint32_t i = 0; i < queueFamilies.size() ; i++) {
     VkBool32 presentSupport = VK_FALSE;
 
     vkGetPhysicalDeviceSurfaceSupportKHR(selectedPhysicalDevice, i, surface, &presentSupport);
