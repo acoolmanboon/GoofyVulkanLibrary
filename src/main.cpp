@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -21,12 +22,12 @@ enum GFVL_PREFERRED_GPU {
 
 struct GFVL_PHYSICAL_DEVICE {
   VkPhysicalDevice device = VK_NULL_HANDLE;
+  VkDeviceSize videoMemory = 0;
   uint32_t graphicsFamilyIndex = UINT32_MAX;
   uint32_t presentFamilyIndex = UINT32_MAX;
-  VkDeviceSize videoMemory = 0;
 };
 
-struct GFVL_Swapchain {
+struct GFVL_SWAPCHAIN {
   VkSwapchainKHR swapchain{};
   VkDevice device{};
   VkPhysicalDevice physicalDevice{};
@@ -44,19 +45,20 @@ struct GFVL_Swapchain {
   bool framebufferResized = false;
 };
 
-struct GFVL_SwapchainSupport {
+struct GFVL_SWAPCHAIN_SUPPORT {
   VkSurfaceCapabilitiesKHR capabilities{};
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct GFVL_SwapchainConfig {
+struct GFVL_SWAPCHAIN_CONFIG {
   VkFormat format;
   VkColorSpaceKHR colorSpace;
   VkPresentModeKHR presentMode;
   VkExtent2D extent;
   uint32_t imageCount;
 };
+
 std::vector<char> readFile(const std::string &filename) {
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -460,8 +462,8 @@ std::vector<const char *> GFVL_EnumerateDeviceExtensions(VkPhysicalDevice device
   return enabledDeviceExtensions;
 }
 
-GFVL_SwapchainSupport GFVL_QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
-  GFVL_SwapchainSupport swapchainSupport{};
+GFVL_SWAPCHAIN_SUPPORT GFVL_QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+  GFVL_SWAPCHAIN_SUPPORT swapchainSupport{};
 
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &swapchainSupport.capabilities);
 
@@ -477,8 +479,8 @@ GFVL_SwapchainSupport GFVL_QuerySwapchainSupport(VkPhysicalDevice device, VkSurf
 
   return swapchainSupport;
 }
-GFVL_SwapchainConfig GFVL_SelectSwapchainConfig(const GFVL_SwapchainSupport &swapchainSupport, SDL_Window *window) {
-  GFVL_SwapchainConfig swapchainConfiguration{};
+GFVL_SWAPCHAIN_CONFIG GFVL_SelectSwapchainConfig(const GFVL_SWAPCHAIN_SUPPORT &swapchainSupport, SDL_Window *window) {
+  GFVL_SWAPCHAIN_CONFIG swapchainConfiguration{};
   
   // pick random format at first
   swapchainConfiguration.format = swapchainSupport.formats[0].format;
@@ -513,7 +515,7 @@ GFVL_SwapchainConfig GFVL_SelectSwapchainConfig(const GFVL_SwapchainSupport &swa
 
   return swapchainConfiguration;
 }
-void GFVL_BuildSwapchain(GFVL_Swapchain &swapchain, const GFVL_SwapchainConfig &swapchainConfig, const GFVL_SwapchainSupport &swapchainSupport) {
+void GFVL_BuildSwapchain(GFVL_SWAPCHAIN &swapchain, const GFVL_SWAPCHAIN_CONFIG &swapchainConfig, const GFVL_SWAPCHAIN_SUPPORT &swapchainSupport) {
   VkSwapchainCreateInfoKHR info{
       .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
       .surface = swapchain.surface,
@@ -563,7 +565,7 @@ void GFVL_BuildSwapchain(GFVL_Swapchain &swapchain, const GFVL_SwapchainConfig &
   swapchain.presentMode = swapchainConfig.presentMode;
   swapchain.imageCount = count;
 }
-void GFVL_DestroySwapchain(GFVL_Swapchain &sc) {
+void GFVL_DestroySwapchain(GFVL_SWAPCHAIN &sc) {
   vkDeviceWaitIdle(sc.device);
 
   for (VkImageView v : sc.imageViews)
@@ -575,14 +577,45 @@ void GFVL_DestroySwapchain(GFVL_Swapchain &sc) {
   sc.imageViews.clear();
   sc.images.clear();
 }
-void GFVL_RecreateSwapchain(GFVL_Swapchain &sc) {
+void GFVL_RecreateSwapchain(GFVL_SWAPCHAIN &sc) {
   GFVL_DestroySwapchain(sc);
 
-  GFVL_SwapchainSupport support = GFVL_QuerySwapchainSupport(sc.physicalDevice, sc.surface);
-  GFVL_SwapchainConfig config = GFVL_SelectSwapchainConfig(support, sc.window);
+  GFVL_SWAPCHAIN_SUPPORT support = GFVL_QuerySwapchainSupport(sc.physicalDevice, sc.surface);
+  GFVL_SWAPCHAIN_CONFIG config = GFVL_SelectSwapchainConfig(support, sc.window);
 
   GFVL_BuildSwapchain(sc, config, support);
 }
+
+// USER-DEFINED STUFF
+struct GFVL_VERTEX_LAYOUT {
+  VkVertexInputBindingDescription binding{
+      .binding = 0,
+      .stride = 0,
+      .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
+
+  std::vector<VkVertexInputAttributeDescription> attributes;
+
+  void addAttribute(VkFormat format, uint32_t offset) {
+    attributes.push_back({
+      .location = static_cast<uint32_t>(attributes.size()),
+      .binding = binding.binding,
+      .format = format,
+      .offset = offset});
+  }
+
+  VkPipelineVertexInputStateCreateInfo getInfo() {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = 1, // TBD : add multiple bindings
+        .pVertexBindingDescriptions = &binding,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size()),
+        .pVertexAttributeDescriptions = attributes.data()};
+  }
+};
+
+struct vertice {
+  float position[3];
+};
 int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
@@ -608,7 +641,7 @@ int main() {
   VkSurfaceKHR surface = GFVL_InitializeVkSurface(instance, window);
 
   GFVL_PHYSICAL_DEVICE physicalDevice = GFVL_InitializePhysicalDevice(instance, surface, GFVL_PREFERRED_GPU_POWER_SAVING);
-  uint32_t graphicsFamilyIndex = 0;
+  uint32_t graphicsFamilyIndex = physicalDevice.graphicsFamilyIndex;
 
   VkDeviceQueueCreateInfo queueInfo = GFVL_InitializeQueueCreation(physicalDevice.graphicsFamilyIndex, surface, physicalDevice.device, &graphicsFamilyIndex);
 
@@ -628,15 +661,15 @@ int main() {
   VkQueue graphicsQueue;
   vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
 
-  GFVL_Swapchain swapchain{};
+  GFVL_SWAPCHAIN swapchain{};
   swapchain.device = device;
   swapchain.physicalDevice = physicalDevice.device;
   swapchain.surface = surface;
   swapchain.window = window;
 
-  GFVL_SwapchainSupport initialSupport = GFVL_QuerySwapchainSupport(physicalDevice.device, surface);
+  GFVL_SWAPCHAIN_SUPPORT initialSupport = GFVL_QuerySwapchainSupport(physicalDevice.device, surface);
 
-  GFVL_SwapchainConfig initialConfig = GFVL_SelectSwapchainConfig(initialSupport, window);
+  GFVL_SWAPCHAIN_CONFIG initialConfig = GFVL_SelectSwapchainConfig(initialSupport, window);
   GFVL_BuildSwapchain(swapchain, initialConfig, initialSupport);
   
   // i hate my life
@@ -662,13 +695,13 @@ int main() {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
         .module = vertexShaderModule,
-        .pName = "vertexShader",
+        .pName = "main",
     },
     VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = fragmentShaderModule,
-        .pName = "fragmentShader",
+        .pName = "main",
     }
   };
   std::vector<VkDynamicState> dynamicStates = {
@@ -680,13 +713,74 @@ int main() {
   dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
   dynamicState.pDynamicStates = dynamicStates.data();
 
-  VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-  vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr; 
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+  // OUUU SHII OUU SHIIII
+  GFVL_VERTEX_LAYOUT vertexLayout = {
+    .binding = {.stride = sizeof(vertice)},
+  };
 
+  vertexLayout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
+
+  VkAttachmentDescription colorAttachment{};
+  colorAttachment.format = swapchain.format;
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  colorAttachment.initialLayout =VK_IMAGE_LAYOUT_UNDEFINED;
+
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+  VkAttachmentReference colorAttachmentRef{};
+
+  colorAttachmentRef.attachment = 0;
+  colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  VkSubpassDescription subpass{};
+
+  subpass.pipelineBindPoint =
+      VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments =
+      &colorAttachmentRef;
+
+  VkRenderPassCreateInfo renderPassInfo{};
+
+  renderPassInfo.sType =
+      VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+
+  renderPassInfo.attachmentCount = 1;
+  renderPassInfo.pAttachments =
+      &colorAttachment;
+
+  renderPassInfo.subpassCount = 1;
+  renderPassInfo.pSubpasses =
+      &subpass;
+
+  VkRenderPass renderPass;
+
+  CheckVkResult(
+    vkCreateRenderPass(
+        device,
+        &renderPassInfo,
+        nullptr,
+        &renderPass));
+
+  VkPipelineLayout pipelineLayout;
+
+  VkPipelineLayoutCreateInfo info{
+      .sType =
+          VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+  vkCreatePipelineLayout(
+      device,
+      &info,
+      nullptr,
+      &pipelineLayout);
   bool running = true;
   bool framebufferResized = false;
 
@@ -719,11 +813,12 @@ int main() {
 
   GFVL_DestroySwapchain(swapchain);
 
+  vkDestroyShaderModule(device, fragmentShaderModule, nullptr);
+  vkDestroyShaderModule(device, vertexShaderModule, nullptr);
+
   vkDestroyDevice(device, nullptr);
   vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
-  vkDestroyShaderModule(device, fragmentShaderModule, nullptr);
-  vkDestroyShaderModule(device, vertexShaderModule, nullptr);
 
   SDL_DestroyWindow(window);
   SDL_Quit();
