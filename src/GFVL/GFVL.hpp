@@ -7,6 +7,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#define DEBUG_PRINT(message) std::cout << "[GFVL] " << message << "\n";
 namespace GFVL {
   const bool DEBUG_MODE = true;
   enum PREFERRED_GPU {
@@ -15,11 +16,16 @@ namespace GFVL {
   };
 
   class DEVICE {
+    public:
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
+    VkDevice logicalDevice = VK_NULL_HANDLE;
     VkDeviceSize videoMemory = 0;
     uint32_t graphicsFamilyIndex = UINT32_MAX;
     uint32_t presentFamilyIndex = UINT32_MAX;
+
+    DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
+    ~DEVICE();
+
   };
 
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
