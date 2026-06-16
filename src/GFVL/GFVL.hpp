@@ -25,12 +25,28 @@ namespace GFVL {
 
     DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
     ~DEVICE();
+  };
 
-    DEVICE(const DEVICE &) = delete;
-    DEVICE &operator=(const DEVICE &) = delete;
+  class SWAPCHAIN {
+    public:
+    VkSwapchainKHR swapchain{};
+    VkDevice device{};
+    VkPhysicalDevice physicalDevice{};
+    VkSurfaceKHR surface{};
+    SDL_Window *window{};
 
-    DEVICE(const DEVICE &&) = delete;
-    DEVICE &operator=(const DEVICE &&) = delete;
+    VkFormat format{};
+    VkExtent2D extent{};
+    VkPresentModeKHR presentMode{};
+    uint32_t imageCount{};
+
+    std::vector<VkImage> images;
+    std::vector<VkImageView> imageViews;
+
+    bool framebufferResized = false;
+
+    SWAPCHAIN(const DEVICE& device, SDL_Window* window, VkSurfaceKHR surface);
+    ~SWAPCHAIN();
   };
 
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
