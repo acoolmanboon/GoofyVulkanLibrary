@@ -88,6 +88,9 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
         .clipped = VK_TRUE,
         .oldSwapchain = VK_NULL_HANDLE};
 
+    if (device.graphicsFamilyIndex != device.presentFamilyIndex) {
+        info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    }
     CheckVkResult(vkCreateSwapchainKHR(this->device, &info, nullptr, &this->swapchain));
     vkGetSwapchainImagesKHR(this->device, this->swapchain, &count, nullptr);
 
@@ -120,15 +123,15 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
     this->imageCount = count;
 }
 SWAPCHAIN::~SWAPCHAIN() {
-  vkDeviceWaitIdle(this->device);
+  if (device == VK_NULL_HANDLE)
+    return;
 
-  for (VkImageView v : this->imageViews)
-    vkDestroyImageView(this->device, v, nullptr);
+  vkDeviceWaitIdle(device);
 
-  if (this->swapchain)
-    vkDestroySwapchainKHR(this->device, this->swapchain, nullptr);
+  for (auto view : imageViews)
+    vkDestroyImageView(device, view, nullptr);
 
-  this->imageViews.clear();
-  this->images.clear();
+  if (swapchain != VK_NULL_HANDLE)
+    vkDestroySwapchainKHR(device, swapchain, nullptr);
 }
 }

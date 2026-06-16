@@ -25,6 +25,12 @@ namespace GFVL {
 
     DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
     ~DEVICE();
+
+    DEVICE(const DEVICE &) = delete;
+    DEVICE &operator=(const DEVICE &) = delete;
+
+    DEVICE(const DEVICE &&) = delete;
+    DEVICE &operator=(const DEVICE &&) = delete;
   };
 
   class SWAPCHAIN {
@@ -47,6 +53,12 @@ namespace GFVL {
 
     SWAPCHAIN(const DEVICE& device, SDL_Window* window, VkSurfaceKHR surface);
     ~SWAPCHAIN();
+
+    SWAPCHAIN(const SWAPCHAIN &) = delete;
+    SWAPCHAIN &operator=(const SWAPCHAIN &) = delete;
+
+    SWAPCHAIN(const SWAPCHAIN &&) = delete;
+    SWAPCHAIN &operator=(const SWAPCHAIN &&) = delete;
   };
 
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
