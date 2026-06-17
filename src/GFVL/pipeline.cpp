@@ -3,9 +3,112 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
+#include <filesystem>
 #include <vector>
 #include <vulkan/vulkan.h>
 
 #include "GFVL.hpp"
 using namespace GFVL;
+
+// USER-DEFINED STUFF
+namespace GFVL {
+    PIPELINE::PIPELINE(DEVICE& device, SWAPCHAIN& swapchain, VERTEX_LAYOUT& layout, std::vector<SHADER>& shaderStages, RENDERPASS& renderPass) : device(device) {
+        std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
+        size_t index = 0;
+        for (const SHADER& shader : shaderStages) {
+          stages[index] = VkPipelineShaderStageCreateInfo{
+              .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+              .stage = shader.stage,
+              .module = shader.shaderModule,
+              .pName = "main"};
+          index++;
+        }
+        std::vector<VkDynamicState> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT, // add more as needed,do later
+            VK_DYNAMIC_STATE_SCISSOR};
+
+        VkPipelineDynamicStateCreateInfo dynamicState{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+            .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+            .pDynamicStates = dynamicStates.data()
+        };
+
+        VkPipelineLayoutCreateInfo info{.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+        vkCreatePipelineLayout(device.logicalDevice, &info, nullptr, &this->pipelineLayout);
+
+        // vertex input
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = layout.getInfo();
+
+        // input assembly
+        // That morning just me and you, with azure views for two
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+            .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            .primitiveRestartEnable = VK_FALSE};
+
+        // viewport/scissor dynamic
+        VkPipelineViewportStateCreateInfo viewportState{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+            .viewportCount = 1,
+            .scissorCount = 1};
+
+        // rasterizer
+        VkPipelineRasterizationStateCreateInfo rasterizer{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+            .depthClampEnable = VK_FALSE,
+            .rasterizerDiscardEnable = VK_FALSE,
+            .polygonMode = VK_POLYGON_MODE_FILL,
+            .cullMode = VK_CULL_MODE_NONE, // VK_CULL_MODE_BACK_BIT
+            .frontFace = VK_FRONT_FACE_CLOCKWISE,
+            .depthBiasEnable = VK_FALSE};
+
+        // multisampling
+        VkPipelineMultisampleStateCreateInfo multisampling{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+            .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+            .sampleShadingEnable = VK_FALSE,
+        };
+
+        // color blending
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{
+            .blendEnable = VK_FALSE,
+            .colorWriteMask =
+                VK_COLOR_COMPONENT_R_BIT |
+                VK_COLOR_COMPONENT_G_BIT |
+                VK_COLOR_COMPONENT_B_BIT |
+                VK_COLOR_COMPONENT_A_BIT};
+
+        VkPipelineColorBlendStateCreateInfo colorBlending{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+            .logicOpEnable = VK_FALSE,
+            .attachmentCount = 1,
+            .pAttachments = &colorBlendAttachment};
+
+        // pipeline
+        VkGraphicsPipelineCreateInfo pipelineInfo{
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+
+            .stageCount = 2,
+            .pStages = stages.data(),
+
+            .pVertexInputState = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssembly,
+            .pViewportState = &viewportState,
+            .pRasterizationState = &rasterizer,
+            .pMultisampleState = &multisampling,
+            .pColorBlendState = &colorBlending,
+            .pDynamicState = &dynamicState,
+
+            .layout = pipelineLayout,
+            .renderPass = renderPass.renderPass,
+            .subpass = 0};
+
+        CheckVkResult(vkCreateGraphicsPipelines( device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &this->pipeline));
+    }
+    PIPELINE::~PIPELINE() {
+        vkDestroyPipeline(this->device.logicalDevice, this->pipeline, nullptr);
+        vkDestroyPipelineLayout(device.logicalDevice, this->pipelineLayout, nullptr);
+    }
+}

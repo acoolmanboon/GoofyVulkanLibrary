@@ -13,11 +13,7 @@
 using namespace GFVL;
 
 namespace GFVL {
-SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surface) {
-    this->device = device.logicalDevice;
-    this->physicalDevice = device.physicalDevice;
-    this->surface = surface;
-    this->window = window;
+SWAPCHAIN::SWAPCHAIN(DEVICE& device, SDL_Window *window, VkSurfaceKHR surface) : device(device) {
     // giggity
     VkSurfaceCapabilitiesKHR capabilities{};
     std::vector<VkSurfaceFormatKHR> formats;
@@ -74,7 +70,7 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
 
     VkSwapchainCreateInfoKHR info{
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .surface = this->surface,
+        .surface = surface,
         .minImageCount = imageCount,
         .imageFormat = format,
         .imageColorSpace = colorSpace,
@@ -91,11 +87,11 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
     if (device.graphicsFamilyIndex != device.presentFamilyIndex) {
         info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
     }
-    CheckVkResult(vkCreateSwapchainKHR(this->device, &info, nullptr, &this->swapchain));
-    vkGetSwapchainImagesKHR(this->device, this->swapchain, &count, nullptr);
+    CheckVkResult(vkCreateSwapchainKHR(this->device.logicalDevice, &info, nullptr, &this->swapchain));
+    vkGetSwapchainImagesKHR(this->device.logicalDevice, this->swapchain, &count, nullptr);
 
     this->images.resize(count);
-    vkGetSwapchainImagesKHR(this->device, this->swapchain, &count, this->images.data());
+    vkGetSwapchainImagesKHR(this->device.logicalDevice, this->swapchain, &count, this->images.data());
 
     this->imageViews.resize(count);
 
@@ -114,7 +110,7 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
               .levelCount = 1,
               .layerCount = 1}};
 
-      CheckVkResult(vkCreateImageView(this->device, &vi, nullptr, &this->imageViews[i]));
+      CheckVkResult(vkCreateImageView(this->device.logicalDevice, &vi, nullptr, &this->imageViews[i]));
     }
 
     this->format = format;
@@ -123,15 +119,15 @@ SWAPCHAIN::SWAPCHAIN(const DEVICE& device, SDL_Window *window, VkSurfaceKHR surf
     this->imageCount = count;
 }
 SWAPCHAIN::~SWAPCHAIN() {
-  if (device == VK_NULL_HANDLE)
+  if (device.logicalDevice == VK_NULL_HANDLE)
     return;
 
-  vkDeviceWaitIdle(device);
+  vkDeviceWaitIdle(device.logicalDevice);
 
   for (auto view : imageViews)
-    vkDestroyImageView(device, view, nullptr);
+    vkDestroyImageView(device.logicalDevice, view, nullptr);
 
   if (swapchain != VK_NULL_HANDLE)
-    vkDestroySwapchainKHR(device, swapchain, nullptr);
+    vkDestroySwapchainKHR(device.logicalDevice, swapchain, nullptr);
 }
 }
