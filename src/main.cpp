@@ -114,19 +114,6 @@ int main() {
 
   GFVL::PIPELINE pipeline(device, swapchain, layout, shaderStages, renderPass);
   GFVL::FRAMEBUFFER framebuffers(device, swapchain, renderPass);
-  VkCommandPool commandPool;
-
-  VkCommandPoolCreateInfo poolInfo{
-      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = device.graphicsFamilyIndex};
-
-  CheckVkResult(
-      vkCreateCommandPool(
-          device.logicalDevice,
-          &poolInfo,
-          nullptr,
-          &commandPool));
   std::vector<VkCommandBuffer> commandBuffers;
 
   commandBuffers.resize(framebuffers.framebuffers.size());

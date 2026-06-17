@@ -160,6 +160,23 @@ namespace GFVL {
   private:
     DEVICE &device;
   };
+
+  class COMMAND_POOL {
+  public:
+    VkCommandPool commandPool;
+    
+    COMMAND_POOL(DEVICE& device);
+    ~COMMAND_POOL();
+
+    COMMAND_POOL(const COMMAND_POOL &) = delete;
+    COMMAND_POOL &operator=(const COMMAND_POOL &) = delete;
+
+    COMMAND_POOL(const COMMAND_POOL &&) = delete;
+    COMMAND_POOL &operator=(const COMMAND_POOL &&) = delete;
+
+  private:
+    DEVICE &device;
+  };
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
   // defined in GFVL.cpp
   std::vector<char> readFile(const std::string &filename);
