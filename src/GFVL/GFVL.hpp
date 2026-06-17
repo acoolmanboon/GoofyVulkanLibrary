@@ -144,6 +144,22 @@ namespace GFVL {
     DEVICE &device;
   };
 
+  class FRAMEBUFFER {
+  public:
+    std::vector<VkFramebuffer> framebuffers;
+
+    FRAMEBUFFER(DEVICE& device, SWAPCHAIN &swapchain, RENDERPASS &renderPass);
+    ~FRAMEBUFFER();
+
+    FRAMEBUFFER(const FRAMEBUFFER &) = delete;
+    FRAMEBUFFER &operator=(const FRAMEBUFFER &) = delete;
+
+    FRAMEBUFFER(const FRAMEBUFFER &&) = delete;
+    FRAMEBUFFER &operator=(const FRAMEBUFFER &&) = delete;
+
+  private:
+    DEVICE &device;
+  };
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
   // defined in GFVL.cpp
   std::vector<char> readFile(const std::string &filename);

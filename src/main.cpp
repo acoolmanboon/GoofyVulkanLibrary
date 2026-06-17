@@ -113,32 +113,7 @@ int main() {
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color));
 
   GFVL::PIPELINE pipeline(device, swapchain, layout, shaderStages, renderPass);
-
-  std::vector<VkFramebuffer> framebuffers;
-
-  framebuffers.resize(swapchain.imageViews.size());
-
-  for (size_t i = 0; i < swapchain.imageViews.size(); i++) {
-
-    VkImageView attachments[] = {
-        swapchain.imageViews[i]};
-
-    VkFramebufferCreateInfo framebufferInfo{
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .renderPass = renderPass.renderPass,
-        .attachmentCount = 1,
-        .pAttachments = attachments,
-        .width = swapchain.extent.width,
-        .height = swapchain.extent.height,
-        .layers = 1};
-
-    CheckVkResult(
-        vkCreateFramebuffer(
-            device.logicalDevice,
-            &framebufferInfo,
-            nullptr,
-            &framebuffers[i]));
-  }
+  GFVL::FRAMEBUFFER framebuffers(device, swapchain, renderPass);
   VkCommandPool commandPool;
 
   VkCommandPoolCreateInfo poolInfo{
@@ -154,7 +129,7 @@ int main() {
           &commandPool));
   std::vector<VkCommandBuffer> commandBuffers;
 
-  commandBuffers.resize(framebuffers.size());
+  commandBuffers.resize(framebuffers.framebuffers.size());
 
   VkCommandBufferAllocateInfo allocInfo{
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -279,7 +254,7 @@ int main() {
     VkRenderPassBeginInfo renderPassInfo{
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass = renderPass.renderPass,
-        .framebuffer = framebuffers[i],
+        .framebuffer = framebuffers.framebuffers[i],
         .renderArea =
             {
                 .offset = {0, 0},
