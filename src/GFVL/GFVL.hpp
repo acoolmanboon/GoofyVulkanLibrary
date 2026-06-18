@@ -17,29 +17,15 @@ namespace GFVL {
     PREFERRED_GPU_PERFORMANCE,
   };
 
-  struct VERTEX_LAYOUT {
-    VkVertexInputBindingDescription binding{
-        .binding = 0,
-        .stride = 0,
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
+  class VERTEX_LAYOUT {
+    public:
+    VkVertexInputBindingDescription binding;
 
     std::vector<VkVertexInputAttributeDescription> attributes;
 
-    void addAttribute(VkFormat format, uint32_t offset) {
-      attributes.push_back({.location = static_cast<uint32_t>(attributes.size()),
-                            .binding = binding.binding,
-                            .format = format,
-                            .offset = offset});
-    }
-
-    VkPipelineVertexInputStateCreateInfo getInfo() {
-      return {
-          .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-          .vertexBindingDescriptionCount = 1, // TBD : add multiple bindings
-          .pVertexBindingDescriptions = &binding,
-          .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size()),
-          .pVertexAttributeDescriptions = attributes.data()};
-    }
+    void addAttribute(VkFormat format, uint32_t offset);
+    
+    VERTEX_LAYOUT(uint32_t size);
   };
 
   class DEVICE {
@@ -78,7 +64,8 @@ namespace GFVL {
 
     bool framebufferResized = false;
 
-    SWAPCHAIN(DEVICE& device, SDL_Window* window, VkSurfaceKHR surface);
+    void recreateSwapchain(SDL_Window *window, VkSurfaceKHR surface);
+    SWAPCHAIN(DEVICE &device, SDL_Window *window, VkSurfaceKHR surface);
     ~SWAPCHAIN();
 
     SWAPCHAIN(const SWAPCHAIN &) = delete;
@@ -148,8 +135,11 @@ namespace GFVL {
   public:
     std::vector<VkFramebuffer> framebuffers;
 
-    FRAMEBUFFER(DEVICE& device, SWAPCHAIN &swapchain, RENDERPASS &renderPass);
+    void recreate(SWAPCHAIN &swapchain, RENDERPASS &renderPass);
+    FRAMEBUFFER(DEVICE &device, SWAPCHAIN &swapchain, RENDERPASS &renderPass);
     ~FRAMEBUFFER();
+
+    
 
     FRAMEBUFFER(const FRAMEBUFFER &) = delete;
     FRAMEBUFFER &operator=(const FRAMEBUFFER &) = delete;
@@ -177,6 +167,35 @@ namespace GFVL {
 
   private:
     DEVICE &device;
+  };
+
+  class VERTEX_BUFFER {
+  public:
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+    VkDeviceSize size;
+
+    VERTEX_BUFFER(DEVICE &device, VkDeviceSize size, void *inputData);
+    ~VERTEX_BUFFER();
+
+    VERTEX_BUFFER(const VERTEX_BUFFER &) = delete;
+    VERTEX_BUFFER &operator=(const VERTEX_BUFFER &) = delete;
+
+    VERTEX_BUFFER(const VERTEX_BUFFER &&) = delete;
+    VERTEX_BUFFER &operator=(const COMMAND_POOL &&) = delete;
+
+  private:
+    DEVICE &device;
+  };
+
+  class MESH {
+    size_t vertice_size;
+    uint32_t vertice_count;
+    size_t mesh_size;
+    void* data;
+
+    MESH(size_t vertice_size, uint32_t vertice_count);
+    ~MESH();
   };
   VkInstance InitializeVkInstance(VkApplicationInfo *appInfo);
   // defined in GFVL.cpp

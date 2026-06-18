@@ -35,7 +35,13 @@ namespace GFVL {
         vkCreatePipelineLayout(device.logicalDevice, &info, nullptr, &this->pipelineLayout);
 
         // vertex input
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo = layout.getInfo();
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+            .vertexBindingDescriptionCount = 1, // TBD : add multiple bindings
+            .pVertexBindingDescriptions = &layout.binding,
+            .vertexAttributeDescriptionCount = static_cast<uint32_t>(layout.attributes.size()),
+            .pVertexAttributeDescriptions = layout.attributes.data()};
+        ;
 
         // input assembly
         // That morning just me and you, with azure views for two
