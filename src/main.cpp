@@ -12,7 +12,7 @@
 #include <vulkan/vulkan.h>
 
 #include<glm/gtc/matrix_transform.hpp>
-
+#define print(message) std::cout << message << "\n";
 
 // Remove-Item build -Recurse -Force; cmake -B build -DCMAKE_PREFIX_PATH=C:/msys64/ucrt64 -G Ninja
 // cmake --build build --verbose; build/main.exe
@@ -107,6 +107,8 @@ int main() {
 
   if (!window)
     throw std::runtime_error(SDL_GetError());
+
+  SDL_SetWindowRelativeMouseMode(window, true);
 
   VkApplicationInfo appInfo{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -338,8 +340,17 @@ int main() {
 
   bool running = true;
   bool framebufferResized = false;
-  float giggity = 0.0f;
+  float speed = 1.0f;
+
+  uint64_t last_time = SDL_GetPerformanceCounter();
+  double delta_time = 0.0; // In seconds
   while (running) {
+    uint64_t current_time = SDL_GetPerformanceCounter();
+    delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
+    last_time = current_time;
+    if (delta_time > 0.01) // jic lag
+      delta_time = 0.1;
+
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -356,6 +367,37 @@ int main() {
       swapchain.recreateSwapchain(window, surface);
       framebuffers.recreate(swapchain, renderPass);
       framebufferResized = false;
+    }
+
+    const bool *keyboard = SDL_GetKeyboardState(nullptr);
+    float speed = 5.0f;
+    float deltaTime = 1.0f / 60.0f; // replace with your real delta time
+
+    glm::vec3 forward;
+
+    forward.x = sin(camera.angle.y);
+    forward.y = 0.0f;
+    forward.z = -cos(camera.angle.y);
+    if (keyboard[SDL_SCANCODE_W]) {
+      camera.position += forward * speed * deltaTime;
+    }
+
+    if (keyboard[SDL_SCANCODE_S]) {
+      camera.position -= forward * speed * deltaTime;
+    }
+
+    glm::vec3 right;
+
+    right.x = cos(camera.angle.y);
+    right.y = 0.0f;
+    right.z = sin(camera.angle.y);
+
+    if (keyboard[SDL_SCANCODE_A]) {
+      camera.position -= right * speed * deltaTime;
+    }
+
+    if (keyboard[SDL_SCANCODE_D]) {
+      camera.position += right * speed * deltaTime;
     }
 
     vkWaitForFences(device.logicalDevice, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
@@ -399,12 +441,6 @@ int main() {
     VkDeviceSize offsets[] = {0};
 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer.vertexBuffer, offsets);
-
-    camera.position = glm::vec3(0, 0, -2);
-    camera.angle = glm::vec3(0, 0, giggity);
-    giggity +=  0.00314f;
-    if (giggity > 6.28f) giggity = 0.0f;
-    void *data;
 
     vkMapMemory(
         device.logicalDevice,
