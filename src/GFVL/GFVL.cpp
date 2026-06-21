@@ -53,6 +53,7 @@ namespace GFVL {
   void PrintVkResult(VkResult result) {
     std::cout << VkResultToString(result) << " (" << static_cast<int>(result) << ")\n";
   }
+
   VkResult CheckVkResult(VkResult result) {
     if (result != VK_SUCCESS) {
       std::cout << "[GFVL] Error! : " << VkResultToString(result) << " (" << static_cast<int>(result) << ")\n";
@@ -89,5 +90,23 @@ namespace GFVL {
         &instance));
 
     return instance;
+  }
+
+  uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+
+      bool typeSupported = typeFilter & (1 << i);
+
+      bool propertiesSupported = (memProperties.memoryTypes[i].propertyFlags & properties) == properties;
+
+      if (typeSupported && propertiesSupported)
+        return i;
+    }
+
+    ERROR("failed to find memory type")
   }
 }

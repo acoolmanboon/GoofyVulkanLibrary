@@ -118,7 +118,7 @@ namespace GFVL {
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline = {};
 
-    PIPELINE(DEVICE &device, SWAPCHAIN &swapchain, VERTEX_LAYOUT &layout, std::vector<SHADER> &shaderStages, RENDERPASS& renderPass);
+    PIPELINE(DEVICE &device, SWAPCHAIN &swapchain, VERTEX_LAYOUT &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     ~PIPELINE();
 
     PIPELINE(const PIPELINE &) = delete;
@@ -186,6 +186,8 @@ namespace GFVL {
 
   private:
     DEVICE &device;
+    VkBufferCreateInfo bufferInfo;
+    void* data;
   };
 
   class MESH {
@@ -203,6 +205,7 @@ namespace GFVL {
   const char *VkResultToString(VkResult result);
   void PrintVkResult(VkResult result);
   VkResult CheckVkResult(VkResult result);
+  uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 }
 
 #endif

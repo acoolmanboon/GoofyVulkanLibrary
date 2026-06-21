@@ -1,15 +1,18 @@
 #include "GFVL/GFVL.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
-#include <glm/glm.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 #include <vulkan/vulkan.h>
+
+#include<glm/gtc/matrix_transform.hpp>
+
 
 // Remove-Item build -Recurse -Force; cmake -B build -DCMAKE_PREFIX_PATH=C:/msys64/ucrt64 -G Ninja
 // cmake --build build --verbose; build/main.exe
@@ -67,15 +70,31 @@ VkResult CheckVkResult(VkResult result) {
   }
   return result;
 }
+
+void setViewport(VkCommandBuffer& commandBuffer, GFVL::SWAPCHAIN& swapchain) {
+  VkViewport viewport{
+      .x = 0.0f,
+      .y = 0.0f,
+      .width = (float)swapchain.extent.width,
+      .height = (float)swapchain.extent.height,
+      .minDepth = 0.0f,
+      .maxDepth = 1.0f};
+  vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+  VkRect2D scissor{.offset = {0, 0}, .extent = swapchain.extent}; // this just cuts off rendering if not in swapchain
+  vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+}
 // USER-DEFINED STUFF
 
 struct vertice {
   float position[3];
   float color[3];
 };
-struct UBO {
-  alignas(16) glm::mat4 player;
+struct CameraUBO {
+  glm::vec3 position;
+  glm::vec3 angle;
 };
+
 int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
@@ -114,20 +133,199 @@ int main() {
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color));
 
-  GFVL::PIPELINE pipeline(device, swapchain, layout, shaderStages, renderPass);
-  GFVL::FRAMEBUFFER framebuffers(device, swapchain, renderPass);
-  GFVL::COMMAND_POOL commandPool(device, framebuffers);
+  VkBuffer uniformBuffer;
+  VkBufferCreateInfo bufferInfo{
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .size = sizeof(CameraUBO),
+      .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
 
+  CheckVkResult(vkCreateBuffer(
+      device.logicalDevice,
+      &bufferInfo,
+      nullptr,
+      &uniformBuffer));
+
+  VkDeviceMemory uniformBufferMemory;
+  VkMemoryRequirements memRequirements;
+
+  vkGetBufferMemoryRequirements(
+      device.logicalDevice,
+      uniformBuffer,
+      &memRequirements);
+
+  VkMemoryAllocateInfo memoryAllocatonInfo{
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .allocationSize = memRequirements.size,
+      .memoryTypeIndex = GFVL::findMemoryType(device.physicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT), 
+  };
+
+  CheckVkResult(vkAllocateMemory(
+      device.logicalDevice,
+      &memoryAllocatonInfo,
+      nullptr,
+      &uniformBufferMemory));
+
+  vkBindBufferMemory(
+      device.logicalDevice,
+      uniformBuffer,
+      uniformBufferMemory,
+      0);
+
+  VkDescriptorSetLayoutBinding cameraBinding{
+      .binding = 0,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT};
+
+  VkDescriptorSetLayoutCreateInfo descriptorInfo{
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .bindingCount = 1,
+      .pBindings = &cameraBinding};
+
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts(1);
+
+  CheckVkResult(vkCreateDescriptorSetLayout(
+      device.logicalDevice,
+      &descriptorInfo,
+      nullptr,
+      &descriptorSetLayouts[0]));
+
+  GFVL::PIPELINE pipeline(device, swapchain, layout, shaderStages, renderPass, descriptorSetLayouts);
+  GFVL::FRAMEBUFFER framebuffers(device, swapchain, renderPass);
+  CameraUBO camera{};
+
+  camera.position = glm::vec3(0,0,-1);
+  camera.angle = glm::vec3(0, 0, 0);
+  void *data;
+
+  vkMapMemory(
+      device.logicalDevice,
+      uniformBufferMemory,
+      0,
+      sizeof(CameraUBO),
+      0,
+      &data);
+
+  memcpy(data, &camera, sizeof(CameraUBO));
+
+  vkUnmapMemory(
+      device.logicalDevice,
+      uniformBufferMemory);
+
+  // joke hed
+
+  VkDescriptorPoolSize poolSize{
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 1};
+
+  VkDescriptorPoolCreateInfo poolInfo{
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .maxSets = 1,
+      .poolSizeCount = 1,
+      .pPoolSizes = &poolSize};
+
+  VkDescriptorPool descriptorPool;
+
+  CheckVkResult(vkCreateDescriptorPool(
+      device.logicalDevice,
+      &poolInfo,
+      nullptr,
+      &descriptorPool));
+
+  VkDescriptorSet cameraDescriptorSet;
+
+  VkDescriptorSetAllocateInfo descriptorSetAllocationInfo{
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .descriptorPool = descriptorPool,
+      .descriptorSetCount = 1,
+      .pSetLayouts = &descriptorSetLayouts[0]};
+
+  CheckVkResult(vkAllocateDescriptorSets(
+      device.logicalDevice,
+      &descriptorSetAllocationInfo,
+      &cameraDescriptorSet));
+
+  VkDescriptorBufferInfo descriptorBufferInfo{
+      .buffer = uniformBuffer,
+      .offset = 0,
+      .range = sizeof(CameraUBO)};
+
+  VkWriteDescriptorSet descriptorWrite{
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = cameraDescriptorSet,
+      .dstBinding = 0,
+      .dstArrayElement = 0,
+      .descriptorCount = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .pBufferInfo = &descriptorBufferInfo};
+
+  vkUpdateDescriptorSets(
+      device.logicalDevice,
+      1,
+      &descriptorWrite,
+      0,
+      nullptr);
+  GFVL::COMMAND_POOL commandPool(device, framebuffers);
   std::vector<vertice> vertices =
       {
-          {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-          {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-          {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}};
+          // Front face (z = -0.5)
+          {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+          {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+          {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
 
+          {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+          {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+          {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+
+          // Back face (z = 0.5)
+          {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+          {{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+          {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+
+          {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+          {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+          {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+
+          // Left face (x = -0.5)
+          {{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+          {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+          {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+
+          {{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+          {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+          {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+
+          // Right face (x = 0.5)
+          {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+          {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+          {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+
+          {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+          {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+          {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+
+          // Bottom face (y = -0.5)
+          {{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+          {{0.5f, -0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}},
+          {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+
+          {{-0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}},
+          {{0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+          {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+
+          // Top face (y = 0.5)
+          {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+          {{0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+          {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+
+          {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
+          {{0.5f, 0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+          {{-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f, 1.0f}}};
   GFVL::VERTEX_BUFFER vertexBuffer(device, vertices.capacity() * sizeof(vertice), vertices.data());
 
   VkSemaphore imageAvailable; // can i render?
-  VkSemaphore renderFinished; // am i done rendering my stuff?  
+  VkSemaphore renderFinished; // am i done rendering my stuff?
 
   VkFence inFlightFence;
   VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
@@ -140,7 +338,7 @@ int main() {
 
   bool running = true;
   bool framebufferResized = false;
-
+  float giggity = 0.0f;
   while (running) {
     SDL_Event event;
 
@@ -164,20 +362,15 @@ int main() {
     vkResetFences(device.logicalDevice, 1, &inFlightFence);
 
     uint32_t imageIndex;
-
     CheckVkResult(vkAcquireNextImageKHR(device.logicalDevice, swapchain.swapchain, UINT64_MAX, imageAvailable, VK_NULL_HANDLE, &imageIndex));
 
-    VkCommandBuffer cmd = commandPool.commandBuffers[imageIndex];
+    VkCommandBuffer commandBuffer = commandPool.commandBuffers[imageIndex];
+    CheckVkResult(vkResetCommandBuffer(commandBuffer, 0));
 
-    CheckVkResult(vkResetCommandBuffer(cmd, 0));
+    VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    CheckVkResult(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
-    VkCommandBufferBeginInfo beginInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-
-    CheckVkResult(vkBeginCommandBuffer(cmd, &beginInfo));
-
-    VkClearValue clearColor{
-        .color = {0.05f, 0.05f, 0.05f, 1.0f}};
+    VkClearValue clearColor{.color = {0.05f, 0.05f, 0.05f, 1.0f}};
 
     VkRenderPassBeginInfo renderPassInfo{
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -189,35 +382,49 @@ int main() {
         .clearValueCount = 1,
         .pClearValues = &clearColor};
 
-    vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-    VkViewport viewport{
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = (float)swapchain.extent.width,
-        .height = (float)swapchain.extent.height,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f};
-
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    VkRect2D scissor{
-        .offset = {0, 0},
-        .extent = swapchain.extent};
-
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipeline.pipelineLayout,
+        0,
+        1,
+        &cameraDescriptorSet,
+        0,
+        nullptr);
+    setViewport(commandBuffer, swapchain);
     VkDeviceSize offsets[] = {0};
 
-    vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer.vertexBuffer, offsets);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer.vertexBuffer, offsets);
 
-    vkCmdDraw(cmd, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+    camera.position = glm::vec3(0, 0, -2);
+    camera.angle = glm::vec3(0, 0, giggity);
+    giggity +=  0.00314f;
+    if (giggity > 6.28f) giggity = 0.0f;
+    void *data;
 
-    vkCmdEndRenderPass(cmd);
+    vkMapMemory(
+        device.logicalDevice,
+        uniformBufferMemory,
+        0,
+        sizeof(CameraUBO),
+        0,
+        &data);
 
-    CheckVkResult(vkEndCommandBuffer(cmd));
+    memcpy(data, &camera, sizeof(CameraUBO));
+
+    vkUnmapMemory(
+        device.logicalDevice,
+        uniformBufferMemory);
+
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+
+    vkCmdEndRenderPass(commandBuffer);
+
+    CheckVkResult(vkEndCommandBuffer(commandBuffer));
 
     VkSemaphore waitSemaphores[] = {imageAvailable};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -229,7 +436,7 @@ int main() {
         .pWaitSemaphores = waitSemaphores,
         .pWaitDstStageMask = waitStages,
         .commandBufferCount = 1,
-        .pCommandBuffers = &cmd,
+        .pCommandBuffers = &commandBuffer,
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemaphores};
 

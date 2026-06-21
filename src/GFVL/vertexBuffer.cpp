@@ -9,13 +9,13 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
     VERTEX_BUFFER::VERTEX_BUFFER(DEVICE& device, VkDeviceSize size, void* inputData) : device(device), size(size) {
-      VkBufferCreateInfo bufferInfo{
+      this->bufferInfo = {
           .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
           .size = size,
           .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
           .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
 
-      CheckVkResult(vkCreateBuffer(this->device.logicalDevice, &bufferInfo, nullptr, &this->vertexBuffer));
+      CheckVkResult(vkCreateBuffer(this->device.logicalDevice, &this->bufferInfo, nullptr, &this->vertexBuffer));
 
       VkMemoryRequirements memRequirements;
 
@@ -46,39 +46,15 @@ namespace GFVL {
           .allocationSize = memRequirements.size,
           .memoryTypeIndex = memoryType};
 
-      CheckVkResult(
-          vkAllocateMemory(
-              this->device.logicalDevice,
-              &allocVertexMemory,
-              nullptr,
-              &this->vertexBufferMemory));
+      CheckVkResult(vkAllocateMemory(this->device.logicalDevice, &allocVertexMemory, nullptr, &this->vertexBufferMemory));
 
-      CheckVkResult(
-          vkBindBufferMemory(
-              this->device.logicalDevice,
-              this->vertexBuffer,
-              this->vertexBufferMemory,
-              0));
+      CheckVkResult(vkBindBufferMemory(this->device.logicalDevice, this->vertexBuffer, this->vertexBufferMemory, 0));
 
-      void *data;
+      CheckVkResult(vkMapMemory(device.logicalDevice, vertexBufferMemory, 0, this->bufferInfo.size, 0, &this->data));
 
-      CheckVkResult(
-          vkMapMemory(
-              device.logicalDevice,
-              vertexBufferMemory,
-              0,
-              bufferInfo.size,
-              0,
-              &data));
+      memcpy(this->data, inputData, this->bufferInfo.size);
 
-      memcpy(
-          data,
-          inputData,
-          bufferInfo.size);
-
-      vkUnmapMemory(
-          device.logicalDevice,
-          vertexBufferMemory);
+      vkUnmapMemory(device.logicalDevice, vertexBufferMemory);
     }
     VERTEX_BUFFER::~VERTEX_BUFFER() {
       vkDestroyBuffer(
