@@ -3,7 +3,6 @@
 layout(binding = 0) uniform UBO {
     mat4 MVP;
     vec3 viewPos;
-    vec3 viewDir;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;

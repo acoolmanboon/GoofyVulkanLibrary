@@ -232,6 +232,7 @@ DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preferen
   }
 
   std::vector<const char *> deviceExtensions = enumerateDeviceExtensions(this->physicalDevice);
+  
   VkDeviceCreateInfo deviceInfo{
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
       .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),

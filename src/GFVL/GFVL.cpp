@@ -74,14 +74,18 @@ namespace GFVL {
       for (uint32_t i = 0; i < instanceExtensionCount; i++)
         std::cout << "  " << instanceExtensions[i] << '\n';
     }
+    const char *validationLayer = "VK_LAYER_KHRONOS_validation";
 
     VkInstanceCreateInfo instanceCreationInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .pApplicationInfo = appInfo,
+        //.enabledLayerCount = 1,
+        //.ppEnabledLayerNames = &validationLayer,
         .enabledExtensionCount = instanceExtensionCount,
-        .ppEnabledExtensionNames = instanceExtensions};
+        .ppEnabledExtensionNames = instanceExtensions,
+    };
 
     VkInstance instance;
     GFVL::CheckVkResult(vkCreateInstance(

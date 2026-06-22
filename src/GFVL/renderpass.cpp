@@ -35,7 +35,7 @@ RENDERPASS::RENDERPASS(DEVICE &device, SWAPCHAIN &swapchain) : device(device)  {
 
   VkAttachmentReference colorAttachmentRef{
       .attachment = 0,
-      .layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL};
+      .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpass{
       .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,

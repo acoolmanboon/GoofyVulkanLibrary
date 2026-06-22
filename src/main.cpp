@@ -21,7 +21,7 @@
 // glslc src/vertex_shader.vert -o src/vertex_shader.spv
 // glslc src/fragment_shader.frag -o src/fragment_shader.spv
 
-// glslc src/vertex_shader.vert -o src/vertex_shader.spv; glslc src/fragment_shader.frag -o src/fragment_shader.spv;  cmake --build build --verbose; build/main.exe
+// rm -Force src/fragment_shader.spv; rm -Force src/vertex_shader.spv; glslc src/vertex_shader.vert -o src/vertex_shader.spv; glslc src/fragment_shader.frag -o src/fragment_shader.spv;  cmake --build build --verbose; build/main.exe
 
 const char *VkResultToString(VkResult result) {
   switch (result) {
@@ -95,10 +95,9 @@ struct vertice {
 };
 struct CameraUBO {
   glm::mat4 MVP;
-  glm::vec3 viewPos;
-  glm::vec3 viewDir;
+  alignas(16) glm::vec3 viewPos;
+  float padding;
 };
-
 void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vector<vertice> &vertices) {
   std::vector<vertice> cube = {
       // Front face (z = -0.5)
@@ -171,7 +170,7 @@ void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vecto
 
   vertices.insert(vertices.end(), cube.begin(), cube.end());
 }
-int main() {
+int main() {  
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
 
@@ -255,7 +254,7 @@ int main() {
       .binding = 0,
       .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
       .descriptorCount = 1,
-      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT};
+      .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS};
 
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -345,10 +344,21 @@ int main() {
       nullptr);
   GFVL::COMMAND_POOL commandPool(device, framebuffers);
   std::vector<vertice> vertices;
-  insertCube(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), vertices);
-  insertCube(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 2.5f, 1.0f), vertices);
-  insertCube(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 2.5f, 1.0f), vertices);
-  GFVL::VERTEX_BUFFER vertexBuffer(device, vertices.capacity() * sizeof(vertice), vertices.data());
+  for (int x = -25; x < 50; x++) {
+    for (int y = -25; y < 50; y++) {
+      for (int z = -25; z < 50; z++) {
+        insertCube(glm::vec3(
+          static_cast<float>(x) * 8.0f,
+          static_cast<float>(y) * 8.0f,
+          static_cast<float>(z) * 8.0f),
+           glm::vec3(1.0f, 1.0f, 1.0f), 
+           glm::vec3(1.8f, 1.8f, 1.8f), vertices
+          );
+      }
+    }
+  }
+  print(vertices.size())
+  GFVL::VERTEX_BUFFER vertexBuffer(device, vertices.size() * sizeof(vertice), vertices.data());
 
   // melica.uwu
   // dino_potato__  
@@ -368,12 +378,16 @@ int main() {
   bool framebufferResized = false;
   float speed = 1.0f;
 
-  float aspect = SDL_GetWindowAspectRatio(window, NULL, NULL);
+  float aspect = 0;
+  int w, h;
+  SDL_GetWindowSizeInPixels(window, &w, &h);
+  aspect = static_cast<float>(w) / static_cast<float>(h);
+
   uint64_t last_time = SDL_GetPerformanceCounter();
   float delta_time = 0.0; // In seconds
 
   glm::vec3 position(0,0,0);
-  glm::quat angle;
+  glm::quat angle ;
   while (running) {
     uint64_t current_time = SDL_GetPerformanceCounter();
     delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
@@ -413,7 +427,9 @@ int main() {
       swapchain.recreateSwapchain(window, surface);
       framebuffers.recreate(swapchain, renderPass);
       framebufferResized = false;
-      aspect = SDL_GetWindowAspectRatio(window, NULL, NULL);
+      int w, h;
+      SDL_GetWindowSizeInPixels(window, &w, &h);
+      aspect = static_cast<float>(w) / static_cast<float>(h);
     }
 
     const bool *keyboard = SDL_GetKeyboardState(nullptr);
@@ -440,7 +456,7 @@ int main() {
         glm::radians(90.0f),
         aspect,
         0.01f,
-        100.0f);
+        100000.0f);
 
     glm::mat4 view =
         glm::mat4_cast(glm::conjugate(angle)) *
@@ -448,7 +464,6 @@ int main() {
 
     camera.MVP = proj * view;
     camera.viewPos = position;
-    camera.viewDir = glm::eulerAngles(angle);
 
     vkWaitForFences(device.logicalDevice, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(device.logicalDevice, 1, &inFlightFence);
@@ -542,9 +557,15 @@ int main() {
         .pImageIndices = &imageIndex};
 
     CheckVkResult(vkQueuePresentKHR(device.graphicsQueue, &presentInfo));
-  }
+  } 
 
   vkDeviceWaitIdle(device.logicalDevice);
+  vkDestroyBuffer(device.logicalDevice, uniformBuffer, nullptr);
+  vkFreeMemory(device.logicalDevice, uniformBufferMemory, nullptr);
+  for (auto& layout : descriptorSetLayouts) {
+    vkDestroyDescriptorSetLayout(device.logicalDevice, layout, nullptr);
+  }
+  vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
 
   vkDestroyFence(device.logicalDevice, inFlightFence, nullptr);
 
