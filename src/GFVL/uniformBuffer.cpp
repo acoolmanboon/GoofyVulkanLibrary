@@ -2,6 +2,7 @@
 #include <SDL3/SDL_vulkan.h>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <vulkan/vulkan.h>
 #include "GFVL.hpp"
 using namespace GFVL;
@@ -37,12 +38,16 @@ BINDING::~BINDING() {
   vkFreeMemory(device.logicalDevice, this->memory, nullptr);
 }
 UNIFORM_BUFFER::UNIFORM_BUFFER(DEVICE &device) : device(device) {
-  bindings.reserve(8);
+  bindings.reserve(16);
 }
 BINDING &UNIFORM_BUFFER::emplaceBinding(size_t size, void *ubo) {
+  if (bindings.size() == 16) 
+    ERROR("You cannot have more than 16 bindings!");
+
   bindings.emplace_back(device, size, ubo, static_cast<uint32_t>(bindings.size()));
   return bindings.back();
 }
+
 void UNIFORM_BUFFER::create() {
   std::vector<VkDescriptorSetLayoutBinding> layouts;
 
