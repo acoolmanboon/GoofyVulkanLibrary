@@ -299,6 +299,7 @@ const char *VkResultToString(VkResult result);
 void PrintVkResult(VkResult result);
 VkResult CheckVkResult(VkResult result);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+void createBuffer(DEVICE &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 
 } // namespace GFVL
 

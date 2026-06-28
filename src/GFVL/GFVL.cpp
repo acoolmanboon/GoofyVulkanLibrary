@@ -80,4 +80,25 @@ namespace GFVL {
     ERROR("failed to find memory type")
   }
 
+  void createBuffer(DEVICE& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
+    VkBufferCreateInfo bufferInfo{
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .size = static_cast<VkDeviceSize>(size),
+      .usage = usage,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+
+    CheckVkResult(vkCreateBuffer(device.logicalDevice, &bufferInfo, nullptr, &buffer));
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device.logicalDevice, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(device.physicalDevice, memRequirements.memoryTypeBits, properties);
+
+    CheckVkResult(vkAllocateMemory(device.logicalDevice, &allocInfo, nullptr, &bufferMemory));
+    CheckVkResult(vkBindBufferMemory(device.logicalDevice, buffer, bufferMemory, 0));
+  }
 }
