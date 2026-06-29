@@ -1,7 +1,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <cstdint>
 #include <iostream>
-#include <cstring>
+#include <sstream>
+#include <string>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include "GFVL.hpp"
@@ -12,7 +15,7 @@ namespace GFVL {
 VkSurfaceKHR InitializeVkSurface(VkInstance instance, SDL_Window* window) {
   VkSurfaceKHR surface;
   if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
-    ERROR(SDL_GetError());
+    THROW_EXCEPTION(SDL_GetError());
   return surface;
 }
 VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
@@ -27,12 +30,12 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   uint32_t instanceExtensionCount = 0;
   const char *const *instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&instanceExtensionCount);
   if (instanceExtensions == NULL)
-    ERROR("No instance extensions found..")
+    THROW_EXCEPTION("No instance extensions found..")
 
   if (DEBUG_MODE) { // optionally print the info
-    DEBUG_PRINT("Detected instance extensions :")
+    PRINT("Detected instance extensions :")
     for (uint32_t i = 0; i < instanceExtensionCount; i++)
-      DEBUG_PRINT("  " << instanceExtensions[i])
+      PRINT("  " << instanceExtensions[i])
   }
   const char *validationLayer = "VK_LAYER_KHRONOS_validation";
 

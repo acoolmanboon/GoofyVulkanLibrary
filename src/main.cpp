@@ -261,7 +261,10 @@ int main() {
     xI++;
   }
 
-  GFVL::MESH mesh(vertices.data(), vertices.size() * sizeof(vertice), GFVLinstance.device);
+  GFVL::Mesh mesh(
+    GFVLinstance.device, 
+    GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .type = GFVL::VertexBuffer::Type::HostVisible, .commandBuffer = nullptr}
+  );
   VkSemaphore imageAvailable; // can i render?
   VkSemaphore renderFinished; // am i done rendering my stuff?
 
@@ -407,8 +410,8 @@ int main() {
     setViewport(commandBuffer, GFVLinstance.swapchain);
     VkDeviceSize offsets[] = {0};
 
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer.vertexBuffer, offsets);
 
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer().buffer(), offsets);
 
     vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 

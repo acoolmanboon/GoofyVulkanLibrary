@@ -1,14 +1,32 @@
+/**
+ * @file GFVL.hpp
+ * @brief Defines everything about GFVL.
+ * @details This is probably the file you wanna include.
+ */
 #ifndef GFVL_CPP
 #define GFVL_CPP
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#define DEBUG_PRINT(message) std::cout << "[GFVL] " << message << "\n";
-#define ERROR(message) throw std::runtime_error(message);
+#define PRINT(message) std::cout << "[GFVL] " << message << "\n";
+#define THROW_EXCEPTION(reason)                 \
+  do {                                          \
+    std::ostringstream oss;                     \
+    oss << "[GFVL] Error! Reason : " << reason; \
+    throw std::runtime_error(oss.str());        \
+  } while (0);
+#define ASSERT(statement, message)               \
+  if (statement) {                               \
+    std::ostringstream oss;                      \
+    oss << "[GFVL] Error! Reason : " << message; \
+    throw std::runtime_error(oss.str());         \
+  };
 #define GOOFYVLIB_ITERATION 1 // internal application name
 
 namespace GFVL {
@@ -17,11 +35,6 @@ class PIPELINE;
 enum PREFERRED_GPU {
   PREFERRED_GPU_POWER_SAVING,
   PREFERRED_GPU_PERFORMANCE,
-};
-
-enum VERTEX_BUFFER_TYPE {
-  VERTEX_BUFFER_TYPE_CPU_READABLE,
-  VERTEX_BUFFER_TYPE_STATIC
 };
 
 struct APPLICATION_INFO {
@@ -34,13 +47,14 @@ struct APPLICATION_INFO {
 
 struct UNIFORM_BUFFER_BINDING {
   size_t size;
-  void* ubo;
+  void *ubo;
 };
 
 struct SHADER_STAGE {
   VkShaderStageFlagBits flags;
   const char *filename;
 };
+
 class VERTEX_LAYOUT {
 public:
   VkVertexInputBindingDescription binding;
@@ -163,7 +177,7 @@ public:
   UNIFORM_BUFFER(DEVICE &device, std::vector<UNIFORM_BUFFER_BINDING> &bindings);
   ~UNIFORM_BUFFER();
 
-  BINDING& emplaceBinding(size_t size, void *ubo);
+  BINDING &emplaceBinding(size_t size, void *ubo);
   void create();
   void bind(VkCommandBuffer &commandBuffer, PIPELINE &pipeline, uint32_t set);
 
@@ -233,46 +247,102 @@ private:
   DEVICE &device;
 };
 
-class VERTEX_BUFFER {
+/**
+ * @class VertexBuffer
+ * @brief Handles memory management for vertex buffers.
+ * @details This allows for management of both in-VRAM buffers and CPU-readable data, but beware of trying to modify something with the wrong type.
+ */
+class VertexBuffer {
 public:
-  VkBuffer vertexBuffer;
-  VkDeviceMemory vertexBufferMemory;
-  VkDeviceSize size;
-  void *data;
-  VERTEX_BUFFER_TYPE type;
-  
-  VERTEX_BUFFER(DEVICE &device, VkDeviceSize size, void *inputData);
-  ~VERTEX_BUFFER();
+  /**
+   * @enum Type
+   * @brief Defines memory allocation strategy.
+   */
+  enum class Type {
+    HostVisible, ///< Memory allocated will be visible to CPU. Use for non-static meshes like terrain.
+    DeviceOnly   ///< Memory allocated will be in VRAM. Use for static-meshes. Faster.
+  };
 
-  VERTEX_BUFFER(const VERTEX_BUFFER &) = delete;
-  VERTEX_BUFFER &operator=(const VERTEX_BUFFER &) = delete;
+  /**
+   * @struct CreateInfo
+   * @brief Configuration for creating VertexBuffer class.
+   */
+  struct CreateInfo {
+    size_t size;                    ///< Size of the buffer in bytes.
+    void *data;                     ///< Pointer to your data.
+    Type type;                      ///< Type of data, see definition.
+    VkCommandBuffer *commandBuffer; ///< Optional, used for static meshes.
+  };
 
-  VERTEX_BUFFER(const VERTEX_BUFFER &&) = delete;
-  VERTEX_BUFFER &operator=(const VERTEX_BUFFER &&) = delete;
+  void *data() const;      ///< Returns the pointer to data, if using HOST_VISIBLE buffer.
+  size_t size() const;     ///< Re  turns size of buffer in bytes.
+  const VkBuffer &buffer() const; ///< Returns the buffer
+  Type type() const;       ///< Returns type of buffer.
+
+  /**
+   * @brief Creates a vertex buffer.
+   * @param device A reference to your Device.
+   * @param createinfo The creation information of the vertex buffer.
+   */
+  VertexBuffer(DEVICE &device, const CreateInfo &createInfo);
+
+  ~VertexBuffer(); ///< Destroys a vertex buffer and frees associated memory.
+
+  VertexBuffer(const VertexBuffer &) = delete;
+  VertexBuffer &operator=(const VertexBuffer &) = delete;
+  VertexBuffer(const VertexBuffer &&) = delete;
+  VertexBuffer &operator=(const VertexBuffer &&) = delete;
 
 private:
-  DEVICE &device;
-  VkBufferCreateInfo bufferInfo;
+  DEVICE &device;              ///< Stores the device reference.
+  VkBuffer buffer_;            ///< The buffer of the vertex buffer
+  VkDeviceMemory bufferMemory; ///< The actual memory stored.
+
+  void *data_;  ///< A pointer to the data. Used for HOST_VISIBLE memory.
+  size_t size_; ///< Size of the memory. Used mainly for debugging.
+  Type type_;   ///< Type of the memory, not used functionalyl but used for type safety.
 };
 
-class MESH {
+/**
+ * @class Mesh
+ * @brief An object containing vertice data.
+ * @details Stores vertex data.
+ */
+class Mesh {
 public:
-  size_t vertice_size;
-  uint32_t vertice_count;
-  size_t mesh_size;
-  VERTEX_BUFFER vertexBuffer;
+  /**
+   * @struct CreateInfo
+   * @brief Configuration for creating Mesh class.
+   */
+  struct CreateInfo {
+    size_t size;                    ///< Size of the mesh in bytes.
+    void *data;                     ///< Pointer to mesh data.
+    VertexBuffer::Type type;        ///< The memory allocation of this mesh. See documentation for details.
+    VkCommandBuffer *commandBuffer; ///< Command buffer, for static meshes.
+  };
 
-  MESH(void* data, uint32_t size, DEVICE& device);
-  ~MESH();
+  size_t size() const;
+  const VertexBuffer &vertexBuffer() const;
+
+  /**
+   * @brief Creates a mesh buffer.
+   * @param device A reference to your Device.
+   * @param createinfo The creation information of the vertex buffer.
+   */
+  Mesh(DEVICE &device, const CreateInfo &createInfo);
+
+  ~Mesh(); ///< Destroys mesh and associated info
 
 private:
-  DEVICE& device;
+  DEVICE &device;             ///< Stores the device reference.
+  size_t size_;               ///< Size of the mesh in bytes.
+  VertexBuffer vertexBuffer_; ///< The buffer containing the actual memory
 };
 
 class INSTANCE {
 public:
   VkInstance instance;
-  SDL_Window* window;
+  SDL_Window *window;
   VkSurfaceKHR surface;
   DEVICE device;
   SWAPCHAIN swapchain;

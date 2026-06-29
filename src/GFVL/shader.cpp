@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -17,7 +18,7 @@ SHADER::SHADER(DEVICE &device, VkShaderStageFlagBits stage, const char *filename
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if (!file.is_open())
-      ERROR("failed to open file!");
+      THROW_EXCEPTION("failed to open file!");
 
   size_t fileSize = (size_t)file.tellg();
   std::vector<char> buffer(fileSize);
@@ -30,7 +31,7 @@ SHADER::SHADER(DEVICE &device, VkShaderStageFlagBits stage, const char *filename
       .codeSize = buffer.size(),
       .pCode = reinterpret_cast<const uint32_t *>(buffer.data())};
   CheckVkResult(vkCreateShaderModule(device.logicalDevice, &shaderCreationInfo, nullptr, &this->shaderModule));
-  DEBUG_PRINT("succesfully created shader!")
+  PRINT("succesfully created shader!")
 }
 SHADER::SHADER(SHADER &&other) noexcept : device(other.device), shaderModule(other.shaderModule), stage(other.stage) {
   other.shaderModule = VK_NULL_HANDLE; // this just prevents the vulkan shader module from being destroyed

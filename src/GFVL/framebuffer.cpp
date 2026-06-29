@@ -1,8 +1,12 @@
+#include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <cstdint>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
-#include <stdexcept>
-#include <iostream>
+
 #include "GFVL.hpp"
 
 using namespace GFVL;
@@ -64,7 +68,7 @@ void createImage(
 
   CheckVkResult(vkAllocateMemory(device, &allocInfo, nullptr, &memory));
   vkBindImageMemory(device, image, memory, 0);
-  DEBUG_PRINT("succesfully created image!")
+  PRINT("succesfully created image!")
 }
 
 VkImageView createImageView(

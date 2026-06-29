@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vulkan/vulkan.h>
 
-#include "GFVL.hpp"
+#include "../GFVL.hpp"
 using namespace GFVL;
 
 namespace GFVL {
@@ -77,7 +77,7 @@ namespace GFVL {
         return i;
     }
 
-    ERROR("failed to find memory type")
+    THROW_EXCEPTION("failed to find memory type")
   }
 
   void createBuffer(DEVICE& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {

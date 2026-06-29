@@ -73,7 +73,7 @@ VkBool32 enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, u
     CheckVkResult(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentationSupport));
 
     if (graphicsSupport && presentationSupport) {
-      DEBUG_PRINT("Found a queue family with both graphics support and presentation support!")
+      PRINT("Found a queue family with both graphics support and presentation support!")
       graphicsFamilyIndex = i;
       presentFamilyIndex = i;
       break;
@@ -118,14 +118,14 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
   for (const VkExtensionProperties &ext : deviceExtensions) {
     if (strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
       enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-      DEBUG_PRINT("Enabling extension: " << VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+      PRINT("Enabling extension: " << VK_KHR_SWAPCHAIN_EXTENSION_NAME)
     }
   }
 
   if (enabledDeviceExtensions.empty()) {
     throw std::runtime_error("[GFVL] Required extension VK_KHR_swapchain not found.");
   }
-  DEBUG_PRINT("Enabled device extension count: " << enabledDeviceExtensions.size())
+  PRINT("Enabled device extension count: " << enabledDeviceExtensions.size())
 
   return enabledDeviceExtensions;
 }

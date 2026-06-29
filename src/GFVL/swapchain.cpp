@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <sstream>
 #include <stdexcept>
 #include <iostream>
 #include <vector>
@@ -19,7 +20,7 @@ void pickFormat(DEVICE &device, VkSurfaceKHR surface, VkFormat& format, VkColorS
   formats.resize(count);
   CheckVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, surface, &count, formats.data()));
   if (formats.empty())
-    ERROR("No VKFormats found.. What??")
+    THROW_EXCEPTION("No VKFormats found.. What??")
 
   // pick random format at first
 
@@ -29,7 +30,7 @@ void pickFormat(DEVICE &device, VkSurfaceKHR surface, VkFormat& format, VkColorS
   // try to get ideal format
   for (const VkSurfaceFormatKHR &surfaceFormat : formats) {
     if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-      DEBUG_PRINT("Found ideal format!")
+      PRINT("Found ideal format!")
       format = surfaceFormat.format;
       colorSpace = surfaceFormat.colorSpace;
       break;
@@ -44,7 +45,7 @@ VkPresentModeKHR pickPresentMode(DEVICE &device, VkSurfaceKHR surface) {
   presentModes.resize(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, surface, &count, presentModes.data());
   if (presentModes.empty())
-    ERROR("No VkPresentModeKHR's found.. What??")
+    THROW_EXCEPTION("No VkPresentModeKHR's found.. What??")
 
   VkPresentModeKHR presentMode;
   presentMode = presentModes[0];
@@ -57,7 +58,7 @@ VkPresentModeKHR pickPresentMode(DEVICE &device, VkSurfaceKHR surface) {
 }
 SWAPCHAIN::SWAPCHAIN(DEVICE& device, SDL_Window *window, VkSurfaceKHR surface) : device(device), presentMode(pickPresentMode(device, surface)) {
     // giggity
-    DEBUG_PRINT("Attempting to create swapchain")
+    PRINT("Attempting to create swapchain")
 
     VkFormat format;
     VkColorSpaceKHR colorSpace;
@@ -131,7 +132,7 @@ SWAPCHAIN::SWAPCHAIN(DEVICE& device, SDL_Window *window, VkSurfaceKHR surface) :
     this->extent = extent;
     this->presentMode = presentMode;
     this->imageCount = count;
-    DEBUG_PRINT("created swapchain")
+    PRINT("created swapchain")
 }
 void SWAPCHAIN::recreateSwapchain(SDL_Window *window, VkSurfaceKHR surface) {
   vkDeviceWaitIdle(device.logicalDevice);
