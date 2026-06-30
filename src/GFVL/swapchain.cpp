@@ -50,8 +50,8 @@ VkPresentModeKHR pickPresentMode(DEVICE &device, VkSurfaceKHR surface) {
   VkPresentModeKHR presentMode;
   presentMode = presentModes[0];
   for (const VkPresentModeKHR& mode : presentModes) {
-    if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-      presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+      presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
     }
   }
   return presentMode;

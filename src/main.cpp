@@ -223,8 +223,8 @@ int main() {
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
 
   std::vector<vertice> vertices;
-  int start = -3;
-  int end = 3;
+  int start = -7;
+  int end = 7;
   int steps = end - start;
   int cubes = steps*steps*steps;
 
@@ -266,6 +266,13 @@ int main() {
     GFVLinstance.device, 
     GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .type = GFVL::VertexBuffer::Type::DeviceOnly}
   ));
+
+  // debug
+  uint32_t verticeAmount = 0;
+  for (const GFVL::Mesh& mesh : meshList) {
+    verticeAmount += mesh.size() / sizeof(vertice);
+  }
+  print("Vertices : " << verticeAmount)
 
   constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
   uint32_t currentFrame = 0;

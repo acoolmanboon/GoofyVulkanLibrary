@@ -8,7 +8,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-    CommandPool::CommandPool(DEVICE& device, Framebuffer& framebuffer) : device(device) {
+    CommandPool::CommandPool(DEVICE& device, Framebuffer& framebuffer) : device_(device) {
       VkCommandPoolCreateInfo poolInfo{
           .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
           .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
