@@ -87,6 +87,74 @@ public:
   DEVICE &operator=(const DEVICE &&) = delete;
 };
 
+class Semaphore {
+public:
+  VkSemaphore semaphore;
+  Semaphore(DEVICE &device) : device_(device) {
+    VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    vkCreateSemaphore(this->device_.logicalDevice, &semaphoreInfo, nullptr, &this->semaphore);
+  }
+
+  Semaphore(const Semaphore &) = delete;
+  Semaphore &operator=(const Semaphore &) = delete;
+
+  Semaphore(Semaphore &&other) noexcept : device_(other.device_), semaphore(other.semaphore) {
+    other.semaphore = VK_NULL_HANDLE;
+  };
+  Semaphore &operator=(Semaphore &&other) {
+    ASSERT(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices")
+    if (this == &other)
+      return *this;
+
+    if (this->semaphore != VK_NULL_HANDLE) {
+      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
+    }
+    this->semaphore = other.semaphore;
+    other.semaphore = VK_NULL_HANDLE;
+    return *this;
+  }
+
+  ~Semaphore() {
+    vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
+  }
+
+private:
+  DEVICE &device_;
+};
+
+class Fence {
+public:
+  VkFence fence;
+  Fence(DEVICE &device, VkFenceCreateFlags flags) : device_(device) {
+    VkFenceCreateInfo fenceInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = flags};
+    vkCreateFence(this->device_.logicalDevice, &fenceInfo, nullptr, &this->fence);
+  }
+  Fence(const Fence &) = delete;
+  Fence &operator=(const Fence &) = delete;
+
+  Fence(Fence &&other) noexcept : device_(other.device_), fence(other.fence) {
+    other.fence = VK_NULL_HANDLE;
+  };
+  Fence &operator=(Fence &&other) {
+    ASSERT(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices")
+    if (this == &other)
+      return *this;
+
+    if (this->fence != VK_NULL_HANDLE) {
+      vkDestroyFence(this->device_.logicalDevice, this->fence, nullptr);
+    }
+    this->fence = other.fence;
+    other.fence = VK_NULL_HANDLE;
+    return *this;
+  }
+
+  ~Fence() {
+    vkDestroyFence(this->device_.logicalDevice, this->fence, nullptr);
+  }
+private:
+  DEVICE& device_;
+};
+
 class SWAPCHAIN {
 public:
   VkSwapchainKHR swapchain{};
@@ -101,7 +169,7 @@ public:
 
   bool framebufferResized = false;
 
-  void recreateSwapchain(SDL_Window *window, VkSurfaceKHR surface);
+  void recreate(SDL_Window *window, VkSurfaceKHR surface);
   SWAPCHAIN(DEVICE &device, SDL_Window *window, VkSurfaceKHR surface);
   ~SWAPCHAIN();
 
@@ -236,11 +304,11 @@ private:
  */
 class CommandPool {
 public:
-  VkCommandPool commandPool;
-  std::vector<VkCommandBuffer> commandBuffers;
-
   CommandPool(DEVICE &device, Framebuffer &framebuffer);
+  void recreate(Framebuffer &framebuffer);
   ~CommandPool();
+
+  const VkCommandBuffer &commandBuffer(size_t index) const;
 
   CommandPool(const CommandPool &) = delete;
   CommandPool &operator=(const CommandPool &) = delete;
@@ -250,6 +318,8 @@ public:
 
 private:
   DEVICE &device_;
+  VkCommandPool commandPool_;
+  std::vector<VkCommandBuffer> commandBuffers_;
 };
 
 /**
@@ -263,9 +333,10 @@ public:
    * @enum Type
    * @brief Defines memory allocation strategy.
    */
-  enum class Type {
-    HostVisible, ///< Memory allocated will be visible to CPU. Use for non-static meshes like terrain.
-    DeviceOnly   ///< Memory allocated will be in VRAM. Use for static-meshes. Faster.
+  enum class MemoryAllocation {
+    HostVisibleOpportunistic, ///< Memory will be visible to CPU, but physically it is still in VRAM. Faster for GPU's that support ReBar.
+    HostVisible,              ///< Memory allocated will be visible to CPU. Use for non-static meshes.
+    DeviceOnly                ///< Memory allocated will be in VRAM. Use for static-meshes. Faster.
   };
 
   /**
@@ -273,22 +344,22 @@ public:
    * @brief Configuration for creating VertexBuffer class.
    */
   struct CreateInfo {
-    size_t size;                   ///< Size of the buffer in bytes.
-    void *data;                    ///< Pointer to your data.
-    Type type = Type::HostVisible; ///< Type of data, see definition.
+    size_t size;                                           ///< Size of the allocated buffer memory in bytes.
+    void *data;                                            ///< Pointer to the data to copy into the buffer.
+    MemoryAllocation type = MemoryAllocation::HostVisible; ///< Type of data, see definition.
   };
 
-  void *data() const;             ///< Returns the pointer to data, if using HOST_VISIBLE buffer.
-  size_t size() const;            ///< Re  turns size of buffer in bytes.
-  const VkBuffer &buffer() const; ///< Returns the buffer
-  Type type() const;              ///< Returns type of buffer.
+  const void *data() const;            ///< Returns the pointer to the buffer data, only for memory allocation strategy of HostVisible
+  const size_t size() const;           ///< Returns the allocated buffer size in buffer.
+  const VkBuffer &buffer() const;      ///< Returns a reference to the Vulkan buffer handle.
+  const MemoryAllocation type() const; ///< Returns the memory allocation strategy of the buffer.
 
   /**
    * @brief Creates a vertex buffer.
    * @param device A reference to your Device.
    * @param createinfo The creation information of the vertex buffer.
    */
-  VertexBuffer(DEVICE &device, const CreateInfo &createInfo);
+  VertexBuffer(DEVICE &device, const CreateInfo &createInfo); ///< Creates a vertex buffer.
 
   ~VertexBuffer(); ///< Destroys a vertex buffer and frees associated memory.
 
@@ -300,12 +371,12 @@ public:
 
 private:
   DEVICE &device_;              ///< Stores the device reference.
-  VkBuffer buffer_;             ///< The buffer of the vertex buffer
-  VkDeviceMemory bufferMemory_; ///< The actual memory stored.
+  VkBuffer buffer_;             ///< The Vulkan Buffer handle.
+  VkDeviceMemory bufferMemory_; ///< The Vulkan memory handle.
 
-  void *data_;  ///< A pointer to the data. Used for HOST_VISIBLE memory.
-  size_t size_; ///< Size of the memory. Used mainly for debugging.
-  Type type_;   ///< Type of the memory, not used functionalyl but used for type safety.
+  void *data_;            ///< A pointer to the buffer data. Used for HostVisible memory.
+  size_t size_;           ///< Size of the memory. Used mainly for debugging.
+  MemoryAllocation type_; ///< Type of the memory, not used functionalyl but used for type safety.
 };
 
 /**
@@ -320,12 +391,12 @@ public:
    * @brief Configuration for creating Mesh class.
    */
   struct CreateInfo {
-    size_t size;                                               ///< Size of the mesh in bytes.
-    void *data;                                                ///< Pointer to mesh data.
-    VertexBuffer::Type type = VertexBuffer::Type::HostVisible; ///< The memory allocation of this mesh. See documentation for details.
+    size_t size;                                                                       ///< Size of the mesh in bytes.
+    void *data;                                                                        ///< Pointer to mesh data.
+    VertexBuffer::MemoryAllocation type = VertexBuffer::MemoryAllocation::HostVisible; ///< The memory allocation of this mesh. See documentation for details.
   };
 
-  size_t size() const;
+  const size_t size() const;
   const VertexBuffer &vertexBuffer() const;
 
   /**
@@ -333,13 +404,13 @@ public:
    * @param device A reference to your Device.
    * @param createinfo The creation information of the vertex buffer.
    */
-  Mesh(DEVICE &device, const CreateInfo &createInfo);
+  Mesh(DEVICE &device, const CreateInfo &createInfo); ///< Creates a mesh.
 
   Mesh(const Mesh &other) = delete;            ///< Copy constructor, removed as multiple vertex buffers will have the same buffer handles.
   Mesh &operator=(const Mesh &other) = delete; ///< Copy assignment operator, removed as multiple vertex buffers will have the same buffer handles.
 
-  Mesh(Mesh &&other) = default;            ///< Move constructor, allowed but it will unbind vulkan resources of old object.
-  Mesh &operator=(Mesh &&other) = default; ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
+  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will unbind vulkan resources of old object.
+  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
 
   ~Mesh(); ///< Destroys mesh and associated info
 

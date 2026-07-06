@@ -26,10 +26,10 @@
   throw std::runtime_error(oss.str());
 
 namespace GFVL {
-inline std::string_view enumToString(const VertexBuffer::Type &value) {
+inline std::string_view enumToString(const VertexBuffer::MemoryAllocation &value) {
   switch (value) {
-    ret(VertexBuffer::Type, HostVisible)
-    ret(VertexBuffer::Type, DeviceOnly)
+    ret(VertexBuffer::MemoryAllocation, HostVisible)
+    ret(VertexBuffer::MemoryAllocation, DeviceOnly)
     reterr(VertexBuffer::Type, value)
   }
   return "";

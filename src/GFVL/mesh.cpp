@@ -13,7 +13,7 @@ Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo) : device_(device),
                                                            vertexBuffer_(device, VertexBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .type = createInfo.type}) 
 {
 }
-size_t Mesh::size() const {
+const size_t Mesh::size() const {
   return this->size_;
 }
 const VertexBuffer &Mesh::vertexBuffer() const {

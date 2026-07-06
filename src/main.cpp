@@ -12,8 +12,9 @@
 #include <vulkan/vulkan.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include<glm/gtc/matrix_transform.hpp>
+
 #define print(message) std::cout << message << "\n";
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 // Remove-Item build -Recurse -Force; cmake -B build -DCMAKE_PREFIX_PATH=C:/msys64/ucrt64 -G Ninja
@@ -76,7 +77,7 @@ VkResult CheckVkResult(VkResult result) {
   return result;
 }
 
-void setViewport(VkCommandBuffer& commandBuffer, GFVL::SWAPCHAIN& swapchain) {
+void setViewport(VkCommandBuffer &commandBuffer, GFVL::SWAPCHAIN &swapchain) {
   VkViewport viewport{
       .x = 0.0f,
       .y = 0.0f,
@@ -177,48 +178,37 @@ void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vecto
 
   vertices.insert(vertices.end(), cube.begin(), cube.end());
 }
-int main() {  
+int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
 
   // owned by user
   std::vector<GFVL::SHADER_STAGE> shaderStages = {
-    {
-      .flags = VK_SHADER_STAGE_VERTEX_BIT,
-      .filename = "src/vertex_shader.spv"
-    },
-    {
-      .flags = VK_SHADER_STAGE_FRAGMENT_BIT,
-      .filename = "src/fragment_shader.spv"
-    }
-  };
+      {.flags = VK_SHADER_STAGE_VERTEX_BIT,
+       .filename = "src/vertex_shader.spv"},
+      {.flags = VK_SHADER_STAGE_FRAGMENT_BIT,
+       .filename = "src/fragment_shader.spv"}};
 
   CameraUBO camera;
   LightingUBO lighting = {.lightPos = glm::vec3(0.0f, 0.0f, 0.0f), .lightColor = glm::vec3(1.0f, 1.0f, 1.0f)};
 
   std::vector<GFVL::UNIFORM_BUFFER_BINDING> bindings = {
-    {
-      .size = sizeof(CameraUBO),
-      .ubo = &camera
-    },
-    {
-      .size = sizeof(LightingUBO),
-      .ubo = &lighting
-    }
-  };
-  
+      {.size = sizeof(CameraUBO),
+       .ubo = &camera},
+      {.size = sizeof(LightingUBO),
+       .ubo = &lighting}};
+
   GFVL::VERTEX_LAYOUT layout(sizeof(vertice));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, normal));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color));
 
   GFVL::APPLICATION_INFO appInfo = {
-    .applicationName = "GoofyVLib example",
-    .applicationVersion = 1,
-    .width = 600,
-    .height = 800,
-    .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING
-  };
+      .applicationName = "GoofyVLib example",
+      .applicationVersion = 1,
+      .width = 600,
+      .height = 800,
+      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
 
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
 
@@ -226,7 +216,7 @@ int main() {
   int start = -7;
   int end = 7;
   int steps = end - start;
-  int cubes = steps*steps*steps;
+  int cubes = steps * steps * steps;
 
   float xI = 0;
   float yI = 0;
@@ -234,24 +224,22 @@ int main() {
 
   float spacing = 50.0f;
   float scale = 20.0f;
-  
+
   for (int x = start; x < end; x++) {
     for (int y = start; y < end; y++) {
       for (int z = start; z < end; z++) {
         if (x == 0 && y == 0 && z == 0)
           continue;
         insertCube(glm::vec3(
-          static_cast<float>(x) * spacing,
-          static_cast<float>(y) * spacing,
-          static_cast<float>(z) * spacing),
-          glm::vec3(
-            xI/steps,
-            yI/steps,
-            zI/steps
-          ), 
-          glm::vec3(scale), vertices
-        );
-        //print("xI : " << (xI/steps) << "yI : " << (yI/steps) << "zI : " << (zI/steps))
+                       static_cast<float>(x) * spacing,
+                       static_cast<float>(y) * spacing,
+                       static_cast<float>(z) * spacing),
+                   glm::vec3(
+                       xI / steps,
+                       yI / steps,
+                       zI / steps),
+                   glm::vec3(scale), vertices);
+        // print("xI : " << (xI/steps) << "yI : " << (yI/steps) << "zI : " << (zI/steps))
         zI++;
       }
       zI = 0;
@@ -263,32 +251,37 @@ int main() {
   std::vector<GFVL::Mesh> meshList;
 
   meshList.emplace_back(GFVL::Mesh(
-    GFVLinstance.device, 
-    GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .type = GFVL::VertexBuffer::Type::DeviceOnly}
-  ));
+      GFVLinstance.device,
+      GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .type = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
 
   // debug
   uint32_t verticeAmount = 0;
-  for (const GFVL::Mesh& mesh : meshList) {
+  for (const GFVL::Mesh &mesh : meshList) {
     verticeAmount += mesh.size() / sizeof(vertice);
   }
-  print("Vertices : " << verticeAmount)
+  print("Vertices : " << verticeAmount) 
 
   constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
   uint32_t currentFrame = 0;
+  uint32_t imageCount = GFVLinstance.swapchain.images.size(); 
+  print(imageCount)
 
-  VkSemaphore imageAvailable[MAX_FRAMES_IN_FLIGHT]; // can i render?
-  VkSemaphore renderFinished[MAX_FRAMES_IN_FLIGHT]; // am i done rendering my stuff?
-  VkFence inFlightFence[MAX_FRAMES_IN_FLIGHT];
+  std::vector<GFVL::Semaphore> imageAvailable;
+  imageAvailable.reserve(MAX_FRAMES_IN_FLIGHT);
+  for (uint8_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) imageAvailable.emplace_back(GFVLinstance.device);
 
-  VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-  VkFenceCreateInfo fenceInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT};
+  std::vector<GFVL::Semaphore> renderFinished;
+  renderFinished.reserve(imageCount);
+  for (uint8_t i = 0; i < imageCount; i++) renderFinished.emplace_back(GFVLinstance.device);
 
-  for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    CheckVkResult(vkCreateSemaphore(GFVLinstance.device.logicalDevice, &semaphoreInfo, nullptr, &imageAvailable[i]));
-    CheckVkResult(vkCreateSemaphore(GFVLinstance.device.logicalDevice, &semaphoreInfo, nullptr, &renderFinished[i]));
-    CheckVkResult(vkCreateFence(GFVLinstance.device.logicalDevice, &fenceInfo, nullptr, &inFlightFence[i]));
-  }
+  std::vector<GFVL::Fence> inFlightFence;
+  inFlightFence.reserve(MAX_FRAMES_IN_FLIGHT);
+  for (uint8_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) inFlightFence.emplace_back(GFVLinstance.device, VK_FENCE_CREATE_SIGNALED_BIT);
+
+  std::vector<GFVL::Fence> imagesInFlightFence;
+  imagesInFlightFence.reserve(imageCount);
+  for (uint8_t i = 0; i < imageCount; i++) imagesInFlightFence.emplace_back(GFVLinstance.device, VK_FENCE_CREATE_SIGNALED_BIT);
+
   bool running = true;
   bool menu = false;
   bool framebufferResized = false;
@@ -296,14 +289,14 @@ int main() {
 
   float aspect = 0;
   int w, h;
-  SDL_GetWindowSizeInPixels(GFVLinstance.window, &w, &h); 
+  SDL_GetWindowSizeInPixels(GFVLinstance.window, &w, &h);
   aspect = static_cast<float>(w) / static_cast<float>(h);
 
   uint64_t last_time = SDL_GetPerformanceCounter();
   float delta_time = 0.0; // In seconds
 
-  glm::vec3 position(0,0,0);
-  glm::quat angle ;
+  glm::vec3 position(0, 0, 0);
+  glm::quat angle;
   while (running) {
     uint64_t current_time = SDL_GetPerformanceCounter();
     delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
@@ -346,8 +339,26 @@ int main() {
 
     if (framebufferResized) {
       vkDeviceWaitIdle(GFVLinstance.device.logicalDevice);
-      GFVLinstance.swapchain.recreateSwapchain(GFVLinstance.window, GFVLinstance.surface);
+      GFVLinstance.swapchain.recreate(GFVLinstance.window, GFVLinstance.surface);
       GFVLinstance.framebuffer.recreate(GFVLinstance.swapchain, GFVLinstance.renderPass);
+      GFVLinstance.commandPool.recreate(GFVLinstance.framebuffer);
+
+      imageAvailable.clear();
+      imageAvailable.reserve(MAX_FRAMES_IN_FLIGHT);
+      for (uint8_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) imageAvailable.emplace_back(GFVLinstance.device);
+
+      renderFinished.clear();
+      renderFinished.reserve(imageCount);
+      for (uint8_t i = 0; i < imageCount; i++) renderFinished.emplace_back(GFVLinstance.device);
+    
+      inFlightFence.clear();
+      inFlightFence.reserve(MAX_FRAMES_IN_FLIGHT);
+      for (uint8_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) inFlightFence.emplace_back(GFVLinstance.device, VK_FENCE_CREATE_SIGNALED_BIT);
+      
+      imagesInFlightFence.clear();
+      imagesInFlightFence.reserve(imageCount);
+      for (uint8_t i = 0; i < imageCount; i++) imagesInFlightFence.emplace_back(GFVLinstance.device, VK_FENCE_CREATE_SIGNALED_BIT);
+    
       framebufferResized = false;
       int w, h;
       SDL_GetWindowSizeInPixels(GFVLinstance.window, &w, &h);
@@ -359,19 +370,18 @@ int main() {
     glm::vec3 forward = angle * glm::vec3(0, 0, -1);
     glm::vec3 right = angle * glm::vec3(1, 0, 0);
 
-    if (keyboard[SDL_SCANCODE_W]) 
+    if (keyboard[SDL_SCANCODE_W])
       position += forward * speed * delta_time;
     if (keyboard[SDL_SCANCODE_SPACE]) {
       lighting.lightPos = position;
       GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
     }
-    if (keyboard[SDL_SCANCODE_S]) 
+    if (keyboard[SDL_SCANCODE_S])
       position -= forward * speed * delta_time;
-    if (keyboard[SDL_SCANCODE_A]) 
+    if (keyboard[SDL_SCANCODE_A])
       position -= right * speed * delta_time;
-    if (keyboard[SDL_SCANCODE_D]) 
+    if (keyboard[SDL_SCANCODE_D])
       position += right * speed * delta_time;
-    
 
     glm::mat4 proj = glm::perspectiveRH_ZO(
         glm::radians(90.0f),
@@ -386,13 +396,24 @@ int main() {
     camera.MVP = proj * view;
     camera.viewPos = position;
 
-    vkWaitForFences(GFVLinstance.device.logicalDevice, 1, &inFlightFence[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(GFVLinstance.device.logicalDevice, 1, &inFlightFence[currentFrame]);
+    vkWaitForFences(GFVLinstance.device.logicalDevice, 1, &inFlightFence[currentFrame].fence, VK_TRUE, UINT64_MAX);
+    vkResetFences(GFVLinstance.device.logicalDevice, 1, &inFlightFence[currentFrame].fence);
 
     uint32_t imageIndex;
-    CheckVkResult(vkAcquireNextImageKHR(GFVLinstance.device.logicalDevice, GFVLinstance.swapchain.swapchain, UINT64_MAX, imageAvailable[currentFrame], VK_NULL_HANDLE, &imageIndex));
+    CheckVkResult(vkAcquireNextImageKHR(GFVLinstance.device.logicalDevice, GFVLinstance.swapchain.swapchain, UINT64_MAX, imageAvailable[currentFrame].semaphore, VK_NULL_HANDLE, &imageIndex));
 
-    VkCommandBuffer commandBuffer = GFVLinstance.commandPool.commandBuffers[imageIndex];
+    if (imagesInFlightFence[imageIndex].fence != VK_NULL_HANDLE) {
+      vkWaitForFences(
+          GFVLinstance.device.logicalDevice,
+          1,
+          &imagesInFlightFence[imageIndex].fence,
+          VK_TRUE,
+          UINT64_MAX);
+    }
+
+    imagesInFlightFence[imageIndex].fence = inFlightFence[currentFrame].fence;
+
+    VkCommandBuffer commandBuffer = GFVLinstance.commandPool.commandBuffer(imageIndex);
     CheckVkResult(vkResetCommandBuffer(commandBuffer, 0));
 
     VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
@@ -402,7 +423,6 @@ int main() {
     VkClearValue clearValues[2]{};
     clearValues[0].color = {{0.05f, 0.05f, 0.05f, 1.0f}};
     clearValues[1].depthStencil = {1.0f, 0};
-    
 
     std::vector<VkBuffer> giggityBuffer(meshList.size());
     std::vector<VkDeviceMemory> giggityBufferMemory(meshList.size());
@@ -458,9 +478,9 @@ int main() {
 
     CheckVkResult(vkEndCommandBuffer(commandBuffer));
 
-    VkSemaphore waitSemaphores[] = {imageAvailable[currentFrame]};
+    VkSemaphore waitSemaphores[] = {imageAvailable[currentFrame].semaphore};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    VkSemaphore signalSemaphores[] = {renderFinished[currentFrame]};
+    VkSemaphore signalSemaphores[] = {renderFinished[imageIndex].semaphore};
 
     VkSubmitInfo submitInfo{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -472,7 +492,7 @@ int main() {
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = signalSemaphores};
 
-    CheckVkResult(vkQueueSubmit(GFVLinstance.device.graphicsQueue, 1, &submitInfo, inFlightFence[currentFrame]));
+    CheckVkResult(vkQueueSubmit(GFVLinstance.device.graphicsQueue, 1, &submitInfo, inFlightFence[currentFrame].fence));
 
     VkSwapchainKHR swapchains[] = {GFVLinstance.swapchain.swapchain};
 
@@ -483,13 +503,13 @@ int main() {
         .swapchainCount = 1,
         .pSwapchains = swapchains,
         .pImageIndices = &imageIndex};
-    
+
     CheckVkResult(vkQueuePresentKHR(GFVLinstance.device.graphicsQueue, &presentInfo));
 
     vkWaitForFences(
         GFVLinstance.device.logicalDevice,
         1,
-        &inFlightFence[currentFrame],
+        &inFlightFence[currentFrame].fence,
         VK_TRUE,
         UINT64_MAX);
     for (uint32_t i = 0; i < giggityBuffer.size(); i++) {
@@ -498,17 +518,10 @@ int main() {
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-  } 
+  }
 
   vkDeviceWaitIdle(GFVLinstance.device.logicalDevice);
 
-  for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    vkDestroyFence(GFVLinstance.device.logicalDevice, inFlightFence[i], nullptr);
-
-    vkDestroySemaphore(GFVLinstance.device.logicalDevice, renderFinished[i], nullptr);
-
-    vkDestroySemaphore(GFVLinstance.device.logicalDevice, imageAvailable[i], nullptr);
-  }
 
   return 0;
 }

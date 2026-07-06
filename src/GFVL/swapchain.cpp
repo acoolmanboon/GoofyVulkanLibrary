@@ -134,7 +134,7 @@ SWAPCHAIN::SWAPCHAIN(DEVICE& device, SDL_Window *window, VkSurfaceKHR surface) :
     this->imageCount = count;
     PRINT("created swapchain")
 }
-void SWAPCHAIN::recreateSwapchain(SDL_Window *window, VkSurfaceKHR surface) {
+void SWAPCHAIN::recreate(SDL_Window *window, VkSurfaceKHR surface) {
   vkDeviceWaitIdle(device.logicalDevice);
 
   for (auto view : imageViews)
