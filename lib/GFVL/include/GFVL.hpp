@@ -375,7 +375,6 @@ struct MouseState {
 
 struct KeyState {
   KeyEvent event;
-  bool isPressed;
   bool isRepeated;
 };
 
@@ -384,8 +383,15 @@ public:
   KeyState getKeycodeState(Keycode keycode) {
     return this->keycodeStates.at(static_cast<size_t>(keycode));
   }
-  bool isKeyPressed(Keycode keycode) {
-    return this->keycodeStates.at(static_cast<size_t>(keycode)).isPressed;
+  bool isKeyDown(Keycode keycode) {
+    return this->keycodeStates.at(static_cast<size_t>(keycode)).event == KeyEvent::Down;
+  }
+  bool isKeyUp(Keycode keycode) {
+    if (this->keycodeStates.at(static_cast<size_t>(keycode)).event == KeyEvent::Up) {
+      this->keycodeStates.at(static_cast<size_t>(keycode)).event = KeyEvent::None;
+      return true;
+    }
+    return false;
   }
   bool isKeyRepeated(Keycode keycode) {
     return this->keycodeStates.at(static_cast<size_t>(keycode)).isRepeated;
@@ -411,7 +417,7 @@ public:
     return this->mouseState.moved;
   }
 
-  InputState() : keycodeStates(Keycode::COUNT, KeyState{.event = KeyEvent::None, .isPressed = false, .isRepeated = false}), mouseButtonStates(MouseButton::Count, MouseButtonState{.event = KeyEvent::None, .clicks = 0}) {
+  InputState() : keycodeStates(Keycode::COUNT, KeyState{.event = KeyEvent::None, .isRepeated = false}), mouseButtonStates(MouseButton::Count, MouseButtonState{.event = KeyEvent::None, .clicks = 0}) {
 
   }
   friend class INSTANCE;

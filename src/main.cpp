@@ -247,28 +247,28 @@ int main() {
 
       angle = glm::normalize(qYaw * qPitch);
     }
-
-
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
+    
+    print(GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
       menu = !menu;
       SDL_SetWindowRelativeMouseMode(GFVLinstance.window, menu);
     }
 
-    float speed = GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::LSHIFT) ? 250.0f : 5.0f;
+    float speed = GFVLinstance.inputState.isKeyDown(GFVL::Keycode::LSHIFT) ? 250.0f : 5.0f;
     glm::vec3 forward = angle * glm::vec3(0, 0, -1);
     glm::vec3 right = angle * glm::vec3(1, 0, 0);
 
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::W))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::W))
       position += forward * speed * delta_time;
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::SPACE)) {
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
       GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
     }
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::S))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
       position -= forward * speed * delta_time;
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::A))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::A))
       position -= right * speed * delta_time;
-    if (GFVLinstance.inputState.isKeyPressed(GFVL::Keycode::D))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::D))
       position += right * speed * delta_time;
 
     glm::mat4 proj = glm::perspectiveRH_ZO(

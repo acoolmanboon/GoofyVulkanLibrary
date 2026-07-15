@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "giggity",
+            "name": "as",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}\\build\\main.exe",

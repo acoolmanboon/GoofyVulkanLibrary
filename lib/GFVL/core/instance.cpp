@@ -120,7 +120,9 @@ void INSTANCE::pollInputs() {
   this->inputState.mouseState.yDelta = 0;
   this->inputState.mouseState.moved = false;
   SDL_Event event;
-
+  for (KeyState &state : this->inputState.keycodeStates) {
+    state.isRepeated = true;
+  }
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EVENT_QUIT)
       this->running = false;
@@ -129,11 +131,11 @@ void INSTANCE::pollInputs() {
       this->framebufferResized = true;
 
     if (event.type == SDL_EVENT_KEY_DOWN) {
-      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.isPressed = event.key.down, .isRepeated = event.key.repeat};
+      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.event = KeyEvent::Down, .isRepeated = false};
     }
 
     if (event.type == SDL_EVENT_KEY_UP) {
-      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.isPressed = event.key.down, .isRepeated = event.key.repeat};
+      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.event = KeyEvent::Up, .isRepeated = false};
     }
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
