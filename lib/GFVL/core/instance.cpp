@@ -321,5 +321,6 @@ void INSTANCE::frame() {
   this->currentFrame = (this->currentFrame + 1) % this->maxFramesInFlight;
 }
 INSTANCE::~INSTANCE() {
+  vkDeviceWaitIdle(device.logicalDevice);
 }
 } // namespace GFVL

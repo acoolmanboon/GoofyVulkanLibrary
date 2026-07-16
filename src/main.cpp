@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../lib/GFVL/include/GFVL.hpp"
 #include "../lib/GFVL/lib/GFVL_core.hpp"
+#include "PerlinNoise.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -131,7 +132,7 @@ void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vecto
   }
 
   vertices.insert(vertices.end(), cube.begin(), cube.end());
-}
+} 
 int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
@@ -165,7 +166,7 @@ int main() {
       .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
 
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
-
+  /*
   std::vector<vertice> vertices;
   int start = -7;
   int end = 7;
@@ -205,6 +206,83 @@ int main() {
   GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(
       GFVLinstance.device,
       GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
+  */
+  
+  std::vector<vertice> cubeOFDeath;
+  insertCube(glm::vec3(12.5f, 2.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
+  //GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
+  constexpr unsigned int width = 100;
+  constexpr unsigned int length = 100;
+  constexpr float spacing = 1.0f;
+  constexpr float frequency = 0.005f;
+  constexpr float amplitude = 25.0f;
+  constexpr float persistence = 0.5f;
+
+  const siv::PerlinNoise::seed_type seed = 123456u;
+  const siv::PerlinNoise perlin{seed};
+
+  std::vector<vertice> terrain;
+  terrain.reserve((width - 1) * (length - 1) * 6);
+
+  auto sampleHeight = [&](float x, float z) -> float {
+    return static_cast<float>(
+        perlin.octave2D(x * frequency, z * frequency, 4, persistence) * amplitude);
+  };
+
+  auto makeVertex = [](const glm::vec3 &pos, const glm::vec3 &normal) {
+    vertice v{};
+    v.position[0] = pos.x;
+    v.position[1] = pos.y;
+    v.position[2] = pos.z;
+
+    v.normal[0] = -normal.x;
+    v.normal[1] = -normal.y;
+    v.normal[2] = -normal.z;
+
+    v.color[0] = 0.2f;
+    v.color[1] = 0.8f;
+    v.color[2] = 0.2f;
+
+    return v;
+  };
+
+  for (unsigned int z = 0; z < length - 1; ++z) {
+    for (unsigned int x = 0; x < width - 1; ++x) {
+      float x0 = (static_cast<float>(x) - width * 0.5f) * spacing;
+      float x1 = x0 + spacing;
+
+      float z0 = (static_cast<float>(z) - length * 0.5f) * spacing;
+      float z1 = z0 + spacing;
+
+      glm::vec3 v00{x0, sampleHeight(x0, z0), z0};
+      glm::vec3 v10{x1, sampleHeight(x1, z0), z0};
+      glm::vec3 v01{x0, sampleHeight(x0, z1), z1};
+      glm::vec3 v11{x1, sampleHeight(x1, z1), z1};
+
+      // -------- Triangle 1 (CCW) --------
+      glm::vec3 n1 = glm::normalize(glm::cross(v01 - v00, v10 - v00));
+
+      terrain.push_back(makeVertex(v00, n1));
+      terrain.push_back(makeVertex(v01, n1));
+      terrain.push_back(makeVertex(v10, n1));
+
+      // -------- Triangle 2 (CCW) --------
+      glm::vec3 n2 = glm::normalize(glm::cross(v11 - v10, v01 - v10));
+
+      terrain.push_back(makeVertex(v10, n2));
+      terrain.push_back(makeVertex(v11, n2));
+      terrain.push_back(makeVertex(v01, n2));
+    }
+  }
+  GFVLinstance.meshesToRender.emplace_back(
+      GFVL::Mesh(
+          GFVLinstance.device,
+          GFVL::Mesh::CreateInfo{
+              .size = terrain.size() * sizeof(vertice),
+              .data = terrain.data(),
+              .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
+
+  // TOOD instancing and index  buffer
 
   // debug
   uint32_t verticeAmount = 0;
@@ -248,7 +326,6 @@ int main() {
       angle = glm::normalize(qYaw * qPitch);
     }
     
-    print(GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE))
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
       menu = !menu;
       SDL_SetWindowRelativeMouseMode(GFVLinstance.window, menu);
@@ -286,8 +363,6 @@ int main() {
 
     GFVLinstance.frame();
   }
-
-  vkDeviceWaitIdle(GFVLinstance.device.logicalDevice);
 
   return 0;
 }
