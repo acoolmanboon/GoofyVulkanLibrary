@@ -211,12 +211,14 @@ int main() {
   std::vector<vertice> cubeOFDeath;
   insertCube(glm::vec3(12.5f, 2.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
   //GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
-  constexpr unsigned int width = 100;
-  constexpr unsigned int length = 100;
-  constexpr float spacing = 1.0f;
-  constexpr float frequency = 0.005f;
-  constexpr float amplitude = 25.0f;
-  constexpr float persistence = 0.5f;
+
+  // Please delete your repository ahh code
+  constexpr unsigned int width = 250;
+  constexpr unsigned int length = 250;
+  constexpr float spacing = 10.0f;
+  constexpr float frequency = 0.01f;
+  constexpr float amplitude = 50.0f;
+  constexpr float persistence = 0.8f;
 
   const siv::PerlinNoise::seed_type seed = 123456u;
   const siv::PerlinNoise perlin{seed};
@@ -235,13 +237,13 @@ int main() {
     v.position[1] = pos.y;
     v.position[2] = pos.z;
 
-    v.normal[0] = -normal.x;
-    v.normal[1] = -normal.y;
-    v.normal[2] = -normal.z;
+    v.normal[0] = normal.x;
+    v.normal[1] = normal.y;
+    v.normal[2] = normal.z;
 
-    v.color[0] = 0.2f;
-    v.color[1] = 0.8f;
-    v.color[2] = 0.2f;
+    v.color[0] = 0.25f;
+    v.color[1] = 0.4f;
+    v.color[2] = 0.0625f;
 
     return v;
   };
@@ -259,19 +261,16 @@ int main() {
       glm::vec3 v01{x0, sampleHeight(x0, z1), z1};
       glm::vec3 v11{x1, sampleHeight(x1, z1), z1};
 
-      // -------- Triangle 1 (CCW) --------
       glm::vec3 n1 = glm::normalize(glm::cross(v01 - v00, v10 - v00));
 
-      terrain.push_back(makeVertex(v00, n1));
-      terrain.push_back(makeVertex(v01, n1));
-      terrain.push_back(makeVertex(v10, n1));
+      terrain.push_back(makeVertex(v00, -n1));
+      terrain.push_back(makeVertex(v01, -n1));
+      terrain.push_back(makeVertex(v10, -n1));
 
-      // -------- Triangle 2 (CCW) --------
       glm::vec3 n2 = glm::normalize(glm::cross(v11 - v10, v01 - v10));
-
-      terrain.push_back(makeVertex(v10, n2));
-      terrain.push_back(makeVertex(v11, n2));
       terrain.push_back(makeVertex(v01, n2));
+      terrain.push_back(makeVertex(v11, n2));
+      terrain.push_back(makeVertex(v10, n2));
     }
   }
   GFVLinstance.meshesToRender.emplace_back(
@@ -281,8 +280,6 @@ int main() {
               .size = terrain.size() * sizeof(vertice),
               .data = terrain.data(),
               .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
-
-  // TOOD instancing and index  buffer
 
   // debug
   uint32_t verticeAmount = 0;
@@ -297,7 +294,7 @@ int main() {
   uint64_t last_time = SDL_GetPerformanceCounter();
   float delta_time = 0.0; // In seconds
 
-  glm::vec3 position(0, 0, -25);
+  glm::vec3 position(0, 50, -25);
   glm::quat angle;
   while (GFVLinstance.running) {
     uint64_t current_time = SDL_GetPerformanceCounter();
@@ -305,7 +302,6 @@ int main() {
     last_time = current_time;
   
     GFVLinstance.pollInputs();
-    GFVLinstance.uniformBuffer.bindings[0].update(&camera);
     //GFVLinstance.uniformBuffer.bind(GFVLinstance.commandBuffer, GFVLinstance.pipeline, 0);
     if (GFVLinstance.inputState.isMouseMoved()) {
       GFVL::MouseState mouseState = GFVLinstance.inputState.getMouseState();
@@ -360,6 +356,8 @@ int main() {
 
     camera.MVP = proj * view;
     camera.viewPos = position;
+
+    GFVLinstance.uniformBuffer.bindings[0].update(&camera);
 
     GFVLinstance.frame();
   }
