@@ -213,26 +213,81 @@ int main() {
   //GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
 
   // Please delete your repository ahh code
-  constexpr unsigned int width = 250;
-  constexpr unsigned int length = 250;
-  constexpr float spacing = 10.0f;
-  constexpr float frequency = 0.01f;
-  constexpr float amplitude = 50.0f;
-  constexpr float persistence = 0.8f;
+  constexpr unsigned int width = 200;
+  constexpr unsigned int length = 200;
 
-  const siv::PerlinNoise::seed_type seed = 123456u;
-  const siv::PerlinNoise perlin{seed};
+  // 1 world unit = 1 meter
+  constexpr float spacing = 5.5f;
+  constexpr float scale = 4.0f;
+
+  constexpr float continentFrequency = 0.00225f; // ~2km features
+  constexpr float mountainFrequency = 0.00015f;  // ~650m mountain systems
+  constexpr float detailFrequency = 0.012f;      // ~100m detail
+  constexpr float colorFrequency = 0.002f;       // very large color regions
+
+  constexpr float continentAmplitude = -4.40f;
+  constexpr float mountainAmplitude = -6.20f;
+  constexpr float detailAmplitude = -3.3f;
+
+  constexpr float persistence = 0.25f;
+
+  const siv::PerlinNoise::seed_type seed = 122u;
+  const siv::PerlinNoise perlin(seed);
 
   std::vector<vertice> terrain;
   terrain.reserve((width - 1) * (length - 1) * 6);
 
-  auto sampleHeight = [&](float x, float z) -> float {
-    return static_cast<float>(
-        perlin.octave2D(x * frequency, z * frequency, 4, persistence) * amplitude);
+  auto sampleHeight = [&](float xa, float za) -> float {
+    float x = xa * scale;
+    float z = za * scale;
+
+    double continents =
+        perlin.octave2D(
+            x * continentFrequency,
+            z * continentFrequency,
+            1,
+            persistence);
+
+    double ridges =
+        perlin.octave2D_01(
+            x * mountainFrequency,
+            z * mountainFrequency,
+            6,
+            0.67) *
+        mountainAmplitude;
+
+    ridges = powf(ridges, 3.0f);
+    // if (ridges < 0.4) ridges = 0;
+
+    double detail =
+        perlin.octave2D(
+            x * detailFrequency,
+            z * detailFrequency,
+            4,
+            0.45);
+
+    double craterNoise =
+        perlin.octave2D_01(
+            (x + 100) * 0.0035,
+            (z + 100) * 0.0035,
+            2,
+            0.6);
+
+    craterNoise = std::pow(craterNoise, 5.0);
+
+    float h =
+        static_cast<float>(
+            continents * continentAmplitude +
+            ridges +
+            detail * detailAmplitude +
+            craterNoise * 60);
+
+    return h;
   };
 
-  auto makeVertex = [](const glm::vec3 &pos, const glm::vec3 &normal) {
+  auto makeVertex = [&](const glm::vec3 &pos, const glm::vec3 &normal) {
     vertice v{};
+
     v.position[0] = pos.x;
     v.position[1] = pos.y;
     v.position[2] = pos.z;
@@ -241,9 +296,63 @@ int main() {
     v.normal[1] = normal.y;
     v.normal[2] = normal.z;
 
-    v.color[0] = 0.25f;
-    v.color[1] = 0.4f;
-    v.color[2] = 0.0625f;
+    float biome =
+        static_cast<float>(
+            perlin.octave2D(
+                pos.x * colorFrequency,
+                pos.z * colorFrequency,
+                4,
+                0.55));
+
+    biome = glm::clamp(biome, 0.0f, 1.0f);
+
+    glm::vec3 darkBasalt(0.20f, 0.20f, 0.22f);
+    glm::vec3 basalt(0.34f, 0.34f, 0.36f);
+    glm::vec3 lightRock(0.55f, 0.55f, 0.58f);
+
+    glm::vec3 color;
+
+    if (biome < 0.35f) {
+      float t = biome / 0.35f;
+      color = glm::mix(darkBasalt, basalt, t);
+    } else {
+      float t = (biome - 0.35f) / 0.65f;
+      color = glm::mix(basalt, lightRock, t);
+    }
+
+    float elevation =
+        glm::clamp(pos.y / 200.0f, 0.0f, 1.0f);
+
+    color += glm::vec3(elevation * 0.08f);
+
+    float frost =
+        glm::smoothstep(
+            170.0f,
+            215.0f,
+            pos.y);
+
+    color = glm::mix(
+        color,
+        glm::vec3(0.93f, 0.93f, 0.95f),
+        frost);
+
+    float grain =
+        static_cast<float>(
+            perlin.octave2D(
+                pos.x * 0.03,
+                pos.z * 0.03,
+                2,
+                0.5));
+
+    grain = (grain - 0.5f) * 0.08f;
+
+    color += glm::vec3(grain);
+
+    color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
+
+    v.color[0] = color.r;
+    v.color[1] = color.g;
+    v.color[2] = color.b;
 
     return v;
   };
@@ -262,17 +371,18 @@ int main() {
       glm::vec3 v11{x1, sampleHeight(x1, z1), z1};
 
       glm::vec3 n1 = glm::normalize(glm::cross(v01 - v00, v10 - v00));
+      glm::vec3 n2 = glm::normalize(glm::cross(v11 - v10, v01 - v10));
 
       terrain.push_back(makeVertex(v00, -n1));
       terrain.push_back(makeVertex(v01, -n1));
       terrain.push_back(makeVertex(v10, -n1));
 
-      glm::vec3 n2 = glm::normalize(glm::cross(v11 - v10, v01 - v10));
       terrain.push_back(makeVertex(v01, n2));
       terrain.push_back(makeVertex(v11, n2));
       terrain.push_back(makeVertex(v10, n2));
     }
   }
+
   GFVLinstance.meshesToRender.emplace_back(
       GFVL::Mesh(
           GFVLinstance.device,
@@ -289,6 +399,7 @@ int main() {
   print("Vertices : " << verticeAmount)
 
   bool menu = false;
+  bool flight = false;
   float speed = 1.0f;
 
   uint64_t last_time = SDL_GetPerformanceCounter();
@@ -343,7 +454,13 @@ int main() {
       position -= right * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::D))
       position += right * speed * delta_time;
+    
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::V) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::V)) {
+      flight = !flight;
+    }
 
+    if (!flight)
+      position.y = sampleHeight(position.x, position.z) - 1.75;
     glm::mat4 proj = glm::perspectiveRH_ZO(
         glm::radians(90.0f),
         GFVLinstance.aspectRatio,

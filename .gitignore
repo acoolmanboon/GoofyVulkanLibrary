@@ -6,3 +6,5 @@
 run.bat
 html/
 latex/
+.vscode/launch.json
+.vscode/
