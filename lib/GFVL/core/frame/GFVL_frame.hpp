@@ -16,25 +16,28 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+/**
+ * @file GFVL_frame.hpp
+ * @brief Handles per-frame state for GFVL.
+ * @details Internal
+ */
+#ifndef GFVL_FRAME_CPP
+#define GFVL_FRAME_CPP
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../lib/GFVL_core.hpp"
-using namespace GFVL;
-
-// USER-DEFINED STUFF
+#include "../../lib/GFVL_core.hpp"
+#include "../../lib/GFVL_definition.hpp"
 namespace GFVL {
-   VERTEX_LAYOUT::VERTEX_LAYOUT(uint32_t size) {
-    this->binding = {
-        .binding = 0,
-        .stride = size,
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
-   }
-   void VERTEX_LAYOUT::addAttribute(VkFormat format, uint32_t offset) {
-     attributes.push_back({.location = static_cast<uint32_t>(attributes.size()),
-                           .binding = binding.binding,
-                           .format = format,
-                           .offset = offset});
-   }
-}
+class FrameData {
+
+};
+} // namespace GFVL
+#endif
