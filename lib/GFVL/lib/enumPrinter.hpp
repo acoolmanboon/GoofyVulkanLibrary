@@ -34,7 +34,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vulkan/vulkan.h>
 
 #include "../include/GFVL.hpp"
-
 #define ret(type_, case_) \
   case (type_::case_):    \
     return #case_;        \

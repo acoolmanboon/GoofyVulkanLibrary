@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;
+
 namespace GFVL {
   const char *VkResultToString(VkResult result) {
     switch (result) {
@@ -77,5 +78,45 @@ namespace GFVL {
       throw std::runtime_error("[GFVL] Error detected. read the above message");
     }
     return result;
+  }
+
+  uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+
+      bool typeSupported = typeFilter & (1 << i);
+
+      bool propertiesSupported = (memProperties.memoryTypes[i].propertyFlags & properties) == properties;
+
+      if (typeSupported && propertiesSupported)
+        return i;
+    }
+
+    THROW_EXCEPTION("failed to find memory type")
+  }
+
+  void createBuffer(DEVICE& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
+    VkBufferCreateInfo bufferInfo{
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .size = static_cast<VkDeviceSize>(size),
+      .usage = usage,
+      .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+
+    CheckVkResult(vkCreateBuffer(device.logicalDevice, &bufferInfo, nullptr, &buffer));
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device.logicalDevice, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(device.physicalDevice, memRequirements.memoryTypeBits, properties);
+
+    CheckVkResult(vkAllocateMemory(device.logicalDevice, &allocInfo, nullptr, &bufferMemory));
+    CheckVkResult(vkBindBufferMemory(device.logicalDevice, buffer, bufferMemory, 0));
   }
 }
