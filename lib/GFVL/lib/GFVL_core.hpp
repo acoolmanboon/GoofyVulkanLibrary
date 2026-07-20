@@ -329,7 +329,9 @@ private:
 std::vector<char> readFile(const std::string &filename);
 const char *VkResultToString(VkResult result);
 void PrintVkResult(VkResult result);
-VkResult CheckVkResult(VkResult result);
+// DEPRECATED, USE CHECKVKRESULT2
+VkResult CheckVkResult(VkResult result); 
+VkResult CheckVkResult2(VkResult result, const char *reason);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 void createBuffer(DEVICE &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 } // namespace GFVL

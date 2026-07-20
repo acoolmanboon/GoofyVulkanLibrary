@@ -99,6 +99,22 @@ namespace GFVL {
     return result;
   }
 
+  /**
+   * @brief Checks a VkResult, if result is not VK_SUCCESS, throw an error with a message.
+   *
+   * @param result A VkResult to check.
+   * @param reason A message to print when the error is encountered.
+   * @return VkResult Simply passes the result parameter to the output.
+   */
+  VkResult CheckVkResult2(VkResult result, const char *reason) {
+    if (result != VK_SUCCESS) {
+      std::cout << "[GFVL] Error! : " << VkResultToString(result) << " (" << static_cast<int>(result) << ")\n";
+      std::cout << "[GFVL] Error cause : " << reason << "\n";
+      throw std::runtime_error("[GFVL] Error detected. read the above message");
+    }
+    return result;
+  }
+
   uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;
 
