@@ -446,7 +446,7 @@ int main() {
       position += forward * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
-      GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
+      //GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
     }
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
       position -= forward * speed * delta_time;
@@ -474,7 +474,7 @@ int main() {
     camera.MVP = proj * view;
     camera.viewPos = position;
 
-    GFVLinstance.uniformBuffer.bindings[0].update(&camera);
+    //GFVLinstance.uniformBuffer.bindings[0].update(&camera);
 
     GFVLinstance.frame();
   }

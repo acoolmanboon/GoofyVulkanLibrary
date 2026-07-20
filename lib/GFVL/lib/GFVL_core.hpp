@@ -41,7 +41,7 @@ enum PREFERRED_GPU {
 };
 
 struct APPLICATION_INFO {
-  const char *applicationName = "No application name!";
+  const char *applicationName = "GFVL application";
   uint32_t applicationVersion = 1;
   int width = 800;
   int height = 600;
@@ -52,6 +52,7 @@ struct APPLICATION_INFO {
 struct UNIFORM_BUFFER_BINDING {
   size_t size;
   void *ubo;
+  bool needsUpdate;
 };
 
 struct SHADER_STAGE {
@@ -226,44 +227,6 @@ private:
   DEVICE &device;
 };
 
-class BINDING {
-public:
-  DEVICE &device;
-  VkBuffer buffer{};
-  VkDeviceMemory memory{};
-  VkDescriptorSet descriptorSet{};
-  VkDescriptorSetLayoutBinding layout{};
-  VkDescriptorBufferInfo bufferInfo{};
-  void *data{};
-  size_t size{};
-
-  BINDING(DEVICE &device, size_t size, void *ubo, uint32_t binding);
-  void update(void *ubo);
-  ~BINDING();
-};
-
-class UNIFORM_BUFFER {
-public:
-  DEVICE &device;
-  std::vector<BINDING> bindings;
-  VkDescriptorSetLayout descriptorSetLayout{};
-  VkDescriptorPool descriptorPool{};
-  VkDescriptorSet descriptorSet{};
-
-  UNIFORM_BUFFER(DEVICE &device, std::vector<UNIFORM_BUFFER_BINDING> &bindings);
-  ~UNIFORM_BUFFER();
-
-  BINDING &emplaceBinding(size_t size, void *ubo);
-  void create();
-  void bind(VkCommandBuffer &commandBuffer, PIPELINE &pipeline, uint32_t set);
-
-  UNIFORM_BUFFER(const UNIFORM_BUFFER &) = delete;
-  UNIFORM_BUFFER &operator=(const UNIFORM_BUFFER &) = delete;
-
-  UNIFORM_BUFFER(const UNIFORM_BUFFER &&) = delete;
-  UNIFORM_BUFFER &operator=(const UNIFORM_BUFFER &&) = delete;
-};
-
 class PIPELINE {
 public:
   VkPipelineLayout pipelineLayout;
@@ -307,31 +270,6 @@ private:
   VkDeviceMemory depthMemory{};
   VkImageView depthImageView{};
   VkFormat depthFormat{};
-};
-
-/**
- * @class CommandPool
- * @brief Handles command pools.
- * @details This is temporarily small but it will become bigger in the future (jk idk why i made this).
- */
-class CommandPool {
-public:
-  CommandPool(DEVICE &device, Framebuffer &framebuffer);
-  void recreate(Framebuffer &framebuffer);
-  ~CommandPool();
-
-  const VkCommandBuffer &commandBuffer(size_t index) const;
-
-  CommandPool(const CommandPool &) = delete;
-  CommandPool &operator=(const CommandPool &) = delete;
-
-  CommandPool(const CommandPool &&) = delete;
-  CommandPool &operator=(const CommandPool &&) = delete;
-
-private:
-  DEVICE &device_;
-  VkCommandPool commandPool_;
-  std::vector<VkCommandBuffer> commandBuffers_;
 };
 
 /**

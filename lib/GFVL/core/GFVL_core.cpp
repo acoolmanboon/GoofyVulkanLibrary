@@ -22,10 +22,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <vulkan/vulkan.h>
 
+#define VMA_IMPLEMENTATION
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;
 
 namespace GFVL {
+  /**
+  * @brief Returns a string of a VkResult.
+  *
+  * @param result A VkResult value to convert into a string.
+  * @return const char* The converted string.
+  */
   const char *VkResultToString(VkResult result) {
     switch (result) {
     case VK_SUCCESS:
@@ -68,10 +75,22 @@ namespace GFVL {
       return "UNKNOWN_VK_RESULT";
     }
   }
+
+  /**
+  * @brief Prints a VkResult.
+  *
+  * @param result
+  */
   void PrintVkResult(VkResult result) {
     std::cout << VkResultToString(result) << " (" << static_cast<int>(result) << ")\n";
   }
 
+  /**
+  * @brief Checks a VkResult, if result is not VK_SUCCESS, throw an error.
+  *
+  * @param result A VkResult to check.
+  * @return VkResult Simply passes the result parameter to the output.
+  */
   VkResult CheckVkResult(VkResult result) {
     if (result != VK_SUCCESS) {
       std::cout << "[GFVL] Error! : " << VkResultToString(result) << " (" << static_cast<int>(result) << ")\n";

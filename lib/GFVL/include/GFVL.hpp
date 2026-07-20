@@ -445,14 +445,12 @@ private:
   RENDERPASS renderPass;
 
 public:
-  UNIFORM_BUFFER uniformBuffer;
   std::vector<SHADER> shaderStages;
   PIPELINE pipeline;
 
 private:
 
   Framebuffer framebuffer;
-  CommandPool commandPool;
 
   uint32_t currentFrame = 0;
   uint32_t maxFramesInFlight;

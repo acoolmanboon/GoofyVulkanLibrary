@@ -91,11 +91,9 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std:
                                                                                                                                                                 device(this->instance, this->surface, applicationInfo.preferredGPU),
                                                                                                                                                                 swapchain(this->device, this->window, this->surface),
                                                                                                                                                                 renderPass(this->device, this->swapchain),
-                                                                                                                                                                uniformBuffer(this->device, bindings),
                                                                                                                                                                 shaderStages(InitializeShaderStages(device, stages)),
                                                                                                                                                                 pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {this->uniformBuffer.descriptorSetLayout}),
                                                                                                                                                                 framebuffer(this->device, this->swapchain, this->renderPass),
-                                                                                                                                                                commandPool(this->device, this->framebuffer),
                                                                                                                                                                 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
   this->imageAvailableSemaphore.reserve(this->maxFramesInFlight);
   for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
