@@ -112,7 +112,7 @@ VertexBuffer::VertexBuffer(VertexBuffer &&other) noexcept
   other.size_ = 0;
 }
 VertexBuffer &VertexBuffer::operator=(VertexBuffer &&other) {
-  ASSERT(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy buffers with different devices")
+  ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy buffers with different devices")
   if (this == &other)
     return *this;
 

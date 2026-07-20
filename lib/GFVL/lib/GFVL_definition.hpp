@@ -30,7 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     oss << "[GFVL] Error! Reason : " << reason; \
     throw std::runtime_error(oss.str());        \
   } while (0);
-#define ASSERT(statement, message)               \
+#define ASSERTIF(statement, message)               \
   if (statement) {                               \
     std::ostringstream oss;                      \
     oss << "[GFVL] Error! Reason : " << message; \

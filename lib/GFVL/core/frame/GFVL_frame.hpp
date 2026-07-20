@@ -17,8 +17,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 /**
- * @file GFVL_core.hpp
- * @brief Defines GFVL core functions.
+ * @file GFVL_frame.hpp
+ * @brief PLACEHOLDER
  * @details Don't include this. Unless you wanna do some master hacking?
  */
 #ifndef GFVL_FRAME_HPP
@@ -126,19 +126,6 @@ maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 */
 namespace GFVL {
 /**
- * @struct UniformBufferBinding
- * @brief Defines a binding in a uniform buffer.
- */
-struct UniformBufferBinding {
-  size_t size = 0;                                               ///< Size of the data to be passed to shader in bytes.
-  uint32_t binding = 0;                                          ///< The binding that will be passed to your shader.
-  uint32_t arrayCount = 1;                                       ///< If you are passing an array of data, for example a[1024] to shader, set this to 1024. Otherwise, leave this empty or set it to 1 to mark it as not being an array.
-  VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS; ///< What shaders can access this uniform buffer. Does not have to be set, default value will set to be accessible by all shaders. However, it is recommended to make them shader-specific.
-  void *ubo = nullptr;                                           ///< Pointer to your data, this will be read automatically by the engine
-  bool needsUpdate = false;                                      ///< When true, the engine will update its internal values. You need to set this to true after changing data
-};
-
-/**
  * @brief
  *
  */
@@ -153,7 +140,6 @@ public:
 
   VkDescriptorPool descriptorPool;
   VkDescriptorSet descriptorSet; // turn into a std::vector for many sets of UBOs, for now, no.
-
 
   Frame(DEVICE &device, std::vector<UniformBufferBinding> &bindings) : device(device),
                                                                        bindings(bindings),
@@ -179,30 +165,10 @@ public:
     std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
     descriptorSetLayoutBindings.reserve(this->bindings.size());
 
-    for (const UniformBufferBinding &binding : this->bindings) {
-      descriptorSetLayoutBindings.emplace_back(VkDescriptorSetLayoutBinding{
-          .binding = binding.binding,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = binding.arrayCount,
-          .stageFlags = binding.shaderStage,
-          .pImmutableSamplers = nullptr});
-      
-    }
-
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-      .pNext = nullptr,
-      .flags = 0,
-      .bindingCount = static_cast<uint32_t>(descriptorSetLayoutBindings.size()),
-      .pBindings = descriptorSetLayoutBindings.data(),
-    };
-
-    CheckVkResult2(
-      vkCreateDescriptorSetLayout(device.logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout),
-      "Failed to create descriptor set layout in Frame creation!");
   }
+  ~Frame() {
 
+  }
 private:
   DEVICE &device;
   std::vector<UniformBufferBinding> &bindings;
