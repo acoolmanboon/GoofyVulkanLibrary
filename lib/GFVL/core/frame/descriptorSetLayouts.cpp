@@ -50,50 +50,36 @@ commandPool(this->device, this->framebuffer),
 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 */
 namespace GFVL {
-/**
- * @brief
- *
- */
-class DescriptorSetLayout {
-public: 
-  VkDescriptorSetLayout descriptorSetLayout;
+DescriptorSetLayout::DescriptorSetLayout(DEVICE &device, std::vector<UniformBufferBinding> &bindings) : device(device),
+                                                                                                        bindings(bindings) {
+  std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+  descriptorSetLayoutBindings.reserve(this->bindings.size());
 
-  DescriptorSetLayout(DEVICE &device, std::vector<UniformBufferBinding> &bindings) : device(device),
-                                                                                     bindings(bindings) {
-    std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
-    descriptorSetLayoutBindings.reserve(this->bindings.size());
+  for (const UniformBufferBinding &binding : this->bindings) {
+    ASSERTIF(binding.size == 0, "Binding size must not be 0 in uniform buffer binding!")
+    ASSERTIF(binding.ubo == nullptr, "Binding UBO pointer must not be nullptr in uniform buffer binding!")
+    descriptorSetLayoutBindings.emplace_back(VkDescriptorSetLayoutBinding{
+        .binding = binding.binding,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = binding.arrayCount,
+        .stageFlags = binding.shaderStage,
+        .pImmutableSamplers = nullptr});
+  }
 
-    for (const UniformBufferBinding &binding : this->bindings) {
-      ASSERTIF(binding.size == 0, "Binding size must not be 0 in uniform buffer binding!")
-      ASSERTIF(binding.ubo == nullptr, "Binding UBO pointer must not be nullptr in uniform buffer binding!")
-      descriptorSetLayoutBindings.emplace_back(VkDescriptorSetLayoutBinding{
-          .binding = binding.binding,
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-          .descriptorCount = binding.arrayCount,
-          .stageFlags = binding.shaderStage,
-          .pImmutableSamplers = nullptr});
-      
-    }
-
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo {
+  VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
       .bindingCount = static_cast<uint32_t>(descriptorSetLayoutBindings.size()),
       .pBindings = descriptorSetLayoutBindings.data(),
-    };
+  };
 
-    CheckVkResult2(
+  CheckVkResult2(
       vkCreateDescriptorSetLayout(device.logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout),
       "Failed to create descriptor set layout in Frame creation!");
-  }
-  ~DescriptorSetLayout() {
-    vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
-  }
-
-private:
-  DEVICE &device;
-  std::vector<UniformBufferBinding> &bindings;
-};
+}
+DescriptorSetLayout::~DescriptorSetLayout() {
+  vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
+}
 } // namespace GFVL
 #endif

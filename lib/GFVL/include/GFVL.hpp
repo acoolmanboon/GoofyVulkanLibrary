@@ -32,9 +32,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../lib/vk_mem_alloc.h"
 #include "../lib/GFVL_core.hpp"
 #include "../lib/GFVL_definition.hpp"
+#include "../lib/vk_mem_alloc.h"
+
 namespace GFVL {
 
 /**
@@ -429,37 +430,23 @@ private:
 };
 
 class INSTANCE {
-private:
-  VkInstance instance;
-
 public:
+  VkInstance instance;
   SDL_Window *window;
-
-private:
   VkSurfaceKHR surface;
   VmaAllocator vmaAllocator;
-
-public:
   DEVICE device;
-
-private:
   Swapchain swapchain;
   RENDERPASS renderPass;
-
-public:
   std::vector<SHADER> shaderStages;
+  DescriptorSetLayout descriptorSetLayout;
   PIPELINE pipeline;
-
-private:
-
   Framebuffer framebuffer;
+
+  std::vector<Frame> frames;
 
   uint32_t currentFrame = 0;
   uint32_t maxFramesInFlight;
-
-  std::vector<GFVL::Semaphore> imageAvailableSemaphore;
-  std::vector<GFVL::Semaphore> renderFinishedSemaphore;
-  std::vector<GFVL::Fence> inFlightFence;
   std::vector<VkFence> imagesInFlightFence;
 
 public:

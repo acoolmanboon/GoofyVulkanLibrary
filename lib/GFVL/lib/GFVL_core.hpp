@@ -23,6 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #ifndef GFVL_CORE_CPP
 #define GFVL_CORE_CPP
+#include "../lib/vk_mem_alloc.h"
+#include "GFVL_definition.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
@@ -32,7 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "GFVL_definition.hpp"
+
 namespace GFVL {
 class PIPELINE;
 enum PREFERRED_GPU {
@@ -332,6 +334,50 @@ private:
   void *data_;            ///< A pointer to the buffer data. Used for HostVisible memory.
   size_t size_;
   MemoryAllocation memoryAllocation_;
+};
+class Frame {
+private:
+  /**
+   * @brief
+   *
+   */
+  struct FrameUniformBuffer {
+    VkBuffer buffer = VK_NULL_HANDLE;
+    VmaAllocation allocation = nullptr;
+    void *mappedMemory = nullptr;
+  };
+
+  void createCommandPool();
+
+public:
+  Semaphore imageAvailableSemaphore;
+  Semaphore renderFinishedSemaphore;
+  Fence gpuFinishedFence;
+
+  VkCommandPool commandPool;
+  VkCommandBuffer commandBuffer;
+
+  VkDescriptorPool descriptorPool;
+  VkDescriptorSet descriptorSet; // turn into a std::vector for many sets of UBOs, for now, no.
+
+  std::vector<FrameUniformBuffer> uniformBuffers;
+
+  Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
+  ~Frame();
+private:
+  DEVICE& device;
+
+};
+class DescriptorSetLayout {
+public:
+  VkDescriptorSetLayout descriptorSetLayout;
+
+  DescriptorSetLayout(DEVICE &device, std::vector<UniformBufferBinding> &bindings);
+  ~DescriptorSetLayout();
+
+private:
+  DEVICE &device;
+  std::vector<UniformBufferBinding> &bindings;
 };
 
 std::vector<char> readFile(const std::string &filename);

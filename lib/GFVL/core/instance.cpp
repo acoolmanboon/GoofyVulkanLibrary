@@ -26,6 +26,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vulkan/vulkan.h>
 
 #include "../include/GFVL.hpp"
+#include "../core/frame/GFVL_descriptorSetLayouts.hpp"
+
 using namespace GFVL;
 
 // USER-DEFINED STUFF
@@ -85,13 +87,14 @@ std::vector<SHADER> InitializeShaderStages(DEVICE &device, std::vector<SHADER_ST
   return shaders;
 }
 
-INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UNIFORM_BUFFER_BINDING> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
+INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
                                                                                                                                                                 window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
                                                                                                                                                                 surface(InitializeVkSurface(this->instance, this->window)),
                                                                                                                                                                 device(this->instance, this->surface, applicationInfo.preferredGPU),
                                                                                                                                                                 swapchain(this->device, this->window, this->surface),
                                                                                                                                                                 renderPass(this->device, this->swapchain),
                                                                                                                                                                 shaderStages(InitializeShaderStages(device, stages)),
+                                                                                                                                                                
                                                                                                                                                                 pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {this->uniformBuffer.descriptorSetLayout}),
                                                                                                                                                                 framebuffer(this->device, this->swapchain, this->renderPass),
                                                                                                                                                                 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
@@ -102,18 +105,6 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std:
     .vulkanApiVersion = VK_VERSION_1_4,
   };
   vmaCreateAllocator(&allocatorCreateinfo, &vmaAllocator);
-
-  this->imageAvailableSemaphore.reserve(this->maxFramesInFlight);
-  for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
-    this->imageAvailableSemaphore.emplace_back(this->device);
-
-  this->renderFinishedSemaphore.reserve(this->swapchain.imageCount);
-  for (uint8_t i = 0; i < this->swapchain.imageCount; i++)
-    this->renderFinishedSemaphore.emplace_back(this->device);
-
-  this->inFlightFence.reserve(this->maxFramesInFlight);
-  for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
-    inFlightFence.emplace_back(this->device, VK_FENCE_CREATE_SIGNALED_BIT);
 
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);
 
@@ -163,21 +154,6 @@ void INSTANCE::frame() {
     this->framebuffer.recreate(this->swapchain, this->renderPass);
     this->commandPool.recreate(this->framebuffer);
     this->swapchain.imageCount = this->swapchain.images.size();
-
-    this->imageAvailableSemaphore.clear();
-    this->imageAvailableSemaphore.reserve(this->maxFramesInFlight);
-    for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
-      this->imageAvailableSemaphore.emplace_back(this->device);
-
-    this->renderFinishedSemaphore.clear();
-    this->renderFinishedSemaphore.reserve(this->swapchain.imageCount);
-    for (uint8_t i = 0; i < this->swapchain.imageCount; i++)
-      this->renderFinishedSemaphore.emplace_back(this->device);
-
-    inFlightFence.clear();
-    inFlightFence.reserve(this->maxFramesInFlight);
-    for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
-      inFlightFence.emplace_back(this->device, VK_FENCE_CREATE_SIGNALED_BIT);
 
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
     framebufferResized = false;

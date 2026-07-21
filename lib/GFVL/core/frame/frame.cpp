@@ -34,6 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "../../lib/GFVL_core.hpp"
 #include "../../lib/vk_mem_alloc.h"
+#ifdef ignorewhateverthisisimjustgettingsyntaxhighlighting
 class BINDING {
 public:
   DEVICE &device;
@@ -146,6 +147,7 @@ UNIFORM_BUFFER::~UNIFORM_BUFFER() {
   vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
   vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
 }
+#endif
 /*
 instance(InitializeVkInstance(applicationInfo)),
 window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
@@ -161,158 +163,118 @@ commandPool(this->device, this->framebuffer),
 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 */
 namespace GFVL {
-/**
- * @brief 
- * 
- */
-struct FrameUniformBuffer {
-  VkBuffer buffer = VK_NULL_HANDLE;
-  VmaAllocation allocation = nullptr;
-  void *mappedMemory = nullptr;
-};
-/**
- * @brief
- *
- */
-class Frame {
-// i only know like 25% of how this works so this code probably sucks
-private:
-  void createCommandPool() {
-    VkCommandPoolCreateInfo commandPoolCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = device.graphicsFamilyIndex};
+void Frame::createCommandPool() {
+  VkCommandPoolCreateInfo commandPoolCreateInfo{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = device.graphicsFamilyIndex};
 
-    CheckVkResult2(
-        vkCreateCommandPool(device.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
-        "Failed to create command pool in Frame creation!");
+  CheckVkResult2(
+      vkCreateCommandPool(device.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
+      "Failed to create command pool in Frame creation!");
 
-    VkCommandBufferAllocateInfo commandBufferAllocationInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1};
+  VkCommandBufferAllocateInfo commandBufferAllocationInfo{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = commandPool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = 1};
 
-    CheckVkResult2(
-        vkAllocateCommandBuffers(device.logicalDevice, &commandBufferAllocationInfo, &commandBuffer),
-        "Failed to allocate command buffers in Frame creation!");
-  }
-public:
-  Semaphore imageAvailableSemaphore;
-  Semaphore renderFinishedSemaphore;
-  Fence gpuFinishedFence;
+  CheckVkResult2(
+      vkAllocateCommandBuffers(device.logicalDevice, &commandBufferAllocationInfo, &commandBuffer),
+      "Failed to allocate command buffers in Frame creation!");
+}
 
-  VkCommandPool commandPool;
-  VkCommandBuffer commandBuffer;
+Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
+                                                                                                                                                     imageAvailableSemaphore(device),
+                                                                                                                                                     renderFinishedSemaphore(device),
+                                                                                                                                                     gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
 
-  VkDescriptorPool descriptorPool;
-  VkDescriptorSet descriptorSet; // turn into a std::vector for many sets of UBOs, for now, no.
+  createCommandPool();
 
-  std::vector<FrameUniformBuffer> uniformBuffers;
+  VkDescriptorPoolSize poolSize{
+      .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = static_cast<uint32_t>(bindings.size())};
 
-  Frame(DEVICE &device, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
-                                                                                                                        imageAvailableSemaphore(device),
-                                                                                                                        renderFinishedSemaphore(device),
-                                                                                                                        gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
+  VkDescriptorPoolCreateInfo poolInfo{
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .maxSets = 1,
+      .poolSizeCount = 1,
+      .pPoolSizes = &poolSize};
 
-    createCommandPool();
-
-    VkDescriptorPoolSize poolSize{
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = static_cast<uint32_t>(bindings.size())};
-
-    VkDescriptorPoolCreateInfo poolInfo{
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, 
-      .maxSets = 1, 
-      .poolSizeCount = 1, 
-      .pPoolSizes = &poolSize
-    };
-
-    CheckVkResult2(
+  CheckVkResult2(
       vkCreateDescriptorPool(device.logicalDevice, &poolInfo, nullptr, &descriptorPool),
       "Failed to create descriptor pool in Frame creation!");
 
-    VkDescriptorSetAllocateInfo allocation{
+  VkDescriptorSetAllocateInfo allocation{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      .descriptorPool = descriptorPool, 
-      .descriptorSetCount = 1, 
-      .pSetLayouts = &descriptorSetLayout
-    };
+      .descriptorPool = descriptorPool,
+      .descriptorSetCount = 1,
+      .pSetLayouts = &descriptorSetLayout};
 
-    CheckVkResult2(
+  CheckVkResult2(
       vkAllocateDescriptorSets(device.logicalDevice, &allocation, &descriptorSet),
       "Failed to allocate descriptor sets in Frame creation!");
 
-    uniformBuffers.reserve(bindings.size());
+  uniformBuffers.reserve(bindings.size());
 
-    for (const UniformBufferBinding &binding : bindings) {
-      FrameUniformBuffer uniformBuffer{};
+  for (const UniformBufferBinding &binding : bindings) {
+    // this may or may not work
+    FrameUniformBuffer uniformBuffer{};
 
-      VkBufferCreateInfo bufferCreateInfo{
-          .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-          .size = binding.size,
-          .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-          .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
+    VkBufferCreateInfo bufferCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = binding.size,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
 
-      VmaAllocationCreateInfo allocationCreateInfo{};
-      allocationCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
-      allocationCreateInfo.flags =
-          VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-          VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    VmaAllocationCreateInfo allocationCreateInfo{
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO};
 
-      VmaAllocationInfo allocationInfo{};
+    VmaAllocationInfo allocationInfo{};
 
-      CheckVkResult2(
-          vmaCreateBuffer(
-              device.allocator,
-              &bufferCreateInfo,
-              &allocationCreateInfo,
-              &uniformBuffer.buffer,
-              &uniformBuffer.allocation,
-              &allocationInfo),
-          "Failed to create frame uniform buffer!");
+    CheckVkResult2(vmaCreateBuffer(
+                       allocator,
+                       &bufferCreateInfo,
+                       &allocationCreateInfo,
+                       &uniformBuffer.buffer,
+                       &uniformBuffer.allocation,
+                       &allocationInfo),
+                   "Failed to create frame uniform buffer!");
 
-      uniformBuffer.mappedMemory = allocationInfo.pMappedData;
+    uniformBuffer.mappedMemory = allocationInfo.pMappedData;
 
-      memcpy(
-          uniformBuffer.mappedMemory,
-          binding.ubo,
-          binding.size);
+    memcpy(uniformBuffer.mappedMemory, binding.ubo, binding.size);
 
-      uniformBuffers.emplace_back(uniformBuffer);
-    }
-    std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bindings.size());
-
-    for (size_t i = 0; i < bindings.size(); i++) {
-      descriptorBufferInfos[i] = {
-          .buffer = uniformBuffers[i].buffer,
-          .offset = 0,
-          .range = bindings[i].size};
-    }
-
-    std::vector<VkWriteDescriptorSet> writes;
-
-    for (size_t descriptorBufferInfoIndex = 0; descriptorBufferInfoIndex < bindings.size(); descriptorBufferInfoIndex++) {589++++++++++++++++++++++++++
-      writes.push_back(
-        {
-          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, 
-          .dstSet = descriptorSet, 
-          .dstBinding = bindings[descriptorBufferInfoIndex], 
-          .descriptorCount = 1, 
-          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
-          .pBufferInfo = descriptorBufferInfos[descriptorBufferInfoIndex];
-        }
-      );
-      descriptorBufferInfoIndex++;
-    }
-
-    vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
+    uniformBuffers.emplace_back(uniformBuffer);
   }
-  ~Frame() {
+  std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bindings.size());
+
+  for (size_t i = 0; i < bindings.size(); i++) {
+    descriptorBufferInfos[i] = {
+        .buffer = uniformBuffers[i].buffer,
+        .offset = 0,
+        .range = bindings[i].size};
   }
 
-private:
-  DEVICE &device;
-};
+  std::vector<VkWriteDescriptorSet> writes;
+
+  for (size_t descriptorBufferInfoIndex = 0; descriptorBufferInfoIndex < bindings.size(); descriptorBufferInfoIndex++) {
+    writes.push_back(
+        VkWriteDescriptorSet{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = bindings[descriptorBufferInfoIndex].binding,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pBufferInfo = &descriptorBufferInfos[descriptorBufferInfoIndex]});
+    descriptorBufferInfoIndex++;
+  }
+
+  vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
+}
+Frame::~Frame() {
+}
+
 } // namespace GFVL
 #endif
