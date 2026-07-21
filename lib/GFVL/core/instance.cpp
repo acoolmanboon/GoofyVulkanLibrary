@@ -43,7 +43,7 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
       .applicationVersion = applicationInfo.applicationVersion,
       .pEngineName = "goofyVLib",
       .engineVersion = GFVL_VERSION,
-      .apiVersion = VK_API_VERSION_1_3};
+      .apiVersion = VK_API_VERSION_1_4};
 
   uint32_t instanceExtensionCount = 0;
   const char *const *instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&instanceExtensionCount);
@@ -95,6 +95,14 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std:
                                                                                                                                                                 pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {this->uniformBuffer.descriptorSetLayout}),
                                                                                                                                                                 framebuffer(this->device, this->swapchain, this->renderPass),
                                                                                                                                                                 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
+  VmaAllocatorCreateInfo allocatorCreateinfo {
+    .physicalDevice = device.physicalDevice,
+    .device = device.logicalDevice,
+    .instance = instance,
+    .vulkanApiVersion = VK_VERSION_1_4,
+  };
+  vmaCreateAllocator(&allocatorCreateinfo, &vmaAllocator);
+
   this->imageAvailableSemaphore.reserve(this->maxFramesInFlight);
   for (uint8_t i = 0; i < this->maxFramesInFlight; i++)
     this->imageAvailableSemaphore.emplace_back(this->device);
@@ -320,5 +328,6 @@ void INSTANCE::frame() {
 }
 INSTANCE::~INSTANCE() {
   vkDeviceWaitIdle(device.logicalDevice);
+  vmaDestroyAllocator(vmaAllocator);
 }
 } // namespace GFVL

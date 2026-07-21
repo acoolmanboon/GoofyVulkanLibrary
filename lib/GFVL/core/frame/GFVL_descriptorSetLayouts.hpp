@@ -51,19 +51,6 @@ maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 */
 namespace GFVL {
 /**
- * @struct UniformBufferBinding
- * @brief Defines a binding in a uniform buffer.
- */
-struct UniformBufferBinding {
-  size_t size = 0;                                               ///< Size of the data to be passed to shader in bytes.
-  uint32_t binding = 0;                                          ///< The binding that will be passed to your shader.
-  uint32_t arrayCount = 1;                                       ///< If you are passing an array of data, for example a[1024] to shader, set this to 1024. Otherwise, leave this empty or set it to 1 to mark it as not being an array.
-  VkShaderStageFlags shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS; ///< What shaders can access this uniform buffer. Does not have to be set, default value will set to be accessible by all shaders. However, it is recommended to make them shader-specific.
-  void *ubo = nullptr;                                           ///< Pointer to your data, this will be read automatically by the engine
-  bool needsUpdate = false;                                      ///< When true, the engine will update its internal values. You need to set this to true after changing data
-};
-
-/**
  * @brief
  *
  */
@@ -101,7 +88,7 @@ public:
       "Failed to create descriptor set layout in Frame creation!");
   }
   ~DescriptorSetLayout() {
-    vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr)
+    vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
   }
 
 private:

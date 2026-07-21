@@ -32,6 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "../lib/vk_mem_alloc.h"
 #include "../lib/GFVL_core.hpp"
 #include "../lib/GFVL_definition.hpp"
 namespace GFVL {
@@ -436,6 +437,7 @@ public:
 
 private:
   VkSurfaceKHR surface;
+  VmaAllocator vmaAllocator;
 
 public:
   DEVICE device;
@@ -478,7 +480,7 @@ public:
   INSTANCE(
       APPLICATION_INFO applicationInfo,
       VERTEX_LAYOUT &layout,
-      std::vector<UNIFORM_BUFFER_BINDING> &bindings,
+      std::vector<UniformBufferBinding> &bindings,
       std::vector<SHADER_STAGE> &stages);
 
   ~INSTANCE();

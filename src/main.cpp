@@ -132,7 +132,7 @@ void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vecto
   }
 
   vertices.insert(vertices.end(), cube.begin(), cube.end());
-} 
+}
 int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
@@ -147,11 +147,18 @@ int main() {
   CameraUBO camera;
   LightingUBO lighting = {.lightPos = glm::vec3(0.0f, 0.0f, 0.0f), .lightColor = glm::vec3(1.0f, 1.0f, 1.0f)};
 
-  std::vector<GFVL::UNIFORM_BUFFER_BINDING> bindings = {
+  std::vector<GFVL::UniformBufferBinding> bindings = {
       {.size = sizeof(CameraUBO),
+       .binding = 0,
+       .arrayCount = 1,
+       .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
        .ubo = &camera},
-      {.size = sizeof(LightingUBO),
-       .ubo = &lighting}};
+      {.size = sizeof(CameraUBO),
+       .binding = 1,
+       .arrayCount = 1,
+       .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
+       .ubo = &lighting},
+  };
 
   GFVL::VERTEX_LAYOUT layout(sizeof(vertice));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
@@ -207,10 +214,10 @@ int main() {
       GFVLinstance.device,
       GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
   */
-  
+
   std::vector<vertice> cubeOFDeath;
   insertCube(glm::vec3(12.5f, 2.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
-  //GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
+  // GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
 
   // Please delete your repository ahh code
   constexpr unsigned int width = 200;
@@ -398,7 +405,7 @@ int main() {
   }
   print("Vertices : " << verticeAmount)
 
-  bool menu = false;
+      bool menu = false;
   bool flight = false;
   float speed = 1.0f;
 
@@ -411,9 +418,9 @@ int main() {
     uint64_t current_time = SDL_GetPerformanceCounter();
     delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
     last_time = current_time;
-  
+
     GFVLinstance.pollInputs();
-    //GFVLinstance.uniformBuffer.bind(GFVLinstance.commandBuffer, GFVLinstance.pipeline, 0);
+    // GFVLinstance.uniformBuffer.bind(GFVLinstance.commandBuffer, GFVLinstance.pipeline, 0);
     if (GFVLinstance.inputState.isMouseMoved()) {
       GFVL::MouseState mouseState = GFVLinstance.inputState.getMouseState();
 
@@ -432,7 +439,7 @@ int main() {
 
       angle = glm::normalize(qYaw * qPitch);
     }
-    
+
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
       menu = !menu;
       SDL_SetWindowRelativeMouseMode(GFVLinstance.window, menu);
@@ -446,7 +453,7 @@ int main() {
       position += forward * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
-      //GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
+      // GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
     }
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
       position -= forward * speed * delta_time;
@@ -454,7 +461,7 @@ int main() {
       position -= right * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::D))
       position += right * speed * delta_time;
-    
+
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::V) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::V)) {
       flight = !flight;
     }
@@ -474,7 +481,7 @@ int main() {
     camera.MVP = proj * view;
     camera.viewPos = position;
 
-    //GFVLinstance.uniformBuffer.bindings[0].update(&camera);
+    // GFVLinstance.uniformBuffer.bindings[0].update(&camera);
 
     GFVLinstance.frame();
   }
