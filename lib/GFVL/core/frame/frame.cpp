@@ -268,7 +268,6 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .pBufferInfo = &descriptorBufferInfos[descriptorBufferInfoIndex]});
-    descriptorBufferInfoIndex++;
   }
 
   vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
