@@ -348,6 +348,8 @@ private:
   };
 
   void createCommandPool();
+  void createDescriptorPool(uint32_t descriptorCount);
+  void updateUniformBuffers(const std::vector<UniformBufferBinding> &bindings);
 
 public:
   Semaphore imageAvailableSemaphore;
@@ -365,6 +367,7 @@ public:
   Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
   ~Frame();
 private:
+  VmaAllocator allocator;
   DEVICE& device;
 
 };

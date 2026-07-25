@@ -24,12 +24,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef GFVL_DEFINITION_HPP
 #define GFVL_DEFINITION_HPP
 #define PRINT(message) std::cout << "[GFVL] " << message << "\n";
+
+#define THROW_WARNING(reason) std::cerr << "[GFVL] " << message << "\n";
 #define THROW_EXCEPTION(reason)                 \
   do {                                          \
     std::ostringstream oss;                     \
     oss << "[GFVL] Error! Reason : " << reason; \
     throw std::runtime_error(oss.str());        \
   } while (0);
+
 #define ASSERTIF(statement, message)               \
   if (statement) {                               \
     std::ostringstream oss;                      \

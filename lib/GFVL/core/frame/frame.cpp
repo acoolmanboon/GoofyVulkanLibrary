@@ -26,9 +26,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -183,17 +180,10 @@ void Frame::createCommandPool() {
       vkAllocateCommandBuffers(device.logicalDevice, &commandBufferAllocationInfo, &commandBuffer),
       "Failed to allocate command buffers in Frame creation!");
 }
-
-Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
-                                                                                                                                                     imageAvailableSemaphore(device),
-                                                                                                                                                     renderFinishedSemaphore(device),
-                                                                                                                                                     gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
-
-  createCommandPool();
-
+void Frame::createDescriptorPool(uint32_t descriptorCount) {
   VkDescriptorPoolSize poolSize{
       .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-      .descriptorCount = static_cast<uint32_t>(bindings.size())};
+      .descriptorCount = descriptorCount};
 
   VkDescriptorPoolCreateInfo poolInfo{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -204,6 +194,23 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   CheckVkResult2(
       vkCreateDescriptorPool(device.logicalDevice, &poolInfo, nullptr, &descriptorPool),
       "Failed to create descriptor pool in Frame creation!");
+}
+void Frame::updateUniformBuffers(const std::vector<UniformBufferBinding> &bindings) {
+  for (size_t i = 0; i < bindings.size(); i++) {
+    if (!bindings[i].hasUpdated)
+      continue;
+
+    memcpy(uniformBuffers[i].mappedMemory, bindings[i].ubo,  bindings[i].size);
+  }
+}                 
+Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
+                                                                                                                                                     allocator(allocator),
+                                                                                                                                                     imageAvailableSemaphore(device),
+                                                                                                                                                     renderFinishedSemaphore(device),
+                                                                                                                                                     gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
+
+  createCommandPool();
+  createDescriptorPool(static_cast<uint32_t>(bindings.size()));
 
   VkDescriptorSetAllocateInfo allocation{
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -218,6 +225,11 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   uniformBuffers.reserve(bindings.size());
 
   for (const UniformBufferBinding &binding : bindings) {
+    ASSERTIF(binding.ubo == nullptr, "UniformBufferBinding ubo cannot be nullptr!")
+    ASSERTIF(binding.size == 0, "UniformBufferBinding size cannot be 0 bytes!")
+    ASSERTIF(binding.shaderStage == 0, "UniformBufferBinding shader stage has no flags! This should not be possible unless it is explicitly initialized as such.")
+    ASSERTIF(binding.arrayCount == 0, "UniformBufferBinding array count is 0. This should not be possible unless you explicitly initialized it to 0.")
+    ASSERTIF(binding.arrayCount != 1, "UniformBufferBinding array count being 1 is only implemented.")
     // this may or may not work
     FrameUniformBuffer uniformBuffer{};
 
@@ -258,6 +270,7 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   }
 
   std::vector<VkWriteDescriptorSet> writes;
+  writes.reserve(bindings.size());
 
   for (size_t descriptorBufferInfoIndex = 0; descriptorBufferInfoIndex < bindings.size(); descriptorBufferInfoIndex++) {
     writes.push_back(
@@ -265,7 +278,7 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = descriptorSet,
             .dstBinding = bindings[descriptorBufferInfoIndex].binding,
-            .descriptorCount = 1,
+            .descriptorCount = bindings[descriptorBufferInfoIndex].arrayCount,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .pBufferInfo = &descriptorBufferInfos[descriptorBufferInfoIndex]});
   }
@@ -273,7 +286,13 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
 }
 Frame::~Frame() {
-}
+  vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
 
+  vkDestroyCommandPool(device.logicalDevice, commandPool, nullptr);
+
+  for (FrameUniformBuffer &buffer : uniformBuffers) {
+    vmaDestroyBuffer(allocator, buffer.buffer, buffer.allocation);
+  }
+}
 } // namespace GFVL
 #endif
