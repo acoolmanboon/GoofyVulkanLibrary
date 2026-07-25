@@ -26,8 +26,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vulkan/vulkan.h>
 
 #include "../include/GFVL.hpp"
-#include "../core/frame/GFVL_descriptorSetLayouts.hpp"
-
+#include "../lib/GFVL_core.hpp"
+#include "../lib/GFVL_definition.hpp"
 using namespace GFVL;
 
 // USER-DEFINED STUFF
@@ -59,9 +59,17 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   }
   const char *validationLayer = "VK_LAYER_KHRONOS_validation";
 
+  VkValidationFeatureEnableEXT enables[] = {
+      VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+      VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT};
+
+  VkValidationFeaturesEXT features{
+      .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+      .enabledValidationFeatureCount = 2,
+      .pEnabledValidationFeatures = enables};
   VkInstanceCreateInfo instanceCreationInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-      .pNext = NULL,
+      .pNext = &features,
       .flags = 0,
       .pApplicationInfo = &appInfo,
       .enabledLayerCount = 1,
@@ -87,26 +95,33 @@ std::vector<SHADER> InitializeShaderStages(DEVICE &device, std::vector<SHADER_ST
   return shaders;
 }
 
-INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
+INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) :   instance(InitializeVkInstance(applicationInfo)),
                                                                                                                                                                 window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
                                                                                                                                                                 surface(InitializeVkSurface(this->instance, this->window)),
                                                                                                                                                                 device(this->instance, this->surface, applicationInfo.preferredGPU),
                                                                                                                                                                 swapchain(this->device, this->window, this->surface),
                                                                                                                                                                 renderPass(this->device, this->swapchain),
-                                                                                                                                                                shaderStages(InitializeShaderStages(device, stages)),
-                                                                                                                                                                
-                                                                                                                                                                pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {this->uniformBuffer.descriptorSetLayout}),
+                                                                                                                                                                shaderStages(InitializeShaderStages(device, stages)), 
+                                                                                                                                                                bindings(bindings),
+                                                                                                                                                                descriptorSetLayout(device, bindings),
+                                                                                                                                                                pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
                                                                                                                                                                 framebuffer(this->device, this->swapchain, this->renderPass),
                                                                                                                                                                 maxFramesInFlight(applicationInfo.maxFramesInFlight) {
-  VmaAllocatorCreateInfo allocatorCreateinfo {
-    .physicalDevice = device.physicalDevice,
-    .device = device.logicalDevice,
-    .instance = instance,
-    .vulkanApiVersion = VK_VERSION_1_4,
+  VmaAllocatorCreateInfo allocatorCreateinfo{
+      .physicalDevice = device.physicalDevice,
+      .device = device.logicalDevice,
+      .instance = instance,
+      .vulkanApiVersion = VK_API_VERSION_1_4,
   };
   vmaCreateAllocator(&allocatorCreateinfo, &vmaAllocator);
 
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);
+
+  frames.reserve(applicationInfo.maxFramesInFlight);
+  for (int i = 0; i < applicationInfo.maxFramesInFlight; i++) {
+    // Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
+    frames.emplace_back(device, vmaAllocator, descriptorSetLayout.descriptorSetLayout, bindings);
+  }
 
   SDL_GetWindowSizeInPixels(this->window, &w, &h);
   this->aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
@@ -148,11 +163,12 @@ void INSTANCE::pollInputs() {
   }
 }
 void INSTANCE::frame() {
+  Frame &currentFrame = frames[currentFrameIndex];
+  currentFrame.updateUniformBuffers();
   if (framebufferResized) {
     vkDeviceWaitIdle(this->device.logicalDevice);
     this->swapchain.recreate(this->window, this->surface);
     this->framebuffer.recreate(this->swapchain, this->renderPass);
-    this->commandPool.recreate(this->framebuffer);
     this->swapchain.imageCount = this->swapchain.images.size();
 
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
@@ -161,11 +177,11 @@ void INSTANCE::frame() {
     aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
   }
 
-  vkWaitForFences(this->device.logicalDevice, 1, &inFlightFence[currentFrame].fence, VK_TRUE, UINT64_MAX);
-  vkResetFences(this->device.logicalDevice, 1, &inFlightFence[currentFrame].fence);
+  vkWaitForFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence, VK_TRUE, UINT64_MAX);
+  vkResetFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence);
 
   uint32_t imageIndex;
-  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, imageAvailableSemaphore[currentFrame].semaphore, VK_NULL_HANDLE, &imageIndex));
+  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore, VK_NULL_HANDLE, &imageIndex));
   if (imagesInFlightFence[imageIndex] != VK_NULL_HANDLE) {
     vkWaitForFences(
         this->device.logicalDevice,
@@ -175,12 +191,11 @@ void INSTANCE::frame() {
         UINT64_MAX);
   }
 
-  imagesInFlightFence[imageIndex] = inFlightFence[currentFrame].fence;
-  this->commandBuffer = this->commandPool.commandBuffer(imageIndex);
-  CheckVkResult(vkResetCommandBuffer(this->commandBuffer, 0));
+  imagesInFlightFence[imageIndex] = currentFrame.gpuFinishedFence.fence;
+  CheckVkResult(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
   VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-  CheckVkResult(vkBeginCommandBuffer(this->commandBuffer, &beginInfo));
+  CheckVkResult(vkBeginCommandBuffer(currentFrame.commandBuffer, &beginInfo));
 
   VkClearValue clearColor{.color = {0.05f, 0.05f, 0.05f, 1.0f}};
   VkClearValue clearValues[2]{};
@@ -208,18 +223,18 @@ void INSTANCE::frame() {
           .size = mesh.size()};
 
       vkCmdCopyBuffer(
-          commandBuffer,
+          currentFrame.commandBuffer,
           mesh.vertexBuffer_.buffer_,
           giggityBuffer[giggityIndex],
           1,
           &copyRegion);
 
-      giggityIndex++;
     } else {
       giggityBuffer[giggityIndex] = mesh.vertexBuffer_.buffer_;
       giggityBufferMemory[giggityIndex] = mesh.vertexBuffer_.bufferMemory_;
     }
-    totalSize += mesh.size();
+    totalSize += mesh.verticeCount();
+    giggityIndex++;
   }
 
   VkRenderPassBeginInfo renderPassInfo{
@@ -232,14 +247,11 @@ void INSTANCE::frame() {
       .clearValueCount = 2,
       .pClearValues = clearValues};
 
-  vkCmdBeginRenderPass(this->commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(currentFrame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-  vkCmdBindPipeline(this->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline.pipeline);
+  vkCmdBindPipeline(currentFrame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline.pipeline);
 
-  // GFVLinstance.uniformBuffer.bindings[0].update(&camera);
-  // GFVLinstance.uniformBuffer.bind(GFVLinstance.commandBuffer, GFVLinstance.pipeline, 0);
-
-  this->uniformBuffer.bind(this->commandBuffer, this->pipeline, 0); // TEMPORARY
+  vkCmdBindDescriptorSets(currentFrame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &currentFrame.descriptorSet, 0, nullptr);
   VkViewport viewport{
       .x = 0.0f,
       .y = 0.0f,
@@ -247,23 +259,23 @@ void INSTANCE::frame() {
       .height = (float)swapchain.extent.height,
       .minDepth = 0.0f,
       .maxDepth = 1.0f};
-  vkCmdSetViewport(this->commandBuffer, 0, 1, &viewport);
+  vkCmdSetViewport(currentFrame.commandBuffer, 0, 1, &viewport);
 
   VkRect2D scissor{.offset = {0, 0}, .extent = swapchain.extent}; // this just cuts off rendering if not in swapchain
-  vkCmdSetScissor(this->commandBuffer, 0, 1, &scissor);
+  vkCmdSetScissor(currentFrame.commandBuffer, 0, 1, &scissor);
   VkDeviceSize offsets[] = {0};
 
-  vkCmdBindVertexBuffers(this->commandBuffer, 0, giggityBuffer.size(), giggityBuffer.data(), offsets);
+  vkCmdBindVertexBuffers(currentFrame.commandBuffer, 0, giggityBuffer.size(), giggityBuffer.data(), offsets);
 
-  vkCmdDraw(this->commandBuffer, totalSize, 1, 0, 0);
+  vkCmdDraw(currentFrame.commandBuffer, totalSize, 1, 0, 0);
 
-  vkCmdEndRenderPass(this->commandBuffer);
+  vkCmdEndRenderPass(currentFrame.commandBuffer);
 
-  CheckVkResult(vkEndCommandBuffer(this->commandBuffer));
+  CheckVkResult(vkEndCommandBuffer(currentFrame.commandBuffer));
 
-  VkSemaphore waitSemaphores[] = {imageAvailableSemaphore[currentFrame].semaphore};
+  VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.semaphore};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSemaphore signalSemaphores[] = {renderFinishedSemaphore[imageIndex].semaphore};
+  VkSemaphore signalSemaphores[] = {currentFrame.renderFinishedSemaphore.semaphore};
 
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -271,11 +283,11 @@ void INSTANCE::frame() {
       .pWaitSemaphores = waitSemaphores,
       .pWaitDstStageMask = waitStages,
       .commandBufferCount = 1,
-      .pCommandBuffers = &this->commandBuffer,
+      .pCommandBuffers = &currentFrame.commandBuffer,
       .signalSemaphoreCount = 1,
       .pSignalSemaphores = signalSemaphores};
 
-  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, inFlightFence[currentFrame].fence));
+  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, currentFrame.gpuFinishedFence.fence));
 
   VkSwapchainKHR swapchains[] = {this->swapchain.swapchain};
 
@@ -292,7 +304,7 @@ void INSTANCE::frame() {
   vkWaitForFences(
       this->device.logicalDevice,
       1,
-      &inFlightFence[currentFrame].fence,
+      &currentFrame.gpuFinishedFence.fence,
       VK_TRUE,
       UINT64_MAX);
   for (uint32_t i = 0; i < giggityBuffer.size(); i++) {
@@ -300,10 +312,12 @@ void INSTANCE::frame() {
     vkFreeMemory(this->device.logicalDevice, giggityBufferMemory[i], nullptr);
   }
 
-  this->currentFrame = (this->currentFrame + 1) % this->maxFramesInFlight;
+  for (UniformBufferBinding &binding : bindings) {
+    binding.hasUpdated = false;
+  }
+  this->currentFrameIndex = (this->currentFrameIndex + 1) % this->maxFramesInFlight;
 }
 INSTANCE::~INSTANCE() {
   vkDeviceWaitIdle(device.logicalDevice);
-  vmaDestroyAllocator(vmaAllocator);
 }
 } // namespace GFVL

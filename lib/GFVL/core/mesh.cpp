@@ -27,10 +27,14 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo) : device_(device),
+                                                           verticeCount_(createInfo.verticeCount),
                                                            vertexBuffer_(device, VertexBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .memoryAllocation = createInfo.memoryAllocation}) {
 }
 size_t Mesh::size() const noexcept {
   return this->vertexBuffer_.size_;
+}
+uint32_t Mesh::verticeCount() const noexcept {
+  return this->verticeCount_;
 }
 VertexBuffer::MemoryAllocation Mesh::memoryAllocation() const noexcept {
   return this->vertexBuffer_.memoryAllocation_;

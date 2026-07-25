@@ -195,7 +195,7 @@ void Frame::createDescriptorPool(uint32_t descriptorCount) {
       vkCreateDescriptorPool(device.logicalDevice, &poolInfo, nullptr, &descriptorPool),
       "Failed to create descriptor pool in Frame creation!");
 }
-void Frame::updateUniformBuffers(const std::vector<UniformBufferBinding> &bindings) {
+void Frame::updateUniformBuffers() {
   for (size_t i = 0; i < bindings.size(); i++) {
     if (!bindings[i].hasUpdated)
       continue;
@@ -204,6 +204,7 @@ void Frame::updateUniformBuffers(const std::vector<UniformBufferBinding> &bindin
   }
 }                 
 Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
+                                                                                                                                                     bindings(bindings),
                                                                                                                                                      allocator(allocator),
                                                                                                                                                      imageAvailableSemaphore(device),
                                                                                                                                                      renderFinishedSemaphore(device),

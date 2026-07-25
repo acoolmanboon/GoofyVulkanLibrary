@@ -349,7 +349,6 @@ private:
 
   void createCommandPool();
   void createDescriptorPool(uint32_t descriptorCount);
-  void updateUniformBuffers(const std::vector<UniformBufferBinding> &bindings);
 
 public:
   Semaphore imageAvailableSemaphore;
@@ -364,12 +363,21 @@ public:
 
   std::vector<FrameUniformBuffer> uniformBuffers;
 
+  void updateUniformBuffers();
+  
   Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
   ~Frame();
-private:
-  VmaAllocator allocator;
-  DEVICE& device;
 
+  Frame(const Frame &) = delete;
+  Frame &operator=(const Frame &) = delete;
+
+  Frame(Frame &&other) = default;
+  Frame &operator=(Frame &&) = delete; // reference member makes assignment awkward
+
+private:
+  DEVICE &device;
+  VmaAllocator allocator;
+  const std::vector<UniformBufferBinding> &bindings;
 };
 class DescriptorSetLayout {
 public:

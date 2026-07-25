@@ -52,10 +52,12 @@ public:
   struct CreateInfo {
     size_t size;                                                                       ///< Size of the vertice data in bytes
     void *data;                                                                        ///< Pointer to the raw mesh data.
+    uint32_t verticeCount;
     VertexBuffer::MemoryAllocation memoryAllocation = VertexBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
 
   size_t size() const noexcept;
+  uint32_t verticeCount() const noexcept;
   VertexBuffer::MemoryAllocation memoryAllocation() const noexcept;
 
   /**
@@ -76,6 +78,7 @@ public:
   friend class INSTANCE;
 private:
   const DEVICE &device_;            ///< Stores the device reference.
+  uint32_t verticeCount_;
   VertexBuffer vertexBuffer_; ///< The buffer containing the actual memory
 };
 
@@ -434,8 +437,8 @@ public:
   VkInstance instance;
   SDL_Window *window;
   VkSurfaceKHR surface;
-  VmaAllocator vmaAllocator;
   DEVICE device;
+  VmaAllocator vmaAllocator;
   Swapchain swapchain;
   RENDERPASS renderPass;
   std::vector<SHADER> shaderStages;
@@ -445,9 +448,11 @@ public:
 
   std::vector<Frame> frames;
 
-  uint32_t currentFrame = 0;
+  uint32_t currentFrameIndex = 0;
   uint32_t maxFramesInFlight;
   std::vector<VkFence> imagesInFlightFence;
+
+  std::vector<UniformBufferBinding> &bindings;
 
 public:
   std::vector<GFVL::Mesh> meshesToRender;
@@ -458,7 +463,6 @@ public:
   float aspectRatio = 0.0f;
   bool framebufferResized = false;
 
-  VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
   InputState inputState;
 
   void pollInputs();

@@ -147,18 +147,19 @@ int main() {
   CameraUBO camera;
   LightingUBO lighting = {.lightPos = glm::vec3(0.0f, 0.0f, 0.0f), .lightColor = glm::vec3(1.0f, 1.0f, 1.0f)};
 
-  std::vector<GFVL::UniformBufferBinding> bindings = {
-      {.size = sizeof(CameraUBO),
-       .binding = 0,
-       .arrayCount = 1,
-       .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
-       .ubo = &camera},
-      {.size = sizeof(CameraUBO),
-       .binding = 1,
-       .arrayCount = 1,
-       .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
-       .ubo = &lighting},
-  };
+  std::vector<GFVL::UniformBufferBinding> bindings;
+  bindings.reserve(2);
+  GFVL::UniformBufferBinding &cameraBinding = bindings.emplace_back(GFVL::UniformBufferBinding{.size = sizeof(CameraUBO),
+                                                                                               .binding = 0,
+                                                                                               .arrayCount = 1,
+                                                                                               .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
+                                                                                               .ubo = &camera});
+
+  GFVL::UniformBufferBinding &lightBinding = bindings.emplace_back(GFVL::UniformBufferBinding{.size = sizeof(LightingUBO),
+                                                                                               .binding = 1,
+                                                                                               .arrayCount = 1,
+                                                                                               .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
+                                                                                               .ubo = &lighting});
 
   GFVL::VERTEX_LAYOUT layout(sizeof(vertice));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
@@ -396,6 +397,7 @@ int main() {
           GFVL::Mesh::CreateInfo{
               .size = terrain.size() * sizeof(vertice),
               .data = terrain.data(),
+              .verticeCount = static_cast<uint32_t>(terrain.size()),
               .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
 
   // debug
@@ -405,7 +407,7 @@ int main() {
   }
   print("Vertices : " << verticeAmount)
 
-      bool menu = false;
+  bool menu = false;
   bool flight = false;
   float speed = 1.0f;
 
@@ -454,6 +456,7 @@ int main() {
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
       // GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
+      lightBinding.hasUpdated = true;
     }
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
       position -= forward * speed * delta_time;
@@ -481,6 +484,7 @@ int main() {
     camera.MVP = proj * view;
     camera.viewPos = position;
 
+    cameraBinding.hasUpdated = true;
     // GFVLinstance.uniformBuffer.bindings[0].update(&camera);
 
     GFVLinstance.frame();
