@@ -307,6 +307,7 @@ public:
     size_t size;                                           ///< Size of the allocated buffer memory in bytes.
     void *data;                                            ///< Pointer to the data to copy into the buffer.
     MemoryAllocation memoryAllocation = MemoryAllocation::HostVisible; ///< Type of data, see definition.
+    VkCommandPool commandPool;                             ///< Command pool, used for alllocation of vertex buffers
   };
 
   /**
@@ -364,7 +365,7 @@ public:
   std::vector<FrameUniformBuffer> uniformBuffers;
 
   void updateUniformBuffers();
-  
+
   Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
   ~Frame();
 

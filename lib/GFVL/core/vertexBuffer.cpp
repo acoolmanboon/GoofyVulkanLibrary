@@ -74,27 +74,91 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
     vkUnmapMemory(device.logicalDevice, bufferMemory_);
 
   } else if (createInfo.memoryAllocation == VertexBuffer::MemoryAllocation::DeviceOnly) {
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingMemory;
+
     createBuffer(
         device,
         createInfo.size,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        this->buffer_,
-        this->bufferMemory_);
+        stagingBuffer,
+        stagingMemory);
 
-    void *stagingData = nullptr;
+    void *stagingData;
     CheckVkResult(vkMapMemory(
         device.logicalDevice,
-        this->bufferMemory_,
+        stagingMemory,
         0,
         createInfo.size,
         0,
         &stagingData));
+
     memcpy(stagingData, createInfo.data, createInfo.size);
-    vkUnmapMemory(
-        device.logicalDevice,
+
+    vkUnmapMemory(device.logicalDevice, stagingMemory);
+
+    createBuffer(
+        device,
+        createInfo.size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        this->buffer_,
         this->bufferMemory_);
 
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = createInfo.commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1};
+
+    VkCommandBuffer cmd;
+    CheckVkResult(vkAllocateCommandBuffers(
+        device.logicalDevice,
+        &allocInfo,
+        &cmd));
+
+    VkCommandBufferBeginInfo beginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+
+    CheckVkResult(vkBeginCommandBuffer(cmd, &beginInfo));
+
+    VkBufferCopy region{
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = createInfo.size};
+
+    vkCmdCopyBuffer(
+        cmd,
+        stagingBuffer,
+        this->buffer_,
+        1,
+        &region);
+
+    CheckVkResult(vkEndCommandBuffer(cmd));
+
+    VkSubmitInfo submitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmd};
+
+    CheckVkResult(vkQueueSubmit(
+        device.graphicsQueue,
+        1,
+        &submitInfo,
+        VK_NULL_HANDLE));
+
+    CheckVkResult(vkQueueWaitIdle(device.graphicsQueue));
+
+    vkFreeCommandBuffers(
+        device.logicalDevice,
+        createInfo.commandPool,
+        1,
+        &cmd);
+
+    vkDestroyBuffer(device.logicalDevice, stagingBuffer, nullptr);
+    vkFreeMemory(device.logicalDevice, stagingMemory, nullptr);
   } else {
     THROW_EXCEPTION("Invalid VERTEX_BUFFER_TYPE!");
   }

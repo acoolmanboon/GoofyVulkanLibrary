@@ -95,6 +95,12 @@ std::vector<SHADER> InitializeShaderStages(DEVICE &device, std::vector<SHADER_ST
   return shaders;
 }
 
+Mesh& INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
+  return meshesToRender.emplace_back(device, createInfo, commandPool);
+}
+void INSTANCE::setMouseLock(bool mouseLock) {
+  SDL_SetWindowRelativeMouseMode(window, mouseLock);
+}
 INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) :   instance(InitializeVkInstance(applicationInfo)),
                                                                                                                                                                 window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
                                                                                                                                                                 surface(InitializeVkSurface(this->instance, this->window)),
@@ -125,6 +131,15 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std:
 
   SDL_GetWindowSizeInPixels(this->window, &w, &h);
   this->aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
+
+  VkCommandPoolCreateInfo commandPoolCreateInfo{
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = device.graphicsFamilyIndex};
+
+  CheckVkResult2(
+      vkCreateCommandPool(device.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
+      "Failed to create command pool for Instance!");
 }
 void INSTANCE::pollInputs() {
 
@@ -202,40 +217,6 @@ void INSTANCE::frame() {
   clearValues[0].color = {{0.05f, 0.05f, 0.05f, 1.0f}};
   clearValues[1].depthStencil = {1.0f, 0};
 
-  std::vector<VkBuffer> giggityBuffer(this->meshesToRender.size());
-  std::vector<VkDeviceMemory> giggityBufferMemory(this->meshesToRender.size());
-  uint32_t giggityIndex = 0;
-  uint32_t totalSize = 0;
-
-  for (const GFVL::Mesh &mesh : this->meshesToRender) {
-    if (mesh.vertexBuffer_.memoryAllocation_ == GFVL::VertexBuffer::MemoryAllocation::DeviceOnly) {
-      GFVL::createBuffer(
-          this->device,
-          mesh.size(),
-          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-          giggityBuffer[giggityIndex],
-          giggityBufferMemory[giggityIndex]);
-
-      VkBufferCopy copyRegion{
-          .srcOffset = 0,
-          .dstOffset = 0,
-          .size = mesh.size()};
-
-      vkCmdCopyBuffer(
-          currentFrame.commandBuffer,
-          mesh.vertexBuffer_.buffer_,
-          giggityBuffer[giggityIndex],
-          1,
-          &copyRegion);
-
-    } else {
-      giggityBuffer[giggityIndex] = mesh.vertexBuffer_.buffer_;
-      giggityBufferMemory[giggityIndex] = mesh.vertexBuffer_.bufferMemory_;
-    }
-    totalSize += mesh.verticeCount();
-    giggityIndex++;
-  }
 
   VkRenderPassBeginInfo renderPassInfo{
       .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -265,9 +246,23 @@ void INSTANCE::frame() {
   vkCmdSetScissor(currentFrame.commandBuffer, 0, 1, &scissor);
   VkDeviceSize offsets[] = {0};
 
-  vkCmdBindVertexBuffers(currentFrame.commandBuffer, 0, giggityBuffer.size(), giggityBuffer.data(), offsets);
+  for (const GFVL::Mesh &mesh : meshesToRender) {
+    VkDeviceSize offset = 0;
 
-  vkCmdDraw(currentFrame.commandBuffer, totalSize, 1, 0, 0);
+    vkCmdBindVertexBuffers(
+        currentFrame.commandBuffer,
+        0,
+        1,
+        &mesh.vertexBuffer_.buffer_,
+        &offset);
+
+    vkCmdDraw(
+        currentFrame.commandBuffer,
+        mesh.verticeCount(),
+        1,
+        0,
+        0);
+  }
 
   vkCmdEndRenderPass(currentFrame.commandBuffer);
 
@@ -307,10 +302,6 @@ void INSTANCE::frame() {
       &currentFrame.gpuFinishedFence.fence,
       VK_TRUE,
       UINT64_MAX);
-  for (uint32_t i = 0; i < giggityBuffer.size(); i++) {
-    vkDestroyBuffer(this->device.logicalDevice, giggityBuffer[i], nullptr);
-    vkFreeMemory(this->device.logicalDevice, giggityBufferMemory[i], nullptr);
-  }
 
   for (UniformBufferBinding &binding : bindings) {
     binding.hasUpdated = false;

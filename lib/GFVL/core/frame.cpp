@@ -29,8 +29,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../../lib/GFVL_core.hpp"
-#include "../../lib/vk_mem_alloc.h"
+#include "../lib/GFVL_core.hpp"
+#include "../lib/vk_mem_alloc.h"
 #ifdef ignorewhateverthisisimjustgettingsyntaxhighlighting
 class BINDING {
 public:
@@ -163,7 +163,7 @@ namespace GFVL {
 void Frame::createCommandPool() {
   VkCommandPoolCreateInfo commandPoolCreateInfo{
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
       .queueFamilyIndex = device.graphicsFamilyIndex};
 
   CheckVkResult2(

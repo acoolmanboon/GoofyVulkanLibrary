@@ -27,6 +27,16 @@ using namespace GFVL;
 namespace GFVL {
 RENDERPASS::RENDERPASS(DEVICE &device, Swapchain &swapchain) : device(device) {
 
+  VkAttachmentDescription colorAttachment{
+      .format = swapchain.format,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
+
   VkAttachmentDescription depthAttachment{
       .format = VK_FORMAT_D32_SFLOAT,
       .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -37,23 +47,17 @@ RENDERPASS::RENDERPASS(DEVICE &device, Swapchain &swapchain) : device(device) {
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
       .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
-  VkAttachmentReference depthAttachmentRef{
-      .attachment = 1,
-      .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
-
-  VkAttachmentDescription colorAttachment{
-      .format = swapchain.format,
-      .samples = VK_SAMPLE_COUNT_1_BIT, // enable for multisamping
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED, // i think this is needed for texturing
-      .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
+  VkAttachmentDescription attachments[2]{
+      colorAttachment,
+      depthAttachment};
 
   VkAttachmentReference colorAttachmentRef{
       .attachment = 0,
       .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+
+  VkAttachmentReference depthAttachmentRef{
+      .attachment = 1,
+      .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
 
   VkSubpassDescription subpass{
       .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -61,21 +65,61 @@ RENDERPASS::RENDERPASS(DEVICE &device, Swapchain &swapchain) : device(device) {
       .pColorAttachments = &colorAttachmentRef,
       .pDepthStencilAttachment = &depthAttachmentRef};
 
-  std::vector<VkAttachmentDescription> attachments = {
-      colorAttachment,
-      depthAttachment};
-      
+  VkSubpassDependency dependencies[2]{};
+
+  dependencies[0] = {
+      .srcSubpass = VK_SUBPASS_EXTERNAL,
+      .dstSubpass = 0,
+
+      .srcStageMask =
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+
+      .dstStageMask =
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+
+      .srcAccessMask = 0,
+
+      .dstAccessMask =
+          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT};
+
+  dependencies[1] = {
+      .srcSubpass = 0,
+      .dstSubpass = VK_SUBPASS_EXTERNAL,
+
+      .srcStageMask =
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+
+      .dstStageMask =
+          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+
+      .srcAccessMask =
+          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+
+      .dstAccessMask = 0};
+
   VkRenderPassCreateInfo renderPassInfo{
       .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-      .attachmentCount = static_cast<uint32_t>(attachments.size()),
-      .pAttachments = attachments.data(),
+      .attachmentCount = 2,
+      .pAttachments = attachments,
       .subpassCount = 1,
-      .pSubpasses = &subpass};
+      .pSubpasses = &subpass,
+      .dependencyCount = 2,
+      .pDependencies = dependencies};
 
-
-  CheckVkResult(vkCreateRenderPass(device.logicalDevice, &renderPassInfo, nullptr, &this->renderPass));
+  CheckVkResult(
+      vkCreateRenderPass(
+          device.logicalDevice,
+          &renderPassInfo,
+          nullptr,
+          &this->renderPass));
 }
 RENDERPASS::~RENDERPASS() {
-    vkDestroyRenderPass(this->device.logicalDevice, this->renderPass, nullptr);
+  vkDestroyRenderPass(this->device.logicalDevice, this->renderPass, nullptr);
 }
-}
+} // namespace GFVL

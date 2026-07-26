@@ -391,14 +391,11 @@ int main() {
     }
   }
 
-  GFVLinstance.meshesToRender.emplace_back(
-      GFVL::Mesh(
-          GFVLinstance.device,
-          GFVL::Mesh::CreateInfo{
-              .size = terrain.size() * sizeof(vertice),
-              .data = terrain.data(),
-              .verticeCount = static_cast<uint32_t>(terrain.size()),
-              .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
+  GFVL::Mesh &terrainMesh = GFVLinstance.createMesh( GFVL::Mesh::CreateInfo{
+    .size = terrain.size() * sizeof(vertice),
+    .verticeCount = static_cast<uint32_t>(terrain.size()),
+    .data = terrain.data(),
+    .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly});
 
   // debug
   uint32_t verticeAmount = 0;
@@ -444,7 +441,7 @@ int main() {
 
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
       menu = !menu;
-      SDL_SetWindowRelativeMouseMode(GFVLinstance.window, menu);
+      GFVLinstance.setMouseLock(menu);
     }
 
     float speed = GFVLinstance.inputState.isKeyDown(GFVL::Keycode::LSHIFT) ? 250.0f : 5.0f;

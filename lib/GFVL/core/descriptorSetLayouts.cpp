@@ -26,14 +26,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../../lib/GFVL_core.hpp"
-#include "../../lib/vk_mem_alloc.h"
+#include "../lib/GFVL_core.hpp"
+#include "../lib/vk_mem_alloc.h"
 
 /*
 instance(InitializeVkInstance(applicationInfo)),
@@ -56,8 +53,10 @@ DescriptorSetLayout::DescriptorSetLayout(DEVICE &device, std::vector<UniformBuff
   descriptorSetLayoutBindings.reserve(this->bindings.size());
 
   for (const UniformBufferBinding &binding : this->bindings) {
-    ASSERTIF(binding.size == 0, "Binding size must not be 0 in uniform buffer binding!")
-    ASSERTIF(binding.ubo == nullptr, "Binding UBO pointer must not be nullptr in uniform buffer binding!")
+    ASSERTIF(binding.ubo == nullptr, "UniformBufferBinding ubo cannot be nullptr!")
+    ASSERTIF(binding.size == 0, "UniformBufferBinding size cannot be 0 bytes!")
+    ASSERTIF(binding.shaderStage == 0, "UniformBufferBinding shader stage has no flags! This should not be possible unless it is explicitly initialized as such.")
+    ASSERTIF(binding.arrayCount == 0, "UniformBufferBinding array count is 0. This should not be possible unless you explicitly initialized it to 0.")
     descriptorSetLayoutBindings.emplace_back(VkDescriptorSetLayoutBinding{
         .binding = binding.binding,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,

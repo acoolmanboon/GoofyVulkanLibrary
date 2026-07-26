@@ -43,43 +43,46 @@ namespace GFVL {
  * @brief Represents a single renderable object.
  * @details Meshes contain all of the data required to draw a single object. A mesh is not an object, it is simply used for graphical rendering, so you can render the same mesh over and over again.
  */
-class Mesh { 
+class Mesh {
 public:
   /**
    * @struct CreateInfo
    * @brief Configuration for creating Mesh class.
    */
   struct CreateInfo {
-    size_t size;                                                                       ///< Size of the vertice data in bytes
-    void *data;                                                                        ///< Pointer to the raw mesh data.
-    uint32_t verticeCount;
+    size_t size;                                                                                   ///< Size of the vertice data in bytes
+    uint32_t verticeCount;                                                                         ///< Vertice count of the mesh.
+    void *data;                                                                                    ///< Pointer to the raw mesh data.
     VertexBuffer::MemoryAllocation memoryAllocation = VertexBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
 
   size_t size() const noexcept;
-  uint32_t verticeCount() const noexcept;
   VertexBuffer::MemoryAllocation memoryAllocation() const noexcept;
+  uint32_t verticeCount() const noexcept;
 
   /**
    * @brief Creates a mesh buffer.
    * @param device A reference to your Device.
    * @param createinfo Mesh creation info.
    */
-  Mesh(DEVICE &device, const CreateInfo &createInfo); ///< Creates a mesh.
+  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool); ///< Creates a mesh.
 
   Mesh(const Mesh &other) = delete;            ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
   Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
 
-  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will destroy the other object.
+  Mesh(Mesh &&other) = default;           ///< Move constructor, allowed but it will destroy the other object.
   Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will destroy the other object.
 
   ~Mesh(); ///< Destroys mesh and associated info
 
   friend class INSTANCE;
+
 private:
-  const DEVICE &device_;            ///< Stores the device reference.
-  uint32_t verticeCount_;
+  const DEVICE &device_;      ///< Stores the device reference.
   VertexBuffer vertexBuffer_; ///< The buffer containing the actual memory
+  uint32_t verticeCount_;
+  bool willRender_;
+  void *data_; ///< NOT IMPLEMENTED YET. Used for host visible memory modification.
 };
 
 enum Keycode : uint32_t {
@@ -433,7 +436,7 @@ private:
 };
 
 class INSTANCE {
-public:
+private:
   VkInstance instance;
   SDL_Window *window;
   VkSurfaceKHR surface;
@@ -445,6 +448,7 @@ public:
   DescriptorSetLayout descriptorSetLayout;
   PIPELINE pipeline;
   Framebuffer framebuffer;
+  VkCommandPool commandPool;
 
   std::vector<Frame> frames;
 
@@ -465,8 +469,10 @@ public:
 
   InputState inputState;
 
+  Mesh& createMesh(Mesh::CreateInfo createInfo);
   void pollInputs();
   void frame();
+  void setMouseLock(bool mouseLock); ///< True will lock the mouse into the window
 
   INSTANCE(
       APPLICATION_INFO applicationInfo,

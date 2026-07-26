@@ -72,7 +72,7 @@ uint32_t getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference) {
 
   return score;
 }
-VkBool32 enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex) {
+bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex) {
   graphicsFamilyIndex = UINT32_MAX;
   presentFamilyIndex = UINT32_MAX;
 
@@ -88,7 +88,9 @@ VkBool32 enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, u
   for (uint32_t i = 0; i < queueFamilyCount; i++) {
     const VkBool32 graphicsSupport = (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0;
     VkBool32 presentationSupport = VK_FALSE;
-    CheckVkResult(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentationSupport));
+    CheckVkResult2(
+      vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentationSupport),
+      "Failed to get physical device surface support!");
 
     if (graphicsSupport && presentationSupport) {
       PRINT("Found a queue family with both graphics support and presentation support!")
@@ -107,10 +109,14 @@ VkBool32 enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, u
 }
 VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device) {
   uint32_t extensionCount = 0;
-  CheckVkResult(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
+  CheckVkResult2(
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr),
+    "Failed to enumerate device extension properties count!");
 
   std::vector<VkExtensionProperties> extensions(extensionCount);
-  CheckVkResult(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, extensions.data()));
+  CheckVkResult2(
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, extensions.data()),
+    "Failed to enumerate device extension properties!");
 
   for (const VkExtensionProperties &extension : extensions) {
     if (strcmp(extension.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0)
@@ -121,7 +127,9 @@ VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device) {
 }
 std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
   uint32_t deviceExtensionCount = 0;
-  CheckVkResult(vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, nullptr));
+  CheckVkResult2(
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, nullptr),
+    "Failed to enumerate device extension properties!");
 
   std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
   CheckVkResult(vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, deviceExtensions.data()));
