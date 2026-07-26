@@ -215,11 +215,6 @@ int main() {
       GFVLinstance.device,
       GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
   */
-
-  std::vector<vertice> cubeOFDeath;
-  insertCube(glm::vec3(12.5f, 2.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
-  // GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(GFVLinstance.device, GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
-
   // Please delete your repository ahh code
   constexpr unsigned int width = 200;
   constexpr unsigned int length = 200;
@@ -396,6 +391,10 @@ int main() {
     .verticeCount = static_cast<uint32_t>(terrain.size()),
     .data = terrain.data(),
     .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly});
+
+  std::vector<vertice> cubeOFDeath;
+  insertCube(glm::vec3(12.5f, sampleHeight(12.5f, -35.0f) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
+  GFVL::Mesh &cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly});
 
   // debug
   uint32_t verticeAmount = 0;
