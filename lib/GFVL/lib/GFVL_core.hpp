@@ -353,7 +353,6 @@ private:
 
 public:
   Semaphore imageAvailableSemaphore;
-  Semaphore renderFinishedSemaphore;
   Fence gpuFinishedFence;
 
   VkCommandPool commandPool;

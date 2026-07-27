@@ -129,6 +129,11 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std:
     frames.emplace_back(device, vmaAllocator, descriptorSetLayout.descriptorSetLayout, bindings);
   }
 
+  renderFinishedSemaphores.reserve(swapchain.imageCount);
+  for (int i = 0; i < swapchain.imageCount; i++) {
+    renderFinishedSemaphores.emplace_back(device);
+  }
+
   SDL_GetWindowSizeInPixels(this->window, &w, &h);
   this->aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
 
@@ -187,6 +192,11 @@ void INSTANCE::frame() {
     this->swapchain.imageCount = this->swapchain.images.size();
 
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
+    renderFinishedSemaphores.clear();
+    renderFinishedSemaphores.reserve(swapchain.imageCount);
+    for (int i = 0; i < swapchain.imageCount; ++i)
+      renderFinishedSemaphores.emplace_back(device);
+
     framebufferResized = false;
     SDL_GetWindowSizeInPixels(this->window, &this->w, &this->h);
     aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
@@ -270,7 +280,7 @@ void INSTANCE::frame() {
 
   VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.semaphore};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSemaphore signalSemaphores[] = {currentFrame.renderFinishedSemaphore.semaphore};
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex].semaphore};
 
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,

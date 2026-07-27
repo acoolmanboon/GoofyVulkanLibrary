@@ -207,7 +207,6 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
                                                                                                                                                      bindings(bindings),
                                                                                                                                                      allocator(allocator),
                                                                                                                                                      imageAvailableSemaphore(device),
-                                                                                                                                                     renderFinishedSemaphore(device),
                                                                                                                                                      gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
 
   createCommandPool();

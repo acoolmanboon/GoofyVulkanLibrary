@@ -454,6 +454,7 @@ private:
 
   uint32_t currentFrameIndex = 0;
   uint32_t maxFramesInFlight;
+  std::vector<Semaphore> renderFinishedSemaphores;
   std::vector<VkFence> imagesInFlightFence;
 
   std::vector<UniformBufferBinding> &bindings;
