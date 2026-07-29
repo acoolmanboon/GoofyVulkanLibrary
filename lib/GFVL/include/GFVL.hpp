@@ -30,7 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <sstream>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../lib/GFVL_core.hpp"
 #include "../lib/GFVL_definition.hpp"

@@ -31,7 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../include/GFVL.hpp"
 #define ret(type_, case_) \

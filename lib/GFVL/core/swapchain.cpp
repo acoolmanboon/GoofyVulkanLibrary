@@ -25,7 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <iostream>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;
@@ -48,7 +48,7 @@ void pickFormat(DEVICE &device_, VkSurfaceKHR surface, VkFormat& format, VkColor
   // try to get ideal format
   for (const VkSurfaceFormatKHR &surfaceFormat : formats) {
     if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-      PRINT("Found ideal format!")
+      PRINT("Found ideal format!");
       format = surfaceFormat.format;
       colorSpace = surfaceFormat.colorSpace;
       break;
@@ -76,7 +76,7 @@ VkPresentModeKHR pickPresentMode(DEVICE &device_, VkSurfaceKHR surface) {
 }
 Swapchain::Swapchain(DEVICE& device_, SDL_Window *window, VkSurfaceKHR surface) : device_(device_), presentMode(pickPresentMode(device_, surface)) {
     // giggity
-    PRINT("Attempting to create swapchain")
+    PRINT("Attempting to create swapchain");
 
     VkFormat format;
     VkColorSpaceKHR colorSpace;
@@ -150,7 +150,7 @@ Swapchain::Swapchain(DEVICE& device_, SDL_Window *window, VkSurfaceKHR surface) 
     this->extent = extent;
     this->presentMode = presentMode;
     this->imageCount = count;
-    PRINT("created swapchain")
+    PRINT("created swapchain");
 }
 void Swapchain::recreate(SDL_Window *window, VkSurfaceKHR surface) {
   vkDeviceWaitIdle(device_.logicalDevice);

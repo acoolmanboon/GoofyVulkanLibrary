@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstring>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../include/GFVL.hpp"
 using namespace GFVL;

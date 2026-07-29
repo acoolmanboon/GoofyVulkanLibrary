@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;
@@ -93,7 +93,7 @@ bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint3
       "Failed to get physical device surface support!");
 
     if (graphicsSupport && presentationSupport) {
-      PRINT("Found a queue family with both graphics support and presentation support!")
+      PRINT("Found a queue family with both graphics support and presentation support!");
       graphicsFamilyIndex = i;
       presentFamilyIndex = i;
       break;
@@ -132,7 +132,9 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
     "Failed to enumerate device extension properties!");
 
   std::vector<VkExtensionProperties> deviceExtensions(deviceExtensionCount);
-  CheckVkResult(vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, deviceExtensions.data()));
+  CheckVkResult2(
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &deviceExtensionCount, deviceExtensions.data()),
+    "Failed to enumerate device extension properties!");
   /* this prints too damn much
   if (GFVL_DEBUG_MODE) {
     std::cout << "[GFVL] Available device extensions:\n";
@@ -144,14 +146,14 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
   for (const VkExtensionProperties &ext : deviceExtensions) {
     if (strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
       enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-      PRINT("Enabling extension: " << VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+      PRINT("Enabling extension: " << VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
   }
 
   if (enabledDeviceExtensions.empty()) {
     throw std::runtime_error("[GFVL] Required extension VK_KHR_swapchain not found.");
   }
-  PRINT("Enabled device extension count: " << enabledDeviceExtensions.size())
+  PRINT("Enabled device extension count: " << enabledDeviceExtensions.size());
 
   return enabledDeviceExtensions;
 }
@@ -159,15 +161,18 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
 namespace GFVL {
 DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference) {
   uint32_t physicalDeviceCount = 0;
-  CheckVkResult(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr));
+  CheckVkResult2(
+    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),
+    "Failed to enumerate physical devices?");
   if (physicalDeviceCount == 0)
     throw std::runtime_error("[GFVL] No Vulkan-compatible GPUs found.");
   std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
 
-  CheckVkResult(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data()));
+  CheckVkResult2(
+    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data()),
+    "Failed to enumerate physical devices!");
 
-  if (DEBUG_MODE)
-    std::cout << "[GFVL] Found " << physicalDeviceCount << " Vulkan-compatible devices.\n";
+  PRINT("Found " << physicalDeviceCount << " Vulkan-compatible devices.\n");
 
   int bestScore = -1;
 
@@ -185,41 +190,41 @@ DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preferen
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
     const VkDeviceSize dedicatedVideoMemory = getDeviceVRAM(physicalDevice);
-    if (DEBUG_MODE) {
-      std::cout << "[GFVL] Device\n";
-      std::cout << "  Name: " << properties.deviceName << '\n';
-      std::cout << "  API Version: " << VK_VERSION_MAJOR(properties.apiVersion) << '.' << VK_VERSION_MINOR(properties.apiVersion) << '.' << VK_VERSION_PATCH(properties.apiVersion) << '\n';
-      std::cout << "  Driver Version: " << properties.driverVersion << '\n';
-      std::cout << "  Vendor ID: " << properties.vendorID << '\n';
-      std::cout << "  Device ID: " << properties.deviceID << '\n';
-      std::cout << "  Graphics Family Index: " << graphicsFamilyIndex << '\n';
-      std::cout << "  Present Family Index: " << presentFamilyIndex << '\n';
-      std::cout << "  Dedicated VRAM: " << dedicatedVideoMemory / (1024ull * 1024ull) << " MB\n";
+    #ifdef GFVL_DEBUG_IMPLEMENTATION
+    std::cout << "[GFVL] Device\n";
+    std::cout << "  Name: " << properties.deviceName << '\n';
+    std::cout << "  API Version: " << VK_VERSION_MAJOR(properties.apiVersion) << '.' << VK_VERSION_MINOR(properties.apiVersion) << '.' << VK_VERSION_PATCH(properties.apiVersion) << '\n';
+    std::cout << "  Driver Version: " << properties.driverVersion << '\n';
+    std::cout << "  Vendor ID: " << properties.vendorID << '\n';
+    std::cout << "  Device ID: " << properties.deviceID << '\n';
+    std::cout << "  Graphics Family Index: " << graphicsFamilyIndex << '\n';
+    std::cout << "  Present Family Index: " << presentFamilyIndex << '\n';
+    std::cout << "  Dedicated VRAM: " << dedicatedVideoMemory / (1024ull * 1024ull) << " MB\n";
 
-      switch (properties.deviceType) {
-      case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-        std::cout << "  Type: Discrete GPU\n";
-        break;
+    switch (properties.deviceType) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+      std::cout << "  Type: Discrete GPU\n";
+      break;
 
-      case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-        std::cout << "  Type: Integrated GPU\n";
-        break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+      std::cout << "  Type: Integrated GPU\n";
+      break;
 
-      case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-        std::cout << "  Type: Virtual GPU\n";
-        break;
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+      std::cout << "  Type: Virtual GPU\n";
+      break;
 
-      case VK_PHYSICAL_DEVICE_TYPE_CPU:
-        std::cout << "  Type: CPU\n";
-        break;
+    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+      std::cout << "  Type: CPU\n";
+      break;
 
-      default:
-        std::cout << "  Type: Other\n";
-        break;
-      }
-
-      std::cout << "  Score: " << getDeviceScore(physicalDevice, preference) << '\n';
+    default:
+      std::cout << "  Type: Other\n";
+      break;
     }
+
+    std::cout << "  Score: " << getDeviceScore(physicalDevice, preference) << '\n';
+    #endif
     if (candidateScore > bestScore) {
       bestScore = candidateScore;
       this->physicalDevice = physicalDevice;
@@ -231,17 +236,16 @@ DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preferen
   if (this->physicalDevice == VK_NULL_HANDLE)
     throw std::runtime_error("[GFVL] No suitable Vulkan device found.");
 
-  if (DEBUG_MODE) {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(this->physicalDevice, &properties);
+  #ifdef GFVL_DEBUG_IMPLEMENTATION  
+  VkPhysicalDeviceProperties properties{};
+  vkGetPhysicalDeviceProperties(this->physicalDevice, &properties);
 
-    std::cout << "[GFVL] Selected Device: " << properties.deviceName << '\n';
-    std::cout << "[GFVL] Graphics Queue Family: " << this->graphicsFamilyIndex << '\n';
-    std::cout << "[GFVL] Present Queue Family: " << this->presentFamilyIndex << '\n';
-    std::cout << "[GFVL] Dedicated VRAM: " << this->videoMemory / (1024ull * 1024ull) << " MB\n";
-    std::cout << "[GFVL] Final Score: " << bestScore << '\n';
-  }
-
+  std::cout << "[GFVL] Selected Device: " << properties.deviceName << '\n';
+  std::cout << "[GFVL] Graphics Queue Family: " << this->graphicsFamilyIndex << '\n';
+  std::cout << "[GFVL] Present Queue Family: " << this->presentFamilyIndex << '\n';
+  std::cout << "[GFVL] Dedicated VRAM: " << this->videoMemory / (1024ull * 1024ull) << " MB\n";
+  std::cout << "[GFVL] Final Score: " << bestScore << '\n';
+  #endif
   const float queuePriority = 1.0f;
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
   // why the hell does it indent like this when i paste the code

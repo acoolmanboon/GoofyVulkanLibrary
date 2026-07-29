@@ -131,7 +131,7 @@ extern "C" {
 
 #ifndef VMA_VULKAN_HEADERS_ALREADY_INCLUDED
     #if !defined(VULKAN_H_)
-        #include <vulkan/vulkan.h>
+        #include "../lib/volk.h"
     #endif
 #endif
 

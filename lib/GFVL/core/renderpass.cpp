@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;

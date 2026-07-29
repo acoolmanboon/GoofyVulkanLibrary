@@ -21,10 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <cstring>
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "../lib/volk.h"
 
 #include "../lib/GFVL_core.hpp"
 using namespace GFVL;
@@ -49,7 +48,7 @@ SHADER::SHADER(DEVICE &device, VkShaderStageFlagBits stage, const char *filename
       .codeSize = buffer.size(),
       .pCode = reinterpret_cast<const uint32_t *>(buffer.data())};
   CheckVkResult(vkCreateShaderModule(device.logicalDevice, &shaderCreationInfo, nullptr, &this->shaderModule));
-  PRINT("succesfully created shader!")
+  PRINT("succesfully created shader!");
 }
 SHADER::SHADER(SHADER &&other) noexcept : device(other.device), shaderModule(other.shaderModule), stage(other.stage) {
   other.shaderModule = VK_NULL_HANDLE; // this just prevents the vulkan shader module from being destroyed

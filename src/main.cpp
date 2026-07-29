@@ -28,7 +28,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <vulkan/vulkan.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
