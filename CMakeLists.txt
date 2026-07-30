@@ -23,6 +23,10 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 )
 message(STATUS "SDL includes = ${SDL_INCLUDES}")
 add_executable(main ${SOURCES})
+target_include_directories(main PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/lib/GFVL/lib"
+)
+
 target_compile_options(main PRIVATE
     -fno-omit-frame-pointer
     -g

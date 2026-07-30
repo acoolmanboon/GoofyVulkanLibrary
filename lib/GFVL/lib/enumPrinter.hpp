@@ -21,19 +21,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * @brief A helper to print enum names in GFVL.hpp.
  * @details No need to include this one, it's an internal helper.
  */
-#ifndef ENUMPRINTER_HPP
-#define ENUMPRINTER_HPP
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <vulkan/vulkan.h>
+#pragma once
 
-#include "../include/GFVL.hpp"
+#include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
+
 #define ret(type_, case_) \
   case (type_::case_):    \
     return #case_;        \
@@ -55,4 +47,3 @@ inline std::string_view enumToString(const VertexBuffer::MemoryAllocation &value
 }
 } // namespace GFVL
 
-#endif

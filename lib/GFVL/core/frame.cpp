@@ -21,144 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * @brief PLACEHOLDER
  * @details Don't include this. Unless you wanna do some master hacking?
  */
-#ifndef GFVL_FRAME_HPP
-#define GFVL_FRAME_HPP
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <vector>
-#include <vulkan/vulkan.h>
+#include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
-#include "../lib/GFVL_core.hpp"
-#include "../lib/vk_mem_alloc.h"
-#ifdef ignorewhateverthisisimjustgettingsyntaxhighlighting
-class BINDING {
-public:
-  DEVICE &device;
-  VkBuffer buffer{};
-  VkDeviceMemory memory{};
-  VkDescriptorSet descriptorSet{};
-  VkDescriptorSetLayoutBinding layout{};
-  VkDescriptorBufferInfo bufferInfo{};
-  void *data{};
-  size_t size{};
-
-  BINDING(DEVICE &device, size_t size, void *ubo, uint32_t binding);
-  void update(void *ubo);
-  ~BINDING();
-};
-
-class UNIFORM_BUFFER {
-public:
-  DEVICE &device;
-  std::vector<BINDING> bindings;
-  VkDescriptorSetLayout descriptorSetLayout{};
-  VkDescriptorPool descriptorPool{};
-  VkDescriptorSet descriptorSet{};
-
-  UNIFORM_BUFFER(DEVICE &device, std::vector<UNIFORM_BUFFER_BINDING> &bindings);
-  ~UNIFORM_BUFFER();
-
-  BINDING &emplaceBinding(size_t size, void *ubo);
-  void create();
-  void bind(VkCommandBuffer &commandBuffer, PIPELINE &pipeline, uint32_t set);
-
-  UNIFORM_BUFFER(const UNIFORM_BUFFER &) = delete;
-  UNIFORM_BUFFER &operator=(const UNIFORM_BUFFER &) = delete;
-
-  UNIFORM_BUFFER(const UNIFORM_BUFFER &&) = delete;
-  UNIFORM_BUFFER &operator=(const UNIFORM_BUFFER &&) = delete;
-};
-BINDING::BINDING(DEVICE &device, size_t size, void *ubo, uint32_t binding) : device(device), size(size) {
-  PRINT("Creating binding at binding " << binding)
-  VkBufferCreateInfo createInfo{.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, .size = size, .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
-  CheckVkResult(vkCreateBuffer(device.logicalDevice, &createInfo, nullptr, &this->buffer));
-
-  VkMemoryRequirements requirements;
-  vkGetBufferMemoryRequirements(device.logicalDevice, this->buffer, &requirements);
-
-  VkMemoryAllocateInfo allocation{.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, .allocationSize = requirements.size, .memoryTypeIndex = findMemoryType(device.physicalDevice, requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
-  CheckVkResult(vkAllocateMemory(device.logicalDevice, &allocation, nullptr, &this->memory));
-
-  CheckVkResult(vkBindBufferMemory(device.logicalDevice, this->buffer, this->memory, 0));
-
-  this->layout = {.binding = binding, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS};
-
-  this->bufferInfo = {.buffer = this->buffer, .offset = 0, .range = size};
-
-  vkMapMemory(device.logicalDevice, this->memory, 0, size, 0, &this->data);
-
-  memcpy(this->data, ubo, size);
-}
-void BINDING::update(void *ubo) {
-  memcpy(this->data, ubo, this->size);
-}
-BINDING::~BINDING() {
-  PRINT("Binding " << this->layout.binding << " was destroyed")
-  vkUnmapMemory(device.logicalDevice, this->memory);
-  vkDestroyBuffer(device.logicalDevice, this->buffer, nullptr);
-  vkFreeMemory(device.logicalDevice, this->memory, nullptr);
-}
-UNIFORM_BUFFER::UNIFORM_BUFFER(DEVICE &device, std::vector<UNIFORM_BUFFER_BINDING> &bindings) : device(device) {
-  this->bindings.reserve(16);
-  uint32_t currentBinding = 0;
-  for (UNIFORM_BUFFER_BINDING &binding : bindings) {
-    if (bindings.size() == 16)
-      THROW_EXCEPTION("You cannot have more than 16 bindings!");
-    this->bindings.emplace_back(device, binding.size, binding.ubo, currentBinding);
-    currentBinding++;
-  }
-  this->create();
-}
-
-void UNIFORM_BUFFER::create() {
-  std::vector<VkDescriptorSetLayoutBinding> layouts;
-
-  for (auto &binding : bindings)
-    layouts.push_back(binding.layout);
-
-  VkDescriptorSetLayoutCreateInfo layoutInfo{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, .bindingCount = static_cast<uint32_t>(layouts.size()), .pBindings = layouts.data()};
-  CheckVkResult(vkCreateDescriptorSetLayout(device.logicalDevice, &layoutInfo, nullptr, &descriptorSetLayout));
-
-  VkDescriptorPoolSize poolSize{.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .descriptorCount = static_cast<uint32_t>(bindings.size())};
-  VkDescriptorPoolCreateInfo poolInfo{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO, .maxSets = 1, .poolSizeCount = 1, .pPoolSizes = &poolSize};
-
-  CheckVkResult(vkCreateDescriptorPool(device.logicalDevice, &poolInfo, nullptr, &descriptorPool));
-
-  VkDescriptorSetAllocateInfo allocation{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO, .descriptorPool = descriptorPool, .descriptorSetCount = 1, .pSetLayouts = &descriptorSetLayout};
-
-  CheckVkResult(vkAllocateDescriptorSets(device.logicalDevice, &allocation, &descriptorSet));
-
-  std::vector<VkWriteDescriptorSet> writes;
-  for (auto &binding : bindings) {
-    writes.push_back({.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = descriptorSet, .dstBinding = binding.layout.binding, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, .pBufferInfo = &binding.bufferInfo});
-  }
-
-  vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
-  PRINT("Succesfully created uniform buffers")
-}
-void UNIFORM_BUFFER::bind(VkCommandBuffer &commandBuffer, PIPELINE &pipeline, uint32_t set) {
-  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, set, 1, &descriptorSet, 0, nullptr);
-}
-UNIFORM_BUFFER::~UNIFORM_BUFFER() {
-  vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
-  vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
-}
-#endif
-/*
-instance(InitializeVkInstance(applicationInfo)),
-window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
-surface(InitializeVkSurface(this->instance, this->window)),
-device(this->instance, this->surface, applicationInfo.preferredGPU),
-swapchain(this->device, this->window, this->surface),
-renderPass(this->device, this->swapchain),
-uniformBuffer(this->device, bindings),
-shaderStages(InitializeShaderStages(device, stages)),
-pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {this->uniformBuffer.descriptorSetLayout}),
-framebuffer(this->device, this->swapchain, this->renderPass),
-commandPool(this->device, this->framebuffer),
-maxFramesInFlight(applicationInfo.maxFramesInFlight) {
-*/
 namespace GFVL {
 void Frame::createCommandPool() {
   VkCommandPoolCreateInfo commandPoolCreateInfo{
@@ -207,7 +72,6 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
                                                                                                                                                      bindings(bindings),
                                                                                                                                                      allocator(allocator),
                                                                                                                                                      imageAvailableSemaphore(device),
-                                                                                                                                                     renderFinishedSemaphore(device),
                                                                                                                                                      gpuFinishedFence(device, VK_FENCE_CREATE_SIGNALED_BIT) {
 
   createCommandPool();
@@ -296,4 +160,3 @@ Frame::~Frame() {
   }
 }
 } // namespace GFVL
-#endif

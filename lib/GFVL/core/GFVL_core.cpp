@@ -16,14 +16,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <iostream>
-#include <stdexcept>
-#include <vulkan/vulkan.h>
 
 #define VMA_IMPLEMENTATION
-#include "../lib/GFVL_core.hpp"
+
+#include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
+
 using namespace GFVL;
 
 namespace GFVL {
@@ -87,7 +85,7 @@ namespace GFVL {
 
   /**
   * @brief Checks a VkResult, if result is not VK_SUCCESS, throw an error.
-  *
+  * @details THIS IS DEPRECATED, USE CHECKVKRESULT2
   * @param result A VkResult to check.
   * @return VkResult Simply passes the result parameter to the output.
   */
@@ -115,24 +113,41 @@ namespace GFVL {
     return result;
   }
 
+  /**
+   * @brief Finds memory with suitable flag bitmask.
+   *
+   * @param physicalDevice a Vulkan physical device
+   * @param typeFilter memoryTypeBits of VkMemoryRequirements
+   * @param properties The flags to use for the bitmask.
+   * @return uint32_t The index of the memory type
+   */
   uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-    VkPhysicalDeviceMemoryProperties memProperties;
+    VkPhysicalDeviceMemoryProperties memoryProperties;
 
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
       bool typeSupported = typeFilter & (1 << i);
-
-      bool propertiesSupported = (memProperties.memoryTypes[i].propertyFlags & properties) == properties;
+      bool propertiesSupported = (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties;
 
       if (typeSupported && propertiesSupported)
         return i;
     }
 
-    THROW_EXCEPTION("failed to find memory type")
+    THROW_EXCEPTION("Failed to find memory type during findMemoryType")
   }
 
+  /**
+   * @brief Creates a Vulkan buffer object.
+   * 
+   * @param device a GFVL device.
+   * @param size Size of the buffer to create in bytes.
+   * @param usage Flags of how this buffer will be used
+   * @param properties The memory type to allocate this buffer to
+   * @param buffer Pointer to the buffer to create
+   * @param bufferMemory Pointer to the device memory to create.
+
+   */
   void createBuffer(DEVICE& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
     VkBufferCreateInfo bufferInfo{
       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -141,17 +156,30 @@ namespace GFVL {
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
 
-    CheckVkResult(vkCreateBuffer(device.logicalDevice, &bufferInfo, nullptr, &buffer));
+    CheckVkResult2(
+      vkCreateBuffer(device.logicalDevice, &bufferInfo, nullptr, &buffer),
+      "Failed to create a VkBuffer in createBuffer function!");
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device.logicalDevice, buffer, &memRequirements);
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(device.physicalDevice, memRequirements.memoryTypeBits, properties);
+    VkMemoryAllocateInfo allocInfo{
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .allocationSize = memRequirements.size,
+      .memoryTypeIndex = findMemoryType(device.physicalDevice, memRequirements.memoryTypeBits, properties)
+    };
 
-    CheckVkResult(vkAllocateMemory(device.logicalDevice, &allocInfo, nullptr, &bufferMemory));
-    CheckVkResult(vkBindBufferMemory(device.logicalDevice, buffer, bufferMemory, 0));
+
+    CheckVkResult2(
+      vkAllocateMemory(device.logicalDevice, &allocInfo, nullptr, &bufferMemory),
+      "");
+
+    CheckVkResult2(
+      vkBindBufferMemory(device.logicalDevice, buffer, bufferMemory, 0),
+      "");
+
+    #ifdef GFVL_DEBUG_IMPLEMENTATION
+
+    #endif
   }
 }
