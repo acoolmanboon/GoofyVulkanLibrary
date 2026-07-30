@@ -64,16 +64,16 @@ DescriptorSetLayout::DescriptorSetLayout(DEVICE &device, std::vector<UniformBuff
       "Failed to create descriptor set layout in DescriptorSetLayout creation!");
 
   #ifdef GFVL_ENABLE_VK_DEBUG_EXTENSION
-  VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
-    .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
-    .pNext = nullptr,
-    .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-    .objectHandle = reinterpret_cast<uint64_t>(&descriptorSetLayout),
-    .pObjectName = "DescriptorSetLayout classes vkDescriptorSetLayout object"
-  };
-  CheckVkResult2(
-      vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
-      "Failed to set debug utils name for Descriptor Set Layout object!");
+  // VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+  //   .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+  //   .pNext = nullptr,
+  //   .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+  //   .objectHandle = reinterpret_cast<uint64_t>(&descriptorSetLayout),
+  //   .pObjectName = "DescriptorSetLayout classes vkDescriptorSetLayout object"
+  // };
+  // CheckVkResult2(
+  //     vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
+  //     "Failed to set debug utils name for Descriptor Set Layout object!");
   #endif
 }
 /**

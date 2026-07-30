@@ -16,14 +16,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#define VK_NO_PROTOTYPES
-#include "../lib/volk.h"
-
 
 #define VMA_IMPLEMENTATION
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
-#include "../lib/vk_mem_alloc.h"
 
 #include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>

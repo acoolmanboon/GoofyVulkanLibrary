@@ -30,10 +30,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <vector>
 
-#define VK_NO_PROTOTYPES
-
-#include "../lib/volk.h"
-#include "../lib/vk_mem_alloc.h"
+#include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #define GFVL_DEBUG_IMPLEMENTATION // Enabling this allows for debug mode to be enabled. Use to troubleshoot errors, but it adds overhead.
 

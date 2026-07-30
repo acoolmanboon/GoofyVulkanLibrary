@@ -26,9 +26,6 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
-  CheckVkResult2(
-    volkInitialize(),
-    "Failed to initialize Volk!");
   VkApplicationInfo appInfo{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
       .pApplicationName = applicationInfo.applicationName,
@@ -74,8 +71,6 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
       &instanceCreationInfo,
       NULL,
       &instance));
-
-  volkLoadInstance(instance);
 
   return instance;
 }
