@@ -16,16 +16,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include "../lib/volk.h"
+#include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
-#include "../lib/GFVL_core.hpp"
 using namespace GFVL;
 
 // USER-DEFINED STUFF

@@ -43,7 +43,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // cmake -B build -DCMAKE_BUILD_TYPE=Debug
 // cmake -B build -DCMAKE_BUILD_TYPE=Release
 // cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-// rm -Force build/main.exe; rm -Force src/fragment_shader.spv; rm -Force src/vertex_shader.spv; glslc src/vertex_shader.vert -o src/vertex_shader.spv; glslc src/fragment_shader.frag -o src/fragment_shader.spv;  cmake --build build --verbose; build/main.exe
+// clear; rm -Force build/main.exe; rm -Force src/fragment_shader.spv; rm -Force src/vertex_shader.spv; glslc src/vertex_shader.vert -o src/vertex_shader.spv; glslc src/fragment_shader.frag -o src/fragment_shader.spv;  cmake --build build --verbose; build/main.exe
 // USER-DEFINED STUFF
 
 struct vertice {

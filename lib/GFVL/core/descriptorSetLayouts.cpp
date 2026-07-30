@@ -19,19 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /**
  * @file GFVL_descriptorSetLayouts.hpp
  * @brief Handles Vulkan descriptor layouts.
- * @details Don't include this. Unless you wanna do some master hacking?
+ * @details Don't include this. Unless+ you wanna do some master hacking?
  */
 
-#ifndef GFVL_FRAME_HPP
-#define GFVL_FRAME_HPP
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <vector>
-
-#include "../lib/volk.h"
-#include "../lib/GFVL_core.hpp"
-#include "../lib/vk_mem_alloc.h"
+#include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
 namespace GFVL {
 /**
@@ -91,4 +83,3 @@ DescriptorSetLayout::~DescriptorSetLayout() {
   //vkDestroyDescriptorSetLayout(device.logicalDevice, descriptorSetLayout, nullptr);
 }
 } // namespace GFVL
-#endif

@@ -21,8 +21,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * @brief Defines some helper stuff for GFVL.
  * @details Here you can turn on some developer settings for GFVL.
  */
-#ifndef GFVL_DEFINITION_HPP
-#define GFVL_DEFINITION_HPP
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+#include <cstdint>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <vector>
+
+#define VK_NO_PROTOTYPES
+
+#include "../lib/volk.h"
+#include "../lib/vk_mem_alloc.h"
+
 #define GFVL_DEBUG_IMPLEMENTATION // Enabling this allows for debug mode to be enabled. Use to troubleshoot errors, but it adds overhead.
 
 #ifdef GFVL_DEBUG_IMPLEMENTATION
@@ -49,4 +61,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   };
 
 #define GFVL_VERSION 1 // internal application name
-#endif
