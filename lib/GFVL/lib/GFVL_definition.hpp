@@ -19,12 +19,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 /**
  * @file GFVL_definition.hpp
  * @brief Defines some helper stuff for GFVL.
- * @details Don't include this. Unless you wanna do some master hacking?
+ * @details Here you can turn on some developer settings for GFVL.
  */
-#ifndef GFVL_DEFINITION_HPP
-#define GFVL_DEFINITION_HPP
-#define PRINT(message) std::cout << "[GFVL] " << message << "\n";
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
+#include <cstdint>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <vector>
 
+#include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
+
+#define GFVL_DEBUG_IMPLEMENTATION // Enabling this allows for debug mode to be enabled. Use to troubleshoot errors, but it adds overhead.
+
+#ifdef GFVL_DEBUG_IMPLEMENTATION
+#define DEBUG_MODE true
+#define PRINT(message) std::cout << "[GFVL] " << message << "\n";
+#define GFVL_ENABLE_VK_DEBUG_EXTENSION // Developer option, comment out to disable usage of Vk_debug_utils extension
+#else
+#define DEBUG_MODE false
+#define PRINT(message) (void)0;
+#endif
 #define THROW_WARNING(reason) std::cerr << "[GFVL] " << message << "\n";
 #define THROW_EXCEPTION(reason)                 \
   do {                                          \
@@ -41,5 +59,3 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   };
 
 #define GFVL_VERSION 1 // internal application name
-#define DEBUG_MODE true
-#endif

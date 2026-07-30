@@ -16,28 +16,15 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <vulkan/vulkan.h>
 
+#include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
 #include "../include/GFVL.hpp"
-#include "../lib/GFVL_core.hpp"
-#include "../lib/GFVL_definition.hpp"
+
 using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-VkSurfaceKHR InitializeVkSurface(VkInstance instance, SDL_Window *window) {
-  VkSurfaceKHR surface;
-  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
-    THROW_EXCEPTION(SDL_GetError());
-  return surface;
-}
 VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   VkApplicationInfo appInfo{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -53,9 +40,9 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
     THROW_EXCEPTION("No instance extensions found..")
 
   if (DEBUG_MODE) { // optionally print the info
-    PRINT("Detected instance extensions :")
+    PRINT("Detected instance extensions :");
     for (uint32_t i = 0; i < instanceExtensionCount; i++)
-      PRINT("  " << instanceExtensions[i])
+      PRINT("  " << instanceExtensions[i]);
   }
   const char *validationLayer = "VK_LAYER_KHRONOS_validation";
 
@@ -67,6 +54,7 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
       .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
       .enabledValidationFeatureCount = 2,
       .pEnabledValidationFeatures = enables};
+
   VkInstanceCreateInfo instanceCreationInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = &features,
@@ -85,6 +73,12 @@ VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
       &instance));
 
   return instance;
+}
+VkSurfaceKHR InitializeVkSurface(VkInstance instance, SDL_Window *window) {
+  VkSurfaceKHR surface;
+  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
+    THROW_EXCEPTION(SDL_GetError());
+  return surface;
 }
 
 std::vector<SHADER> InitializeShaderStages(DEVICE &device, std::vector<SHADER_STAGE> &stages) {

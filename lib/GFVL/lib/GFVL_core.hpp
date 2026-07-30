@@ -21,19 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * @brief Defines GFVL core functions.
  * @details Don't include this. Unless you wanna do some master hacking?
  */
-#ifndef GFVL_CORE_CPP
-#define GFVL_CORE_CPP
-#include "../lib/vk_mem_alloc.h"
-#include "GFVL_definition.hpp"
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <cstdint>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <vulkan/vulkan.h>
+#pragma once
 
+#include <GFVL_definition.hpp>
 
 namespace GFVL {
 class PIPELINE;
@@ -400,4 +390,3 @@ VkResult CheckVkResult2(VkResult result, const char *reason);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 void createBuffer(DEVICE &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 } // namespace GFVL
-#endif
