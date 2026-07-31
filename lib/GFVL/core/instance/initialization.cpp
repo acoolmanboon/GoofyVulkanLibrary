@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../../include/GFVL.hpp"
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <cstring>
 
 using namespace GFVL;
 
@@ -38,23 +39,34 @@ std::vector<VkValidationFeatureEnableEXT> getEnabledValidationFeatures() {
   return enables;
 }
 std::vector<const char *> getEnabledInstanceExtensions() {
-  uint32_t instanceExtensionCount = 0;
-  const char *const *instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&instanceExtensionCount);
+  uint32_t SDLinstanceExtensionCount = 0;
+  const char *const *SDLinstanceExtensions = SDL_Vulkan_GetInstanceExtensions(&SDLinstanceExtensionCount);
+  ASSERTIF(SDLinstanceExtensions == nullptr, "Failed to get SDL instance extensions! However, " << SDLinstanceExtensionCount << " instance extensions were detected. (If this is not zero, something is wrong)")
+  std::vector<const char *> extensions(SDLinstanceExtensions, SDLinstanceExtensions + SDLinstanceExtensionCount);
 
-  if (instanceExtensions == nullptr)
-    THROW_EXCEPTION("No instance extensions found..")
+  uint32_t availableInstanceExtensionCount = 0;
+  CheckVkResult2(
+      vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, nullptr),
+      "Failed to enumerate available instance extension count!");
 
-  std::vector<const char *> extensions(instanceExtensions, instanceExtensions + instanceExtensionCount);
+  std::vector<VkExtensionProperties> availableInstanceExtensions(availableInstanceExtensionCount);
+  CheckVkResult2(
+      vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, availableInstanceExtensions.data()),
+      "Failed to enumerate available instance extensions!");
 
-#ifdef GFVL_DEBUG_IMPLEMENTATION
-  PRINT("Detected instance extensions :");
-  for (uint32_t i = 0; i < instanceExtensionCount; i++)
-    PRINT("  " << instanceExtensions[i]);
-#endif
-
+  for (const VkExtensionProperties &availableExtension : availableInstanceExtensions) {
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
-  extensions.push_back("VK_EXT_debug_utils");
+    if (strcmp(availableExtension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
+      extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
 #endif
+  }
+#ifdef GFVL_DEBUG_IMPLEMENTATION
+  PRINT("SDL instance extensions :");
+  for (uint32_t i = 0; i < SDLinstanceExtensionCount; i++)
+    PRINT("  " << SDLinstanceExtensions[i]);
+#endif
+
   return extensions;
 }
 std::vector<const char *> getEnabledLayers() {
@@ -62,7 +74,7 @@ std::vector<const char *> getEnabledLayers() {
 #ifdef GFVL_ENABLE_VK_VALIDATION_LAYERS
   enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
-      return enabledLayers;
+  return enabledLayers;
 }
 VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   VkApplicationInfo appInfo{
