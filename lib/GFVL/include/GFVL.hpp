@@ -449,6 +449,11 @@ private:
 
   std::vector<UniformBufferBinding> &bindings;
 
+private:
+  VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo);
+  VkSurfaceKHR InitializeVkSurface();
+  std::vector<SHADER> InitializeShaderStages(std::vector<SHADER_STAGE> &stages);
+
 public:
   std::vector<GFVL::Mesh> meshesToRender;
 

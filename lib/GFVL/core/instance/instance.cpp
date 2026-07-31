@@ -17,96 +17,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+#include "../../include/GFVL.hpp"
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
-#include "../include/GFVL.hpp"
 
 using namespace GFVL;
-
 // USER-DEFINED STUFF
 namespace GFVL {
-VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo) {
-  VkApplicationInfo appInfo{
-      .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-      .pApplicationName = applicationInfo.applicationName,
-      .applicationVersion = applicationInfo.applicationVersion,
-      .pEngineName = "goofyVLib",
-      .engineVersion = GFVL_VERSION,
-      .apiVersion = VK_API_VERSION_1_4};
-
-  uint32_t instanceExtensionCount = 0;
-  const char *const *instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&instanceExtensionCount);
-  if (instanceExtensions == NULL)
-    THROW_EXCEPTION("No instance extensions found..")
-
-  if (DEBUG_MODE) { // optionally print the info
-    PRINT("Detected instance extensions :");
-    for (uint32_t i = 0; i < instanceExtensionCount; i++)
-      PRINT("  " << instanceExtensions[i]);
-  }
-  const char *validationLayer = "VK_LAYER_KHRONOS_validation";
-
-  VkValidationFeatureEnableEXT enables[] = {
-      VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-      VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT};
-
-  VkValidationFeaturesEXT features{
-      .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-      .enabledValidationFeatureCount = 2,
-      .pEnabledValidationFeatures = enables};
-
-  VkInstanceCreateInfo instanceCreationInfo = {
-      .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-      .pNext = &features,
-      .flags = 0,
-      .pApplicationInfo = &appInfo,
-      .enabledLayerCount = 1,
-      .ppEnabledLayerNames = &validationLayer,
-      .enabledExtensionCount = instanceExtensionCount,
-      .ppEnabledExtensionNames = instanceExtensions,
-  };
-
-  VkInstance instance;
-  GFVL::CheckVkResult(vkCreateInstance(
-      &instanceCreationInfo,
-      NULL,
-      &instance));
-
-  return instance;
-}
-VkSurfaceKHR InitializeVkSurface(VkInstance instance, SDL_Window *window) {
-  VkSurfaceKHR surface;
-  if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
-    THROW_EXCEPTION(SDL_GetError());
-  return surface;
-}
-
-std::vector<SHADER> InitializeShaderStages(DEVICE &device, std::vector<SHADER_STAGE> &stages) {
-  std::vector<SHADER> shaders;
-  for (SHADER_STAGE &stage : stages) {
-    shaders.emplace_back(device, stage.flags, stage.filename);
-  }
-  return shaders;
-}
-
-Mesh& INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
+Mesh &INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
   return meshesToRender.emplace_back(device, createInfo, commandPool);
 }
 void INSTANCE::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
 }
-INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) :   instance(InitializeVkInstance(applicationInfo)),
-                                                                                                                                                                window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
-                                                                                                                                                                surface(InitializeVkSurface(this->instance, this->window)),
-                                                                                                                                                                device(this->instance, this->surface, applicationInfo.preferredGPU),
-                                                                                                                                                                swapchain(this->device, this->window, this->surface),
-                                                                                                                                                                renderPass(this->device, this->swapchain),
-                                                                                                                                                                shaderStages(InitializeShaderStages(device, stages)), 
-                                                                                                                                                                bindings(bindings),
-                                                                                                                                                                descriptorSetLayout(device, bindings),
-                                                                                                                                                                pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
-                                                                                                                                                                framebuffer(this->device, this->swapchain, this->renderPass),
-                                                                                                                                                                maxFramesInFlight(applicationInfo.maxFramesInFlight) {
+INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
+                                                                                                                                                              window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
+                                                                                                                                                              surface(InitializeVkSurface()),
+                                                                                                                                                              device(this->instance, this->surface, applicationInfo.preferredGPU),
+                                                                                                                                                              swapchain(this->device, this->window, this->surface),
+                                                                                                                                                              renderPass(this->device, this->swapchain),
+                                                                                                                                                              shaderStages(InitializeShaderStages(stages)),
+                                                                                                                                                              bindings(bindings),
+                                                                                                                                                              descriptorSetLayout(device, bindings),
+                                                                                                                                                              pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
+                                                                                                                                                              framebuffer(this->device, this->swapchain, this->renderPass),
+                                                                                                                                                              maxFramesInFlight(applicationInfo.maxFramesInFlight) {
   VmaAllocatorCreateInfo allocatorCreateinfo{
       .physicalDevice = device.physicalDevice,
       .device = device.logicalDevice,
@@ -220,7 +155,6 @@ void INSTANCE::frame() {
   VkClearValue clearValues[2]{};
   clearValues[0].color = {{0.05f, 0.05f, 0.05f, 1.0f}};
   clearValues[1].depthStencil = {1.0f, 0};
-
 
   VkRenderPassBeginInfo renderPassInfo{
       .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
