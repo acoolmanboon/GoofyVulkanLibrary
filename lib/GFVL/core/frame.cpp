@@ -90,11 +90,11 @@ Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   uniformBuffers.reserve(bindings.size());
 
   for (const UniformBufferBinding &binding : bindings) {
-    ASSERTIF(binding.ubo == nullptr, "UniformBufferBinding ubo cannot be nullptr!")
-    ASSERTIF(binding.size == 0, "UniformBufferBinding size cannot be 0 bytes!")
-    ASSERTIF(binding.shaderStage == 0, "UniformBufferBinding shader stage has no flags! This should not be possible unless it is explicitly initialized as such.")
-    ASSERTIF(binding.arrayCount == 0, "UniformBufferBinding array count is 0. This should not be possible unless you explicitly initialized it to 0.")
-    ASSERTIF(binding.arrayCount != 1, "UniformBufferBinding array count being 1 is only implemented.")
+    ASSERTIF(binding.ubo == nullptr, "UniformBufferBinding ubo cannot be nullptr!");
+    ASSERTIF(binding.size == 0, "UniformBufferBinding size cannot be 0 bytes!");
+    ASSERTIF(binding.shaderStage == 0, "UniformBufferBinding shader stage has no flags! This should not be possible unless it is explicitly initialized as such.");
+    ASSERTIF(binding.arrayCount == 0, "UniformBufferBinding array count is 0. This should not be possible unless you explicitly initialized it to 0.");
+    ASSERTIF(binding.arrayCount != 1, "UniformBufferBinding array count being 1 is only implemented.");
     // this may or may not work
     FrameUniformBuffer uniformBuffer{};
 

@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#include "../../include/GFVL.hpp"
+#include <GFVL.hpp>
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
 

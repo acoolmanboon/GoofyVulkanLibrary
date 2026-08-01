@@ -107,7 +107,7 @@ public:
     other.semaphore = VK_NULL_HANDLE;
   };
   Semaphore &operator=(Semaphore &&other) {
-    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices")
+    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices");
     if (this == &other)
       return *this;
 
@@ -142,7 +142,7 @@ public:
     other.fence = VK_NULL_HANDLE;
   };
   Fence &operator=(Fence &&other) {
-    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices")
+    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices");
     if (this == &other)
       return *this;
 

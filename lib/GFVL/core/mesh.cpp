@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
-#include "../include/GFVL.hpp"
+#include <GFVL.hpp>
 
 using namespace GFVL;
 
