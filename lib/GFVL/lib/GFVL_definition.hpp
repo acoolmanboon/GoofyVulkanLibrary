@@ -24,14 +24,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <fstream>
 #include <vector>
 
-#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 #define GFVL_DEBUG_IMPLEMENTATION // Enabling this allows for debug mode to be enabled. Use to troubleshoot errors, but it adds overhead.
 
@@ -39,9 +39,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define DEBUG_MODE true
 #define PRINT(message) std::cout << "[GFVL] " << message << "\n"
+
 #define GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION // Developer option, comment out to disable usage of Vk_debug_utils extension
 #define GFVL_ENABLE_VK_VALIDATION_LAYERS
-#define GFVL_ENABLE_VK_CORE_VALIDATION 
+#define GFVL_ENABLE_VK_CORE_VALIDATION
 #define GFVL_ENABLE_VK_GPU_ASSISTED_VALIDATION // discouraged to use both core validation and this as it makes it really slow
 
 #else
@@ -51,19 +52,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #endif
 
-#define THROW_WARNING(reason) std::cerr << "[GFVL] " << message << "\n";
+#define THROW_WARNING(reason) std::cerr << "[GFVL] " << reason << "\n"
 #define THROW_EXCEPTION(reason)                 \
   do {                                          \
     std::ostringstream oss;                     \
     oss << "[GFVL] Error! Reason : " << reason; \
     throw std::runtime_error(oss.str());        \
-  } while (0);
+  } while (false)
 
 #define ASSERTIF(statement, message)               \
-  if (statement) {                               \
-    std::ostringstream oss;                      \
-    oss << "[GFVL] Error! Reason : " << message; \
-    throw std::runtime_error(oss.str());         \
-  };
+  do {                                             \
+    if (statement) {                               \
+      std::ostringstream oss;                      \
+      oss << "[GFVL] Error! Reason : " << message; \
+      throw std::runtime_error(oss.str());         \
+    };                                             \
+  } while (false)
 
 #define GFVL_VERSION 1 // internal application name

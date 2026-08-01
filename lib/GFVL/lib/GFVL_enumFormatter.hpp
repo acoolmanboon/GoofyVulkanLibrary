@@ -17,33 +17,33 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 /**
- * @file enumPrinter.hpp
+ * @file GFVL_enumFormatter.hpp
  * @brief A helper to print enum names in GFVL.hpp.
  * @details No need to include this one, it's an internal helper.
  */
 #pragma once
 
-#include <GFVL_definition.hpp>
+#include <GFVL.hpp>
 #include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
 
-#define ret(type_, case_) \
-  case (type_::case_):    \
-    return #case_;        \
+
+#define returnCase(type_, case_) \
+  case (type_::case_):           \
+    return #case_;               \
     break;
-#define reterr(type_, value)                                                                                                   \
-  std::ostringstream oss;                                                                                                      \
-  oss << "[GFVL] Error! Attempted to convert enum of type " << #type_ << " into string, value is " << static_cast<int>(value); \
-  throw std::runtime_error(oss.str())
+
+#define returnError(type_, value) \
+  default:                        \
+    THROW_EXCEPTION("Attempted to convert raw value of " << static_cast<int>(value) << " of enum type " #type_ " but the raw value is not a valid enum value.");
 
 namespace GFVL {
 inline std::string_view enumToString(const VertexBuffer::MemoryAllocation &value) {
   switch (value) {
-    ret(VertexBuffer::MemoryAllocation, HostVisible);
-    ret(VertexBuffer::MemoryAllocation, HostVisibleOpportunistic);
-    ret(VertexBuffer::MemoryAllocation, DeviceOnly);
-    reterr(VertexBuffer::Type, value);
-  }
-  return "";
+    returnCase(VertexBuffer::MemoryAllocation, HostVisible);
+    returnCase(VertexBuffer::MemoryAllocation, HostVisibleOpportunistic);
+    returnCase(VertexBuffer::MemoryAllocation, DeviceOnly);
+    returnError(VertexBuffer::MemoryAllocation, value);
+  } 
 }
 } // namespace GFVL
-
