@@ -8,3 +8,4 @@ html/
 latex/
 .vscode/launch.json
 .vscode/
+compileCommands.txt

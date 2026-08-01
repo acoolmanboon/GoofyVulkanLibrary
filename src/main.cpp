@@ -17,14 +17,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#include "../lib/GFVL/include/GFVL.hpp"
-#include "../lib/GFVL/lib/GFVL_core.hpp"
+#include <GFVL.hpp>
 #include "PerlinNoise.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <glm/glm.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -35,15 +33,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define print(message) std::cout << message << "\n";
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-// Remove-Item build -Recurse -Force; cmake -B build -DCMAKE_PREFIX_PATH=C:/msys64/ucrt64 -G Ninja
-// cmake --build build --verbose; build/main.exe
-// glslc src/vertex_shader.vert -o src/vertex_shader.spv
-// glslc src/fragment_shader.frag -o src/fragment_shader.spv
 
-// cmake -B build -DCMAKE_BUILD_TYPE=Debug
-// cmake -B build -DCMAKE_BUILD_TYPE=Release
-// cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-// clear; rm -Force build/main.exe; rm -Force src/fragment_shader.spv; rm -Force src/vertex_shader.spv; glslc src/vertex_shader.vert -o src/vertex_shader.spv; glslc src/fragment_shader.frag -o src/fragment_shader.spv;  cmake --build build --verbose; build/main.exe
 // USER-DEFINED STUFF
 
 struct vertice {
@@ -173,47 +163,7 @@ int main() {
       .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
 
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
-  /*
-  std::vector<vertice> vertices;
-  int start = -7;
-  int end = 7;
-  int steps = end - start;
-  int cubes = steps * steps * steps;
 
-  float xI = 0;
-  float yI = 0;
-  float zI = 0;
-
-  float spacing = 50.0f;
-  float scale = 20.0f;
-
-  for (int x = start; x < end; x++) {
-    for (int y = start; y < end; y++) {
-      for (int z = start; z < end; z++) {
-        if (x == 0 && y == 0 && z == 0)
-          continue;
-        insertCube(glm::vec3(
-                       static_cast<float>(x) * spacing,
-                       static_cast<float>(y) * spacing,
-                       static_cast<float>(z) * spacing),
-                   glm::vec3(
-                       xI / steps,
-                       yI / steps,
-                       zI / steps),
-                   glm::vec3(scale), vertices);
-        // print("xI : " << (xI/steps) << "yI : " << (yI/steps) << "zI : " << (zI/steps))
-        zI++;
-      }
-      zI = 0;
-      yI++;
-    }
-    yI = 0;
-    xI++;
-  }
-  GFVLinstance.meshesToRender.emplace_back(GFVL::Mesh(
-      GFVLinstance.device,
-      GFVL::Mesh::CreateInfo{.size = vertices.size() * sizeof(vertice), .data = vertices.data(), .memoryAllocation = GFVL::VertexBuffer::MemoryAllocation::DeviceOnly}));
-  */
   // Please delete your repository ahh code
   constexpr unsigned int width = 200;
   constexpr unsigned int length = 200;
@@ -417,7 +367,6 @@ int main() {
     last_time = current_time;
 
     GFVLinstance.pollInputs();
-    // GFVLinstance.uniformBuffer.bind(GFVLinstance.commandBuffer, GFVLinstance.pipeline, 0);
     if (GFVLinstance.inputState.isMouseMoved()) {
       GFVL::MouseState mouseState = GFVLinstance.inputState.getMouseState();
 
@@ -450,7 +399,6 @@ int main() {
       position += forward * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
-      // GFVLinstance.uniformBuffer.bindings[1].update(&lighting);
       lightBinding.hasUpdated = true;
     }
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
@@ -480,8 +428,6 @@ int main() {
     camera.viewPos = position;
 
     cameraBinding.hasUpdated = true;
-    // GFVLinstance.uniformBuffer.bindings[0].update(&camera);
-
     GFVLinstance.frame();
   }
 
