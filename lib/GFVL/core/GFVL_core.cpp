@@ -134,7 +134,7 @@ namespace GFVL {
         return i;
     }
 
-    THROW_EXCEPTION("Failed to find memory type during findMemoryType")
+    THROW_EXCEPTION("Failed to find memory type during findMemoryType");
   }
 
   /**

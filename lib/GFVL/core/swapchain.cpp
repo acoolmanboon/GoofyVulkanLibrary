@@ -29,7 +29,7 @@ void pickFormat(DEVICE &device_, VkSurfaceKHR surface, VkFormat& format, VkColor
   formats.resize(count);
   CheckVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(device_.physicalDevice, surface, &count, formats.data()));
   if (formats.empty())
-    THROW_EXCEPTION("No VKFormats found.. What??")
+    THROW_EXCEPTION("No VkFormats found.. What??");
 
   // pick random format at first
 
@@ -54,7 +54,7 @@ VkPresentModeKHR pickPresentMode(DEVICE &device_, VkSurfaceKHR surface) {
   presentModes.resize(count);
   vkGetPhysicalDeviceSurfacePresentModesKHR(device_.physicalDevice, surface, &count, presentModes.data());
   if (presentModes.empty())
-    THROW_EXCEPTION("No VkPresentModeKHR's found.. What??")
+    THROW_EXCEPTION("No VkPresentModeKHR's found.. What??");
 
   VkPresentModeKHR presentMode;
   presentMode = presentModes[0];
