@@ -248,5 +248,6 @@ void INSTANCE::frame() {
 }
 INSTANCE::~INSTANCE() {
   vkDeviceWaitIdle(device.logicalDevice);
+  vkDestroyCommandPool(device.logicalDevice, commandPool, nullptr);
 }
 } // namespace GFVL
