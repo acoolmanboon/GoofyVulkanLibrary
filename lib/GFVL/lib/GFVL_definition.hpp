@@ -41,6 +41,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define PRINT(message) std::cout << "[GFVL] " << message << "\n"
 
 #define GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION // Developer option, comment out to disable usage of Vk_debug_utils extension
+#define GFVL_SILENCE_GENERAL_MESSAGES // use this to silence messages with the "info" severity or "general" type to avoid terminal clutter
+
 #define GFVL_ENABLE_VK_VALIDATION_LAYERS
 #define GFVL_ENABLE_VK_CORE_VALIDATION
 #define GFVL_ENABLE_VK_GPU_ASSISTED_VALIDATION // discouraged to use both core validation and this as it makes it really slow

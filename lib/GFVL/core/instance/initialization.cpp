@@ -17,7 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#include "../../include/GFVL.hpp"
+#include <GFVL.hpp>
+#include <GFVL_vkFunctionPointers.hpp>
+#include <GFVL_enumFormatter.hpp>
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
 #include <cstring>
@@ -25,6 +27,69 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace GFVL;
 
 // USER-DEFINED STUFF
+VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *callbackData, void *userData) {
+#ifndef GFVL_DEBUG_IMPLEMENTATION
+  if (severity != VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+    return VK_FALSE;
+  }
+#endif
+
+#ifdef GFVL_SILENCE_GENERAL_MESSAGES
+  if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT || messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+    return VK_FALSE;
+#endif
+
+  PRINT("Vulkan debug message : ");
+  switch (severity) {
+  case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT):
+    PRINT(" Severity : Verbose");
+    break;
+  case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT):
+    PRINT(" Severity : Info");
+    break;
+  case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT):
+    PRINT(" Severity : Warning");
+    break;
+  case (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT):
+    PRINT(" Severity : Error");
+    break;
+  default:
+    THROW_WARNING("Invalid severity flag bits in vulkan debug callback! Flags hex : " << std::hex << severity);
+  }
+
+  switch (messageType) {
+  case (VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT):
+    PRINT(" Message type : General");
+    break;
+  case (VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT):
+    PRINT(" Message type : Validation");
+    break;
+  case (VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT):
+    PRINT(" Message type : Performance");
+    break;
+  default:
+    THROW_WARNING("Invalid message type flag bits in vulkan debug callback! Flags hex : " << std::hex << messageType);
+  }
+  if (callbackData->pMessageIdName != NULL)
+    PRINT(" Message ID name : " << callbackData->pMessageIdName);
+
+  PRINT(" Message ID number : 0x" << std::hex << callbackData->messageIdNumber);
+
+  if (callbackData->pMessage != NULL)
+    PRINT(" Message : " << callbackData->pMessage);
+
+  PRINT(" Involved objects (in order of importance)");
+  for (uint32_t i = 0; i < callbackData->objectCount; i++) {
+    const VkDebugUtilsObjectNameInfoEXT currentObject = callbackData->pObjects[i];
+    PRINT("   Object " << i);
+    PRINT("     Type : " << enumToString(currentObject.objectType) << "(" << currentObject.objectType << ")");
+    PRINT("     Handle : 0x" << std::hex << currentObject.objectHandle);
+    if (currentObject.pObjectName != NULL)
+      PRINT("     Object Name " << currentObject.pObjectName);
+  }
+
+  return VK_FALSE;
+}
 namespace GFVL {
 std::vector<VkValidationFeatureEnableEXT> getEnabledValidationFeatures() {
   std::vector<VkValidationFeatureEnableEXT> enables = {VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT};
@@ -38,10 +103,11 @@ std::vector<VkValidationFeatureEnableEXT> getEnabledValidationFeatures() {
 
   return enables;
 }
+
 std::vector<const char *> getEnabledInstanceExtensions() {
   uint32_t SDLinstanceExtensionCount = 0;
   const char *const *SDLinstanceExtensions = SDL_Vulkan_GetInstanceExtensions(&SDLinstanceExtensionCount);
-  ASSERTIF(SDLinstanceExtensions == nullptr, "Failed to get SDL instance extensions! However, " << SDLinstanceExtensionCount << " instance extensions were detected. (If this is not zero, something is wrong)")
+  ASSERTIF(SDLinstanceExtensions == nullptr, "Failed to get SDL instance extensions! However, " << SDLinstanceExtensionCount << " instance extensions were detected. (If this is not zero, something is wrong)");
   std::vector<const char *> extensions(SDLinstanceExtensions, SDLinstanceExtensions + SDLinstanceExtensionCount);
 
   uint32_t availableInstanceExtensionCount = 0;
@@ -54,13 +120,25 @@ std::vector<const char *> getEnabledInstanceExtensions() {
       vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, availableInstanceExtensions.data()),
       "Failed to enumerate available instance extensions!");
 
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+  bool foundVkDebugUtilsExtension = false;
+#endif
+
   for (const VkExtensionProperties &availableExtension : availableInstanceExtensions) {
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
     if (strcmp(availableExtension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
       extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+      foundVkDebugUtilsExtension = true;
     }
 #endif
   }
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+  if (foundVkDebugUtilsExtension == false) {
+    THROW_WARNING("GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION is on, but the extension was not supported.");
+  }
+#endif
+
 #ifdef GFVL_DEBUG_IMPLEMENTATION
   PRINT("SDL instance extensions :");
   for (uint32_t i = 0; i < SDLinstanceExtensionCount; i++)
@@ -76,6 +154,7 @@ std::vector<const char *> getEnabledLayers() {
 #endif
   return enabledLayers;
 }
+
 VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   VkApplicationInfo appInfo{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -89,10 +168,31 @@ VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   std::vector<const char *> enabledInstanceExtensions = getEnabledInstanceExtensions();
   std::vector<const char *> enabledLayers = getEnabledLayers();
 
+  void *debugUtilsMessengerCreateInfoPointer = nullptr;
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+  VkDebugUtilsMessengerEXT debugUtilsMessenger;
+
+  VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfo = {
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+      .pNext = nullptr,
+      .flags = 0,
+      .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+      .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+      .pfnUserCallback = vulkanDebugUtilsMessengerCallback,
+      .pUserData = nullptr};
+
+  debugUtilsMessengerCreateInfoPointer = &debugUtilsMessengerCreateInfo;
+
+#endif
+
   VkValidationFeaturesEXT features = {
       .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+      .pNext = nullptr,
       .enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size()),
-      .pEnabledValidationFeatures = enabledValidationFeatures.data()};
+      .pEnabledValidationFeatures = enabledValidationFeatures.data(),
+      .disabledValidationFeatureCount = 0,
+      .pDisabledValidationFeatures = nullptr};
 
   VkInstanceCreateInfo instanceCreationInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -106,13 +206,24 @@ VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   };
 
   VkInstance instance;
-  GFVL::CheckVkResult(vkCreateInstance(
-      &instanceCreationInfo,
-      NULL,
-      &instance));
+  CheckVkResult2(
+      vkCreateInstance(&instanceCreationInfo, NULL, &instance),
+      "Failed to create Vulkan instance!");
+
+  VulkanFunctionPointers::initialize(instance);
+
+  CheckVkResult2(
+      VulkanFunctionPointers::vkCreateDebugUtilsMessengerEXT(
+          instance,
+          &debugUtilsMessengerCreateInfo,
+          nullptr,
+          &debugUtilsMessenger
+          ),
+      "Failed to create debug utils messenger!");
 
   return instance;
 }
+
 VkSurfaceKHR INSTANCE::InitializeVkSurface() {
   VkSurfaceKHR surface;
   if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))

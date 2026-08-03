@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
 
+#define typeString(type_) inline std::string_view enumToString(const type_ &value)
 
 #define returnCase(type_, case_) \
   case (type_::case_):           \
@@ -35,15 +36,59 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define returnError(type_, value) \
   default:                        \
-    THROW_EXCEPTION("Attempted to convert raw value of " << static_cast<int>(value) << " of enum type " #type_ " but the raw value is not a valid enum value.");
+    THROW_EXCEPTION("Attempted to convert raw value of " << static_cast<int>(value) << " of enum type " #type_ " but the raw value is not a valid enum value."); // ONLY use this if you have defined all possible cases
 
+#define returnDefault (type_, value) default : return "";
+
+/*
+example
+
+typeString(type__) {
+  switch (value) {
+    returnCase(type__, unknown);
+    returnError(type__, value);
+  }
+}
+*/
 namespace GFVL {
-inline std::string_view enumToString(const VertexBuffer::MemoryAllocation &value) {
+typeString(VertexBuffer::MemoryAllocation) {
   switch (value) {
     returnCase(VertexBuffer::MemoryAllocation, HostVisible);
     returnCase(VertexBuffer::MemoryAllocation, HostVisibleOpportunistic);
     returnCase(VertexBuffer::MemoryAllocation, DeviceOnly);
     returnError(VertexBuffer::MemoryAllocation, value);
-  } 
+  }
 }
+typeString(VkObjectType) {
+  switch (value) {
+    returnCase(VkObjectType, VK_OBJECT_TYPE_UNKNOWN);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_INSTANCE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_PHYSICAL_DEVICE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_DEVICE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_QUEUE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_SEMAPHORE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_COMMAND_BUFFER);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_FENCE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_DEVICE_MEMORY);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_BUFFER);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_IMAGE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_EVENT);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_QUERY_POOL);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_BUFFER_VIEW);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_IMAGE_VIEW);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_SHADER_MODULE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_PIPELINE_CACHE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_RENDER_PASS);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_PIPELINE);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_SAMPLER);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_DESCRIPTOR_POOL);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_DESCRIPTOR_SET);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_FRAMEBUFFER);
+    returnCase(VkObjectType, VK_OBJECT_TYPE_COMMAND_POOL);
+    returnError(VkObjectType, value);
+  }
+}
+
 } // namespace GFVL
