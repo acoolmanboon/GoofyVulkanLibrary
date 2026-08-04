@@ -328,10 +328,6 @@ private:
 };
 class Frame {
 private:
-  /**
-   * @brief
-   *
-   */
   struct FrameUniformBuffer {
     VkBuffer buffer = VK_NULL_HANDLE;
     VmaAllocation allocation = nullptr;
@@ -369,16 +365,27 @@ private:
   VmaAllocator allocator;
   const std::vector<UniformBufferBinding> &bindings;
 };
+
+/**
+ * @brief Encapsulates a VkDescriptorSetLayout object.
+ * @details Defines a descriptor set layout based on the provided list of UniformBufferBindings
+ */
 class DescriptorSetLayout {
 public:
   VkDescriptorSetLayout descriptorSetLayout;
 
-  DescriptorSetLayout(DEVICE &device, std::vector<UniformBufferBinding> &bindings);
+  DescriptorSetLayout(DEVICE &device, const std::vector<UniformBufferBinding> &bindings);
   ~DescriptorSetLayout();
 
+  DescriptorSetLayout(const DescriptorSetLayout &) = delete;
+  DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
+
+  DescriptorSetLayout(DescriptorSetLayout &&other) noexcept;
+  DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
+
 private:
-  DEVICE &device;
-  std::vector<UniformBufferBinding> &bindings;
+  DEVICE &device_;
+  const std::vector<UniformBufferBinding> &bindings_;
 };
 
 std::vector<char> readFile(const std::string &filename);
