@@ -150,7 +150,7 @@ int main() {
                                                                                                .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
                                                                                                .ubo = &lighting});
 
-  GFVL::VERTEX_LAYOUT layout(sizeof(vertice));
+  GFVL::VertexLayout layout(sizeof(vertice));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, normal));
   layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color));

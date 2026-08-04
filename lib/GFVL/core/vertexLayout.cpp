@@ -22,13 +22,13 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-   VERTEX_LAYOUT::VERTEX_LAYOUT(uint32_t size) {
+   VertexLayout::VertexLayout(uint32_t size) {
     this->binding = {
         .binding = 0,
         .stride = size,
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX};
    }
-   void VERTEX_LAYOUT::addAttribute(VkFormat format, uint32_t offset) {
+   void VertexLayout::addAttribute(VkFormat format, uint32_t offset) {
      attributes.push_back({.location = static_cast<uint32_t>(attributes.size()),
                            .binding = binding.binding,
                            .format = format,

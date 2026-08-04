@@ -472,7 +472,7 @@ public:
 
   INSTANCE(
       APPLICATION_INFO applicationInfo,
-      VERTEX_LAYOUT &layout,
+      VertexLayout &layout,
       std::vector<UniformBufferBinding> &bindings,
       std::vector<SHADER_STAGE> &stages);
 

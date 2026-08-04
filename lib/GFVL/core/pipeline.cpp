@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-PIPELINE::PIPELINE(DEVICE &device, Swapchain &swapchain, VERTEX_LAYOUT &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts) : device(device) {
+PIPELINE::PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts) : device(device) {
   std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
   size_t index = 0;
   PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << layouts.size() << " layouts.");

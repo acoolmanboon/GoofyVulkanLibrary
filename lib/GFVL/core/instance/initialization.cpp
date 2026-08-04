@@ -54,7 +54,7 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
     PRINT(" Severity : Error");
     break;
   default:
-    THROW_WARNING("Invalid severity flag bits in vulkan debug callback! Flags hex : " << std::hex << severity);
+    THROW_WARNING("Invalid severity flag bits in vulkan debug callback! Flags hex : " << std::hex << severity << std::dec);
   }
 
   switch (messageType) {
@@ -68,12 +68,12 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
     PRINT(" Message type : Performance");
     break;
   default:
-    THROW_WARNING("Invalid message type flag bits in vulkan debug callback! Flags hex : " << std::hex << messageType);
+    THROW_WARNING("Invalid message type flag bits in vulkan debug callback! Flags hex : " << std::hex << messageType << std::dec);
   }
   if (callbackData->pMessageIdName != NULL)
     PRINT(" Message ID name : " << callbackData->pMessageIdName);
 
-  PRINT(" Message ID number : 0x" << std::hex << callbackData->messageIdNumber);
+  PRINT(" Message ID number : 0x" << std::hex << callbackData->messageIdNumber << std::dec);
 
   if (callbackData->pMessage != NULL)
     PRINT(" Message : " << callbackData->pMessage);
@@ -83,7 +83,7 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
     const VkDebugUtilsObjectNameInfoEXT currentObject = callbackData->pObjects[i];
     PRINT("   Object " << i);
     PRINT("     Type : " << enumToString(currentObject.objectType) << "(" << currentObject.objectType << ")");
-    PRINT("     Handle : 0x" << std::hex << currentObject.objectHandle);
+    PRINT("     Handle : 0x" << std::hex << currentObject.objectHandle << std::dec);
     if (currentObject.pObjectName != NULL)
       PRINT("     Object Name " << currentObject.pObjectName);
   }

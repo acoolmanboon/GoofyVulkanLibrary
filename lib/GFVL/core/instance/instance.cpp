@@ -30,7 +30,7 @@ Mesh &INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
 void INSTANCE::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
 }
-INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VERTEX_LAYOUT &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
+INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
                                                                                                                                                               window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
                                                                                                                                                               surface(InitializeVkSurface()),
                                                                                                                                                               device(this->instance, this->surface, applicationInfo.preferredGPU),

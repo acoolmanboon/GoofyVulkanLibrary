@@ -60,15 +60,14 @@ struct SHADER_STAGE {
   const char *filename;
 };
 
-class VERTEX_LAYOUT {
+class VertexLayout {
 public:
   VkVertexInputBindingDescription binding;
-
   std::vector<VkVertexInputAttributeDescription> attributes;
 
   void addAttribute(VkFormat format, uint32_t offset);
 
-  VERTEX_LAYOUT(uint32_t size);
+  VertexLayout(uint32_t size);
 };
 
 class DEVICE {
@@ -232,7 +231,7 @@ public:
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 
-  PIPELINE(DEVICE &device, Swapchain &swapchain, VERTEX_LAYOUT &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts);
+  PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts);
   ~PIPELINE();
 
   PIPELINE(const PIPELINE &) = delete;
