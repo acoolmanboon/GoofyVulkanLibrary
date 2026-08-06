@@ -17,95 +17,131 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
 
 using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &createInfo) : device_(device), size_(createInfo.size), memoryAllocation_(createInfo.memoryAllocation) {
-  if (createInfo.memoryAllocation == VertexBuffer::MemoryAllocation::HostVisibleOpportunistic) {
-    createBuffer(
-        device,
-        createInfo.size,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        this->buffer_,
-        this->bufferMemory_);
+VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &createInfo) : device_(device),
+                                                                                         allocator_(createInfo.allocator),
+                                                                                         size_(createInfo.size),
+                                                                                         memoryAllocation_(createInfo.memoryAllocation) {
+  if (memoryAllocation_ == MemoryAllocation::HostVisible) {
+    VkBufferCreateInfo bufferCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = static_cast<VkDeviceSize>(size_),
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 1,
+        .pQueueFamilyIndices = &device_.graphicsFamilyIndex,
+    };
 
-    CheckVkResult(vkMapMemory(
-        device.logicalDevice,
-        bufferMemory_,
-        0,
-        createInfo.size,
-        0,
-        &this->data_));
+    VmaAllocationCreateInfo allocationCreateInfo{
+        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT |
+                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+    };
 
-    memcpy(this->data_, createInfo.data, createInfo.size);
+    CheckVkResult2(
+        vmaCreateBuffer(
+            allocator_,
+            &bufferCreateInfo,
+            &allocationCreateInfo,
+            &buffer_,
+            &bufferMemory_,
+            nullptr),
+        "Failed to create vertex buffer!");
 
-    vkUnmapMemory(device.logicalDevice, bufferMemory_);
-  } else if (createInfo.memoryAllocation == VertexBuffer::MemoryAllocation::HostVisible) {
-    createBuffer(
-        device,
-        createInfo.size,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        this->buffer_,
-        this->bufferMemory_);
+    CheckVkResult2(
+        vmaMapMemory(
+            allocator_,
+            bufferMemory_,
+            &data_),
+        "Failed to map vertex buffer!");
 
-    CheckVkResult(vkMapMemory(
-        device.logicalDevice,
-        bufferMemory_,
-        0,
-        createInfo.size,
-        0,
-        &this->data_));
+    memcpy(data_, createInfo.data, size_);
 
-    memcpy(this->data_, createInfo.data, createInfo.size);
-
-    vkUnmapMemory(device.logicalDevice, bufferMemory_);
-
-  } else if (createInfo.memoryAllocation == VertexBuffer::MemoryAllocation::DeviceOnly) {
+    vmaUnmapMemory(allocator_, bufferMemory_);
+  } else if (memoryAllocation_ == MemoryAllocation::DeviceOnly) {
     VkBuffer stagingBuffer;
-    VkDeviceMemory stagingMemory;
+    VmaAllocation stagingAllocation;
 
-    createBuffer(
-        device,
-        createInfo.size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingMemory);
+    VkBufferCreateInfo stagingCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = static_cast<VkDeviceSize>(size_),
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 1,
+        .pQueueFamilyIndices = &device_.graphicsFamilyIndex,
+    };
 
-    void *stagingData;
-    CheckVkResult(vkMapMemory(
-        device.logicalDevice,
-        stagingMemory,
-        0,
-        createInfo.size,
-        0,
-        &stagingData));
+    VmaAllocationCreateInfo stagingAllocationInfo{
+        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT |
+                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+    };
 
-    memcpy(stagingData, createInfo.data, createInfo.size);
+    CheckVkResult2(
+        vmaCreateBuffer(
+            allocator_,
+            &stagingCreateInfo,
+            &stagingAllocationInfo,
+            &stagingBuffer,
+            &stagingAllocation,
+            nullptr),
+        "Failed to create staging buffer!");
 
-    vkUnmapMemory(device.logicalDevice, stagingMemory);
+    void *stagingData = nullptr;
 
-    createBuffer(
-        device,
-        createInfo.size,
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        this->buffer_,
-        this->bufferMemory_);
+    CheckVkResult2(
+        vmaMapMemory(
+            allocator_,
+            stagingAllocation,
+            &stagingData),
+        "Failed to map staging buffer!");
+
+    memcpy(stagingData, createInfo.data, size_);
+
+    vmaUnmapMemory(
+        allocator_,
+        stagingAllocation);
+
+    VkBufferCreateInfo vertexBufferCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = static_cast<VkDeviceSize>(size_),
+        .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 1,
+        .pQueueFamilyIndices = &device_.graphicsFamilyIndex,
+    };
+
+    VmaAllocationCreateInfo vertexAllocationInfo{
+        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+    };
+
+    CheckVkResult2(
+        vmaCreateBuffer(
+            allocator_,
+            &vertexBufferCreateInfo,
+            &vertexAllocationInfo,
+            &buffer_,
+            &bufferMemory_,
+            nullptr),
+        "Failed to create vertex buffer!");
 
     VkCommandBufferAllocateInfo allocInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = createInfo.commandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1};
+        .commandBufferCount = 1,
+    };
 
     VkCommandBuffer cmd;
+
     CheckVkResult(vkAllocateCommandBuffers(
         device.logicalDevice,
         &allocInfo,
@@ -113,28 +149,31 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
 
     VkCommandBufferBeginInfo beginInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
 
     CheckVkResult(vkBeginCommandBuffer(cmd, &beginInfo));
 
-    VkBufferCopy region{
+    VkBufferCopy copyRegion{
         .srcOffset = 0,
         .dstOffset = 0,
-        .size = createInfo.size};
+        .size = static_cast<VkDeviceSize>(size_),
+    };
 
     vkCmdCopyBuffer(
         cmd,
         stagingBuffer,
-        this->buffer_,
+        buffer_,
         1,
-        &region);
+        &copyRegion);
 
     CheckVkResult(vkEndCommandBuffer(cmd));
 
     VkSubmitInfo submitInfo{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1,
-        .pCommandBuffers = &cmd};
+        .pCommandBuffers = &cmd,
+    };
 
     CheckVkResult(vkQueueSubmit(
         device.graphicsQueue,
@@ -150,10 +189,12 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
         1,
         &cmd);
 
-    vkDestroyBuffer(device.logicalDevice, stagingBuffer, nullptr);
-    vkFreeMemory(device.logicalDevice, stagingMemory, nullptr);
+    vmaDestroyBuffer(
+        allocator_,
+        stagingBuffer,
+        stagingAllocation);
   } else {
-    THROW_EXCEPTION("Invalid VERTEX_BUFFER_TYPE!");
+    THROW_EXCEPTION("Invalid VertexBuffer::MemoryAllocation!");
   }
 }
 VertexBuffer::VertexBuffer(VertexBuffer &&other) noexcept
@@ -173,13 +214,10 @@ VertexBuffer &VertexBuffer::operator=(VertexBuffer &&other) {
   if (this == &other)
     return *this;
 
-  if (buffer_ != VK_NULL_HANDLE) {
-    vkDestroyBuffer(device_.logicalDevice, buffer_, nullptr);
+  if (buffer_ != VK_NULL_HANDLE && bufferMemory_ != VK_NULL_HANDLE) {
+    vmaDestroyBuffer(allocator_, buffer_, bufferMemory_);
   }
 
-  if (bufferMemory_ != VK_NULL_HANDLE) {
-    vkFreeMemory(device_.logicalDevice, bufferMemory_, nullptr);
-  }
 
   this->buffer_ = other.buffer_;
   this->bufferMemory_ = other.bufferMemory_;
@@ -195,7 +233,6 @@ VertexBuffer &VertexBuffer::operator=(VertexBuffer &&other) {
   return *this;
 }
 VertexBuffer::~VertexBuffer() {
-  vkDestroyBuffer(this->device_.logicalDevice, this->buffer_, nullptr);
-  vkFreeMemory(this->device_.logicalDevice, this->bufferMemory_, nullptr);
+  vmaDestroyBuffer(allocator_, buffer_, bufferMemory_);
 }
 } // namespace GFVL

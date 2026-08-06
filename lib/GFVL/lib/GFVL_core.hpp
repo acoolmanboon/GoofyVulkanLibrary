@@ -54,7 +54,6 @@ struct UniformBufferBinding {
   bool hasUpdated = true;                                        ///< Setting this to true tells GFVL to update the internal buffers. Set it to true after every change of the data.
 };
 
-
 struct SHADER_STAGE {
   VkShaderStageFlagBits flags;
   const char *filename;
@@ -283,9 +282,8 @@ public:
    * @brief Defines memory allocation strategy.
    */
   enum class MemoryAllocation {
-    DeviceOnly,               ///< Memory allocated will be in VRAM. Use for static-meshes. Fastest.
-    HostVisibleOpportunistic, ///< Memory has both device local flag and CPU-visible flag, usually in integrated graphics or for GPUs that support ReBar, which is very fast since it is physically in VRAM.
-    HostVisible,              ///< Memory allocated will be visible to CPU. Use for non-static meshes.
+    DeviceOnly,  ///< Memory allocated will be in VRAM. Use for static-meshes. Fastest.
+    HostVisible, ///< Memory allocated will be visible to CPU. Use for non-static meshes.
   };
 
   /**
@@ -293,10 +291,11 @@ public:
    * @brief Configuration for creating VertexBuffer class.
    */
   struct CreateInfo {
-    size_t size;                                           ///< Size of the allocated buffer memory in bytes.
-    void *data;                                            ///< Pointer to the data to copy into the buffer.
+    size_t size;                                                       ///< Size of the allocated buffer memory in bytes.
+    void *data;                                                        ///< Pointer to the data to copy into the buffer.
     MemoryAllocation memoryAllocation = MemoryAllocation::HostVisible; ///< Type of data, see definition.
-    VkCommandPool commandPool;                             ///< Command pool, used for alllocation of vertex buffers
+    VkCommandPool commandPool;                                         ///< Command pool, used for alllocation of vertex buffers
+    VmaAllocator allocator;                                            ///< VMA allocator
   };
 
   /**
@@ -316,12 +315,14 @@ public:
 
   friend class Mesh;
   friend class INSTANCE;
+
 private:
   DEVICE &device_;
+  VmaAllocator allocator_;
   VkBuffer buffer_;
-  VkDeviceMemory bufferMemory_;
+  VmaAllocation bufferMemory_;
 
-  void *data_;            ///< A pointer to the buffer data. Used for HostVisible memory.
+  void *data_; ///< A pointer to the buffer data. Used for HostVisible memory.
   size_t size_;
   MemoryAllocation memoryAllocation_;
 };
@@ -391,8 +392,9 @@ std::vector<char> readFile(const std::string &filename);
 const char *VkResultToString(VkResult result);
 void PrintVkResult(VkResult result);
 // DEPRECATED, USE CHECKVKRESULT2
-VkResult CheckVkResult(VkResult result); 
+VkResult CheckVkResult(VkResult result);
 VkResult CheckVkResult2(VkResult result, const char *reason);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 void createBuffer(DEVICE &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+
 } // namespace GFVL

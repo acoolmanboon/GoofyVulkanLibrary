@@ -18,14 +18,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <GFVL.hpp>
-#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
 using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 Mesh &INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
-  return meshesToRender.emplace_back(device, createInfo, commandPool);
+  return meshesToRender.emplace_back(device, createInfo, commandPool, vmaAllocator);
 }
 void INSTANCE::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);

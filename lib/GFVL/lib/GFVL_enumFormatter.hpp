@@ -24,8 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <GFVL.hpp>
-#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
 #define typeString(type_) inline std::string_view enumToString(const type_ &value)
 
@@ -54,7 +54,6 @@ namespace GFVL {
 typeString(VertexBuffer::MemoryAllocation) {
   switch (value) {
     returnCase(VertexBuffer::MemoryAllocation, HostVisible);
-    returnCase(VertexBuffer::MemoryAllocation, HostVisibleOpportunistic);
     returnCase(VertexBuffer::MemoryAllocation, DeviceOnly);
     returnError(VertexBuffer::MemoryAllocation, value);
   }

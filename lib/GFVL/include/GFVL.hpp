@@ -55,7 +55,7 @@ public:
    * @param device A reference to your Device.
    * @param createinfo Mesh creation info.
    */
-  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool); ///< Creates a mesh.
+  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
 
   Mesh(const Mesh &other) = delete;            ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
   Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.

@@ -26,8 +26,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <GFVL.hpp>
-#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 
 #define definePointer(name_) inline static PFN_##name_ name_
 #define initializePointer(name_, instance_)                                        \

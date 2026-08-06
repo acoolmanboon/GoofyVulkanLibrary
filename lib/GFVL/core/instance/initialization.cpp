@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <GFVL.hpp>
 #include <GFVL_vkFunctionPointers.hpp>
 #include <GFVL_enumFormatter.hpp>
-#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 #include <cstring>
 
 using namespace GFVL;

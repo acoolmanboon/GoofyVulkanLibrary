@@ -22,8 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * @details Don't include this. Unless+ you wanna do some master hacking?
  */
 
-#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <GFVL_core.hpp>
 #include <GFVL_vkFunctionPointers.hpp>
 
 namespace GFVL {
