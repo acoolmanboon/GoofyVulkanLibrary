@@ -78,14 +78,16 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
   if (callbackData->pMessage != NULL)
     PRINT(" Message : " << callbackData->pMessage);
 
-  PRINT(" Involved objects (in order of importance)");
-  for (uint32_t i = 0; i < callbackData->objectCount; i++) {
-    const VkDebugUtilsObjectNameInfoEXT currentObject = callbackData->pObjects[i];
-    PRINT("   Object " << i);
-    PRINT("     Type : " << enumToString(currentObject.objectType) << "(" << currentObject.objectType << ")");
-    PRINT("     Handle : 0x" << std::hex << currentObject.objectHandle << std::dec);
-    if (currentObject.pObjectName != NULL)
-      PRINT("     Object Name " << currentObject.pObjectName);
+  if (callbackData->objectCount != 0) {
+    PRINT(" Involved objects (in order of importance)");
+    for (uint32_t i = 0; i < callbackData->objectCount; i++) {
+      const VkDebugUtilsObjectNameInfoEXT currentObject = callbackData->pObjects[i];
+      PRINT("   Object " << i);
+      PRINT("     Type : " << enumToString(currentObject.objectType) << "(" << currentObject.objectType << ")");
+      PRINT("     Handle : 0x" << std::hex << currentObject.objectHandle << std::dec);
+      if (currentObject.pObjectName != NULL)
+        PRINT("     Object Name " << currentObject.pObjectName);
+    }
   }
 
   return VK_FALSE;
