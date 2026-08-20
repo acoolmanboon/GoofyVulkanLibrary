@@ -132,8 +132,6 @@ void INSTANCE::frame() {
   }
 
   vkWaitForFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence, VK_TRUE, UINT64_MAX);
-  vkResetFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence);
-
   uint32_t imageIndex;
   CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore, VK_NULL_HANDLE, &imageIndex));
   if (imagesInFlightFence[imageIndex] != VK_NULL_HANDLE) {
@@ -146,6 +144,8 @@ void INSTANCE::frame() {
   }
 
   imagesInFlightFence[imageIndex] = currentFrame.gpuFinishedFence.fence;
+  vkResetFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence);
+
   CheckVkResult(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
   VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
