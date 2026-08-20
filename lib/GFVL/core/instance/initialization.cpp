@@ -214,6 +214,7 @@ VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
 
   VulkanFunctionPointers::initialize(instance);
 
+  #ifdef  GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
   CheckVkResult2(
       VulkanFunctionPointers::vkCreateDebugUtilsMessengerEXT(
           instance,
@@ -222,7 +223,7 @@ VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
           &debugUtilsMessenger
           ),
       "Failed to create debug utils messenger!");
-
+  #endif
   return instance;
 }
 

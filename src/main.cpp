@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <GFVL.hpp>
+#include "GFVL_core.hpp"
 #include "PerlinNoise.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -160,7 +161,7 @@ int main() {
       .applicationVersion = 1,
       .width = 600,
       .height = 800,
-      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
+      .preferredGPU = GFVL::PREFERRED_GPU_PERFORMANCE};
 
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
 
