@@ -26,17 +26,17 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool commandPool, VmaAllocator allocator) : device_(device),
-                                                                                      vertexBuffer_(device, VertexBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .memoryAllocation = createInfo.memoryAllocation, .commandPool = commandPool, .allocator = allocator}),
+                                                                                      meshBuffer_(device, MeshBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .memoryAllocation = createInfo.memoryAllocation, .commandPool = commandPool, .allocator = allocator}),
                                                                                       verticeCount_(createInfo.verticeCount) {
 }
 size_t Mesh::size() const noexcept {
-  return this->vertexBuffer_.size_;
+  return this->meshBuffer_.size_;
 }
 uint32_t Mesh::verticeCount() const noexcept {
   return this->verticeCount_;
 }
-VertexBuffer::MemoryAllocation Mesh::memoryAllocation() const noexcept {
-  return this->vertexBuffer_.memoryAllocation_;
+MeshBuffer::MemoryAllocation Mesh::memoryAllocation() const noexcept {
+  return this->meshBuffer_.memoryAllocation_;
 }
 Mesh::~Mesh() {
 }

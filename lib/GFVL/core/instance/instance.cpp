@@ -191,7 +191,7 @@ void INSTANCE::frame() {
         currentFrame.commandBuffer,
         0,
         1,
-        &mesh.vertexBuffer_.buffer_,
+        &mesh.meshBuffer_.buffer_,
         &offset);
 
     vkCmdDraw(

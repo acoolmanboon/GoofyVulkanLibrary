@@ -43,11 +43,11 @@ public:
     size_t size;                                                                                   ///< Size of the vertice data in bytes
     uint32_t verticeCount;                                                                         ///< Vertice count of the mesh.
     void *data;                                                                                    ///< Pointer to the raw mesh data.
-    VertexBuffer::MemoryAllocation memoryAllocation = VertexBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
+    MeshBuffer::MemoryAllocation memoryAllocation = MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
 
   size_t size() const noexcept;
-  VertexBuffer::MemoryAllocation memoryAllocation() const noexcept;
+  MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
   uint32_t verticeCount() const noexcept;
 
   /**
@@ -69,7 +69,7 @@ public:
 
 private:
   const DEVICE &device_;      ///< Stores the device reference.
-  VertexBuffer vertexBuffer_; ///< The buffer containing the actual memory
+  MeshBuffer meshBuffer_; ///< The buffer containing the actual memory
   uint32_t verticeCount_;
   bool willRender_;
   void *data_; ///< NOT IMPLEMENTED YET. Used for host visible memory modification.

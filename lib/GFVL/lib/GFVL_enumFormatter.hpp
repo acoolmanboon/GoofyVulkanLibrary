@@ -38,7 +38,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   default:                        \
     THROW_EXCEPTION("Attempted to convert raw value of " << static_cast<int>(value) << " of enum type " #type_ " but the raw value is not a valid enum value."); // ONLY use this if you have defined all possible cases
 
-#define returnDefault (type_, value) default : return "";
+#define returnDefault() \
+default : return ""; \
+  break;
 
 /*
 example
@@ -51,11 +53,11 @@ typeString(type__) {
 }
 */
 namespace GFVL {
-typeString(VertexBuffer::MemoryAllocation) {
+typeString(MeshBuffer::MemoryAllocation) {
   switch (value) {
-    returnCase(VertexBuffer::MemoryAllocation, HostVisible);
-    returnCase(VertexBuffer::MemoryAllocation, DeviceOnly);
-    returnError(VertexBuffer::MemoryAllocation, value);
+    returnCase(MeshBuffer::MemoryAllocation, HostVisible);
+    returnCase(MeshBuffer::MemoryAllocation, DeviceOnly);
+    returnError(MeshBuffer::MemoryAllocation, value);
   }
 }
 typeString(VkObjectType) {
@@ -86,7 +88,7 @@ typeString(VkObjectType) {
     returnCase(VkObjectType, VK_OBJECT_TYPE_DESCRIPTOR_SET);
     returnCase(VkObjectType, VK_OBJECT_TYPE_FRAMEBUFFER);
     returnCase(VkObjectType, VK_OBJECT_TYPE_COMMAND_POOL);
-    returnError(VkObjectType, value);
+    returnDefault();
   }
 }
 

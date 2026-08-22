@@ -24,7 +24,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &createInfo) : device_(device),
+MeshBuffer::MeshBuffer(DEVICE &device, const MeshBuffer::CreateInfo &createInfo) : device_(device),
                                                                                          allocator_(createInfo.allocator),
                                                                                          size_(createInfo.size),
                                                                                          memoryAllocation_(createInfo.memoryAllocation) {
@@ -39,8 +39,7 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
     };
 
     VmaAllocationCreateInfo allocationCreateInfo{
-        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT |
-                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
     };
 
@@ -78,8 +77,7 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
     };
 
     VmaAllocationCreateInfo stagingAllocationInfo{
-        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT |
-                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+        .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
     };
 
@@ -194,10 +192,10 @@ VertexBuffer::VertexBuffer(DEVICE &device, const VertexBuffer::CreateInfo &creat
         stagingBuffer,
         stagingAllocation);
   } else {
-    THROW_EXCEPTION("Invalid VertexBuffer::MemoryAllocation!");
+    THROW_EXCEPTION("Invalid MeshBuffer::MemoryAllocation!");
   }
 }
-VertexBuffer::VertexBuffer(VertexBuffer &&other) noexcept
+MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : device_(other.device_),
       buffer_(other.buffer_),
       bufferMemory_(other.bufferMemory_),
@@ -209,7 +207,7 @@ VertexBuffer::VertexBuffer(VertexBuffer &&other) noexcept
   other.data_ = nullptr;
   other.size_ = 0;
 }
-VertexBuffer &VertexBuffer::operator=(VertexBuffer &&other) {
+MeshBuffer &MeshBuffer::operator=(MeshBuffer &&other) {
   ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy buffers with different devices");
   if (this == &other)
     return *this;
@@ -232,7 +230,7 @@ VertexBuffer &VertexBuffer::operator=(VertexBuffer &&other) {
 
   return *this;
 }
-VertexBuffer::~VertexBuffer() {
+MeshBuffer::~MeshBuffer() {
   vmaDestroyBuffer(allocator_, buffer_, bufferMemory_);
 }
 } // namespace GFVL

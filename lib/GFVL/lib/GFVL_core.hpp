@@ -271,11 +271,11 @@ private:
 };
 
 /**
- * @class VertexBuffer
+ * @class MeshBuffer
  * @brief Handles memory management for vertex buffers.
  * @details This allows for management of both in-VRAM buffers and CPU-readable data, but beware of trying to modify something with the wrong type.
  */
-class VertexBuffer {
+class MeshBuffer {
 public:
   /**
    * @enum Type
@@ -288,7 +288,7 @@ public:
 
   /**
    * @struct CreateInfo
-   * @brief Configuration for creating VertexBuffer class.
+   * @brief Configuration for creating MeshBuffer class.
    */
   struct CreateInfo {
     size_t size;                                                       ///< Size of the allocated buffer memory in bytes.
@@ -303,15 +303,15 @@ public:
    * @param device A reference to your Device.
    * @param createinfo The creation information of the vertex buffer.
    */
-  VertexBuffer(DEVICE &device, const CreateInfo &createInfo); ///< Creates a vertex buffer.
+  MeshBuffer(DEVICE &device, const CreateInfo &createInfo); ///< Creates a vertex buffer.
 
-  ~VertexBuffer(); ///< Destroys a vertex buffer and frees associated memory.
+  ~MeshBuffer(); ///< Destroys a vertex buffer and frees associated memory.
 
-  VertexBuffer(const VertexBuffer &other) = delete;            ///< Copy constructor, removed as multiple vertex buffers will have the same buffer handles.
-  VertexBuffer &operator=(const VertexBuffer &other) = delete; ///< Copy assignment operator, removed as multiple vertex buffers will have the same buffer handles.
+  MeshBuffer(const MeshBuffer &other) = delete;            ///< Copy constructor, removed as multiple vertex buffers will have the same buffer handles.
+  MeshBuffer &operator=(const MeshBuffer &other) = delete; ///< Copy assignment operator, removed as multiple vertex buffers will have the same buffer handles.
 
-  VertexBuffer(VertexBuffer &&other) noexcept;   ///< Move constructor, allowed but it will unbind vulkan resources of old object.
-  VertexBuffer &operator=(VertexBuffer &&other); ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
+  MeshBuffer(MeshBuffer &&other) noexcept;   ///< Move constructor, allowed but it will unbind vulkan resources of old object.
+  MeshBuffer &operator=(MeshBuffer &&other); ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
 
   friend class Mesh;
   friend class INSTANCE;
