@@ -195,6 +195,7 @@ MeshBuffer::MeshBuffer(DEVICE &device, const MeshBuffer::CreateInfo &createInfo)
     THROW_EXCEPTION("Invalid MeshBuffer::MemoryAllocation!");
   }
 }
+
 MeshBuffer::MeshBuffer(MeshBuffer &&other) noexcept
     : device_(other.device_),
       buffer_(other.buffer_),
@@ -229,6 +230,15 @@ MeshBuffer &MeshBuffer::operator=(MeshBuffer &&other) {
   other.size_ = 0;
 
   return *this;
+}
+VkBuffer MeshBuffer::buffer() const noexcept {
+    return buffer_;
+}
+VkDeviceSize MeshBuffer::size() const noexcept {
+  return size_;
+}
+MeshBuffer::MemoryAllocation MeshBuffer::memoryAllocation() const noexcept {
+    return memoryAllocation_;
 }
 MeshBuffer::~MeshBuffer() {
   vmaDestroyBuffer(allocator_, buffer_, bufferMemory_);

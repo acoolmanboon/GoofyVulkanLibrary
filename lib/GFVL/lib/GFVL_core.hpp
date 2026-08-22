@@ -313,8 +313,9 @@ public:
   MeshBuffer(MeshBuffer &&other) noexcept;   ///< Move constructor, allowed but it will unbind vulkan resources of old object.
   MeshBuffer &operator=(MeshBuffer &&other); ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
 
-  friend class Mesh;
-  friend class INSTANCE;
+  [[nodiscard]] VkDeviceSize size() const noexcept;
+  [[nodiscard]] VkBuffer buffer() const noexcept;
+  [[nodiscard]] MemoryAllocation memoryAllocation() const noexcept;
 
 private:
   DEVICE &device_;
@@ -323,7 +324,7 @@ private:
   VmaAllocation bufferMemory_;
 
   void *data_; ///< A pointer to the buffer data. Used for HostVisible memory.
-  size_t size_;
+  VkDeviceSize size_;
   MemoryAllocation memoryAllocation_;
 };
 class Frame {

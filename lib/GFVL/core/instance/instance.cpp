@@ -186,12 +186,13 @@ void INSTANCE::frame() {
 
   for (const GFVL::Mesh &mesh : meshesToRender) {
     VkDeviceSize offset = 0;
+    VkBuffer meshBuffer = mesh.meshBuffer_.buffer();
 
     vkCmdBindVertexBuffers(
         currentFrame.commandBuffer,
         0,
         1,
-        &mesh.meshBuffer_.buffer_,
+        &meshBuffer,
         &offset);
 
     vkCmdDraw(

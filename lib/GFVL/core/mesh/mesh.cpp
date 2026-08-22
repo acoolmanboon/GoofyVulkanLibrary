@@ -17,26 +17,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
-#include <GFVL_definition.hpp>
-#include <GFVL_core.hpp>
 #include <GFVL.hpp>
+#include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
+
 
 using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
 Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool commandPool, VmaAllocator allocator) : device_(device),
-                                                                                      meshBuffer_(device, MeshBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .memoryAllocation = createInfo.memoryAllocation, .commandPool = commandPool, .allocator = allocator}),
-                                                                                      verticeCount_(createInfo.verticeCount) {
+                                                                                                              meshBuffer_(device, MeshBuffer::CreateInfo{.size = createInfo.size, .data = createInfo.data, .memoryAllocation = createInfo.memoryAllocation, .commandPool = commandPool, .allocator = allocator}),
+                                                                                                              verticeCount_(createInfo.verticeCount) {
 }
 size_t Mesh::size() const noexcept {
-  return this->meshBuffer_.size_;
+  return this->meshBuffer_.size();
 }
 uint32_t Mesh::verticeCount() const noexcept {
   return this->verticeCount_;
 }
 MeshBuffer::MemoryAllocation Mesh::memoryAllocation() const noexcept {
-  return this->meshBuffer_.memoryAllocation_;
+  return this->meshBuffer_.memoryAllocation();
 }
 Mesh::~Mesh() {
 }
