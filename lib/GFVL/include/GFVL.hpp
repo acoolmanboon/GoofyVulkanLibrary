@@ -23,33 +23,41 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
 
-#include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
+
 
 namespace GFVL {
 
 /**
- * @class Mesh
  * @brief Represents a single renderable object.
  * @details Meshes contain all of the data required to draw a single object. A mesh is not an object, it is simply used for graphical rendering, so you can render the same mesh over and over again.
  */
 class Mesh {
 public:
   /**
-   * @struct CreateInfo
+   * @brief Defines the type of data your indices are.
+   */
+  enum class IndiceDataType {
+    // add uint8 support later
+    NotDefined,
+    UInt16,
+    UInt32
+  };
+
+  /**
    * @brief Configuration for creating Mesh class.
    */
   struct CreateInfo {
-    size_t size;                                                                                   ///< Size of the vertice data in bytes
-    uint32_t verticeCount;                                                                         ///< Vertice count of the mesh.
-    void *data;                                                                                    ///< Pointer to the raw mesh data.
+    VkDeviceSize verticeDataSize;     ///< Size of the vertice data in bytes
+    uint32_t verticeCount; ///< Vertice count of the mesh.
+    void *verticeData;     ///< Pointer to the raw mesh data.
+
+    uint32_t indiceCount;                                                                      ///< Indice count of the mesh
+    void *indiceData;                                                                          ///< Pointer to indice data
+    IndiceDataType indiceType;                                                                 ///< The type of data your indices are
     MeshBuffer::MemoryAllocation memoryAllocation = MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
-
-  size_t size() const noexcept;
-  MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
-  uint32_t verticeCount() const noexcept;
-
   /**
    * @brief Creates a mesh buffer.
    * @param device A reference to your Device.
@@ -60,19 +68,25 @@ public:
   Mesh(const Mesh &other) = delete;            ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
   Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
 
-  Mesh(Mesh &&other) = default;           ///< Move constructor, allowed but it will destroy the other object.
+  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will destroy the other object.
   Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will destroy the other object.
 
   ~Mesh(); ///< Destroys mesh and associated info
 
+  [[nodiscard]] VkDeviceSize size() const noexcept;
+  [[nodiscard]] MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
+  [[nodiscard]] uint32_t verticeCount() const noexcept;
+
   friend class INSTANCE;
 
 private:
-  const DEVICE &device_;      ///< Stores the device reference.
+  VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
+
+  const DEVICE &device_;  ///< Stores the device reference.
+  VkDeviceSize indiceDataSize;
+  void *packedData;       //< temporary buffer, its immediately freed after use
   MeshBuffer meshBuffer_; ///< The buffer containing the actual memory
   uint32_t verticeCount_;
-  bool willRender_;
-  void *data_; ///< NOT IMPLEMENTED YET. Used for host visible memory modification.
 };
 
 enum Keycode : uint32_t {
@@ -416,9 +430,9 @@ public:
   }
 
   InputState() : keycodeStates(Keycode::COUNT, KeyState{.event = KeyEvent::None, .isRepeated = false}), mouseButtonStates(MouseButton::Count, MouseButtonState{.event = KeyEvent::None, .clicks = 0}) {
-
   }
   friend class INSTANCE;
+
 private:
   MouseState mouseState;
   std::vector<KeyState> keycodeStates;
@@ -465,7 +479,7 @@ public:
 
   InputState inputState;
 
-  Mesh& createMesh(Mesh::CreateInfo createInfo);
+  Mesh &createMesh(Mesh::CreateInfo createInfo);
   void pollInputs();
   void frame();
   void setMouseLock(bool mouseLock); ///< True will lock the mouse into the window
@@ -486,4 +500,3 @@ public:
 };
 
 } // namespace GFVL
-

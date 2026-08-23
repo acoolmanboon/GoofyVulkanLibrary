@@ -51,7 +51,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define DEBUG_MODE false
 #define PRINT(message) (void)0
-
+#define SYSTEM_64_BIT_CHECK (constexpr (sizeof(size_t) == 8)) ? 1 : 0 
 #endif
 
 #define THROW_WARNING(reason) std::cerr << "[GFVL] " << reason << "\n"

@@ -278,7 +278,6 @@ private:
 class MeshBuffer {
 public:
   /**
-   * @enum Type
    * @brief Defines memory allocation strategy.
    */
   enum class MemoryAllocation {
@@ -287,11 +286,10 @@ public:
   };
 
   /**
-   * @struct CreateInfo
    * @brief Configuration for creating MeshBuffer class.
    */
   struct CreateInfo {
-    size_t size;                                                       ///< Size of the allocated buffer memory in bytes.
+    VkDeviceSize size;                                                 ///< Size of the allocated buffer memory in bytes.
     void *data;                                                        ///< Pointer to the data to copy into the buffer.
     MemoryAllocation memoryAllocation = MemoryAllocation::HostVisible; ///< Type of data, see definition.
     VkCommandPool commandPool;                                         ///< Command pool, used for alllocation of vertex buffers
@@ -320,6 +318,7 @@ public:
 private:
   DEVICE &device_;
   VmaAllocator allocator_;
+
   VkBuffer buffer_;
   VmaAllocation bufferMemory_;
 

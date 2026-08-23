@@ -337,14 +337,18 @@ int main() {
   }
 
   GFVL::Mesh &terrainMesh = GFVLinstance.createMesh( GFVL::Mesh::CreateInfo{
-    .size = terrain.size() * sizeof(vertice),
+    .verticeDataSize = terrain.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(terrain.size()),
-    .data = terrain.data(),
+    .verticeData = terrain.data(),
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
   std::vector<vertice> cubeOFDeath;
   insertCube(glm::vec3(12.5f, sampleHeight(12.5f, -35.0f) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
-  GFVL::Mesh &cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{.size = cubeOFDeath.size() * sizeof(vertice), .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), .data = cubeOFDeath.data(), .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
+  GFVL::Mesh &cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{
+    .verticeDataSize = cubeOFDeath.size() * sizeof(vertice),
+    .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), 
+    .verticeData = cubeOFDeath.data(), 
+    .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
   // debug
   uint32_t verticeAmount = 0;
