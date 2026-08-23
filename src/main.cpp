@@ -340,6 +340,7 @@ int main() {
     .verticeDataSize = terrain.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(terrain.size()),
     .verticeData = terrain.data(),
+    .indiceType = GFVL::Mesh::IndiceDataType::NotDefined,
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
   std::vector<vertice> cubeOFDeath;
@@ -348,6 +349,7 @@ int main() {
     .verticeDataSize = cubeOFDeath.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), 
     .verticeData = cubeOFDeath.data(), 
+    .indiceType = GFVL::Mesh::IndiceDataType::NotDefined,
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
   // debug
