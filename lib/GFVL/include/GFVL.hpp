@@ -81,9 +81,14 @@ public:
 
 private:
   VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
+  VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
 
-  const DEVICE &device_;  ///< Stores the device reference.
+  const DEVICE &device_; ///< Stores the device reference.
   VkDeviceSize indiceDataSize;
+  VkDeviceSize indiceDataOffset;
+  uint32_t indiceCount;
+  VkIndexType indiceDataType;
+  
   void *packedData;       //< temporary buffer, its immediately freed after use
   MeshBuffer meshBuffer_; ///< The buffer containing the actual memory
   uint32_t verticeCount_;

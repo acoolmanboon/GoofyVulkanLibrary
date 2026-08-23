@@ -195,12 +195,29 @@ void INSTANCE::frame() {
         &meshBuffer,
         &offset);
 
-    vkCmdDraw(
+    if (mesh.indiceDataSize == 0) {
+      vkCmdDraw(
+          currentFrame.commandBuffer,
+          mesh.verticeCount(),
+          1,
+          0,
+          0);
+    } else {
+      vkCmdBindIndexBuffer2(
         currentFrame.commandBuffer,
-        mesh.verticeCount(),
-        1,
-        0,
+        mesh.meshBuffer_.buffer(),
+        mesh.indiceDataOffset,
+        mesh.indiceDataSize,
+        mesh.indiceDataType);
+      vkCmdDrawIndexed(
+        currentFrame.commandBuffer, 
+        mesh.indiceCount, 
+        1, 
+        0, 
+        0, 
         0);
+    }
+
   }
 
   vkCmdEndRenderPass(currentFrame.commandBuffer);

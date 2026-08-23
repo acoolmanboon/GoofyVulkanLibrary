@@ -39,6 +39,18 @@ VkDeviceSize Mesh::getIndiceDataSize(Mesh::IndiceDataType indiceDataType, uint32
       THROW_EXCEPTION("Attempted to use invalid indice data type of " << static_cast<int>(indiceDataType)); // OH MY GOD BEHIND YOU
   }
 }
+VkIndexType Mesh::getIndiceDataType(Mesh::IndiceDataType indiceDataType) {
+  switch (indiceDataType) {
+    case (Mesh::IndiceDataType::NotDefined):
+      return VK_INDEX_TYPE_MAX_ENUM;
+    case (Mesh::IndiceDataType::UInt16):
+      return VK_INDEX_TYPE_UINT16;
+    case (Mesh::IndiceDataType::UInt32):
+      return VK_INDEX_TYPE_UINT32;
+    default:
+      THROW_EXCEPTION("Attempted to use invalid indice data type of " << static_cast<int>(indiceDataType)); // OH MY GOD BEHIND YOU
+  }
+}
 void *packData(size_t verticeDataSize, void* verticeData, size_t indiceDataSize, void* indiceData) {
   if (indiceDataSize == 0)
     return 0;
@@ -51,6 +63,9 @@ Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool commandPo
                                                                                                               indiceDataSize(getIndiceDataSize(
                                                                                                                   createInfo.indiceType,
                                                                                                                   createInfo.indiceCount)),
+                                                                                                              indiceDataOffset(createInfo.verticeDataSize),
+                                                                                                              indiceCount(createInfo.indiceCount),
+                                                                                                              indiceDataType(getIndiceDataType(createInfo.indiceType)),
                                                                                                               packedData(packData(
                                                                                                                 createInfo.verticeDataSize,
                                                                                                                 createInfo.verticeData,
