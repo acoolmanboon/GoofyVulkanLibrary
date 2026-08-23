@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-PIPELINE::PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts) : device(device) {
+PIPELINE::PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts) : device(device) {
   std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
   size_t index = 0;
   PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << layouts.size() << " layouts.");
@@ -47,19 +47,19 @@ PIPELINE::PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, s
 
   VkPipelineLayoutCreateInfo info{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      .setLayoutCount = static_cast<uint32_t>(layouts.size()),
-      .pSetLayouts = layouts.data()};
+      .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+      .pSetLayouts = descriptorSetLayouts.data()};
 
   CheckVkResult(vkCreatePipelineLayout(device.logicalDevice, &info, nullptr, &this->pipelineLayout));
   PRINT("Created pipeline layout");
   // vertex input
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-      .vertexBindingDescriptionCount = 1, // TBD : add multiple bindings
-      .pVertexBindingDescriptions = &layout.binding,
+      .vertexBindingDescriptionCount = static_cast<uint32_t>(layout.bindings.size()),
+      .pVertexBindingDescriptions = layout.bindings.data(),
       .vertexAttributeDescriptionCount = static_cast<uint32_t>(layout.attributes.size()),
       .pVertexAttributeDescriptions = layout.attributes.data()};
-  ;
+  
 
   // input assembly
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{

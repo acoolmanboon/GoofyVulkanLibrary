@@ -151,10 +151,11 @@ int main() {
                                                                                                .shaderStage = VK_SHADER_STAGE_ALL_GRAPHICS,
                                                                                                .ubo = &lighting});
 
-  GFVL::VertexLayout layout(sizeof(vertice));
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position));
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, normal));
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color));
+  GFVL::VertexLayout layout;
+  layout.addBinding(0, static_cast<uint32_t>(sizeof(vertice)), VK_VERTEX_INPUT_RATE_VERTEX);
+  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position), 0);
+  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, normal), 0);
+  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color), 0);
 
   GFVL::APPLICATION_INFO appInfo = {
       .applicationName = "GoofyVLib example",

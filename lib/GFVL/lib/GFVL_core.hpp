@@ -61,12 +61,13 @@ struct SHADER_STAGE {
 
 class VertexLayout {
 public:
-  VkVertexInputBindingDescription binding;
+  std::vector<VkVertexInputBindingDescription> bindings;
   std::vector<VkVertexInputAttributeDescription> attributes;
 
-  void addAttribute(VkFormat format, uint32_t offset);
+  void addBinding(uint32_t binding, uint32_t  stride, VkVertexInputRate inputRate);
+  void addAttribute(VkFormat format, uint32_t offset, uint32_t binding);
 
-  VertexLayout(uint32_t size);
+  VertexLayout();
 };
 
 class DEVICE {
@@ -230,7 +231,7 @@ public:
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 
-  PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> layouts);
+  PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
   ~PIPELINE();
 
   PIPELINE(const PIPELINE &) = delete;

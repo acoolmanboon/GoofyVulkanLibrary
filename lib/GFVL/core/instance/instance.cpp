@@ -31,17 +31,17 @@ void INSTANCE::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
 }
 INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
-                                                                                                                                                              window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
-                                                                                                                                                              surface(InitializeVkSurface()),
-                                                                                                                                                              device(this->instance, this->surface, applicationInfo.preferredGPU),
-                                                                                                                                                              swapchain(this->device, this->window, this->surface),
-                                                                                                                                                              renderPass(this->device, this->swapchain),
-                                                                                                                                                              shaderStages(InitializeShaderStages(stages)),
-                                                                                                                                                              bindings(bindings),
-                                                                                                                                                              descriptorSetLayout(device, bindings),
-                                                                                                                                                              pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
-                                                                                                                                                              framebuffer(this->device, this->swapchain, this->renderPass),
-                                                                                                                                                              maxFramesInFlight(applicationInfo.maxFramesInFlight) {
+                                                                                                                                                                          window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
+                                                                                                                                                                          surface(InitializeVkSurface()),
+                                                                                                                                                                          device(this->instance, this->surface, applicationInfo.preferredGPU),
+                                                                                                                                                                          swapchain(this->device, this->window, this->surface),
+                                                                                                                                                                          renderPass(this->device, this->swapchain),
+                                                                                                                                                                          shaderStages(InitializeShaderStages(stages)),
+                                                                                                                                                                          bindings(bindings),
+                                                                                                                                                                          descriptorSetLayout(device, bindings),
+                                                                                                                                                                          pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
+                                                                                                                                                                          framebuffer(this->device, this->swapchain, this->renderPass),
+                                                                                                                                                                          maxFramesInFlight(applicationInfo.maxFramesInFlight) {
   VmaAllocatorCreateInfo allocatorCreateinfo{
       .physicalDevice = device.physicalDevice,
       .device = device.logicalDevice,
