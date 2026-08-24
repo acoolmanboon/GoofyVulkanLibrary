@@ -66,8 +66,6 @@ public:
 
   void addBinding(uint32_t binding, uint32_t  stride, VkVertexInputRate inputRate);
   void addAttribute(VkFormat format, uint32_t offset, uint32_t binding);
-
-  VertexLayout();
 };
 
 class DEVICE {

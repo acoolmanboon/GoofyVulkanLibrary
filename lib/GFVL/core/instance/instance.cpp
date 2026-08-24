@@ -24,8 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
-Mesh &INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
-  return meshesToRender.emplace_back(device, createInfo, commandPool, vmaAllocator);
+Mesh INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
+  return Mesh(device, createInfo, commandPool, vmaAllocator);
 }
 void INSTANCE::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
@@ -111,7 +111,7 @@ void INSTANCE::pollInputs() {
     }
   }
 }
-void INSTANCE::frame() {
+void INSTANCE::beginFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
   currentFrame.updateUniformBuffers();
   if (framebufferResized) {
@@ -132,7 +132,6 @@ void INSTANCE::frame() {
   }
 
   vkWaitForFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence, VK_TRUE, UINT64_MAX);
-  uint32_t imageIndex;
   CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore, VK_NULL_HANDLE, &imageIndex));
   if (imagesInFlightFence[imageIndex] != VK_NULL_HANDLE) {
     vkWaitForFences(
@@ -184,42 +183,46 @@ void INSTANCE::frame() {
   vkCmdSetScissor(currentFrame.commandBuffer, 0, 1, &scissor);
   VkDeviceSize offsets[] = {0};
 
-  for (const GFVL::Mesh &mesh : meshesToRender) {
-    VkDeviceSize offset = 0;
-    VkBuffer meshBuffer = mesh.meshBuffer_.buffer();
 
-    vkCmdBindVertexBuffers(
+  
+}
+void INSTANCE::renderMesh(Mesh &mesh) {
+  Frame &currentFrame = frames[currentFrameIndex];
+  VkDeviceSize offset = 0;
+  VkBuffer meshBuffer = mesh.meshBuffer_.buffer();
+
+  vkCmdBindVertexBuffers(
+      currentFrame.commandBuffer,
+      0,
+      1,
+      &meshBuffer,
+      &offset);
+
+  if (mesh.indiceDataSize == 0) {
+    vkCmdDraw(
         currentFrame.commandBuffer,
-        0,
+        mesh.verticeCount(),
         1,
-        &meshBuffer,
-        &offset);
-
-    if (mesh.indiceDataSize == 0) {
-      vkCmdDraw(
-          currentFrame.commandBuffer,
-          mesh.verticeCount(),
-          1,
-          0,
-          0);
-    } else {
-      vkCmdBindIndexBuffer2(
+        0,
+        0);
+  } else {
+    vkCmdBindIndexBuffer2(
         currentFrame.commandBuffer,
         mesh.meshBuffer_.buffer(),
         mesh.indiceDataOffset,
         mesh.indiceDataSize,
         mesh.indiceDataType);
-      vkCmdDrawIndexed(
-        currentFrame.commandBuffer, 
-        mesh.indiceCount, 
-        1, 
-        0, 
-        0, 
+    vkCmdDrawIndexed(
+        currentFrame.commandBuffer,
+        mesh.indiceCount,
+        1,
+        0,
+        0,
         0);
-    }
-
   }
-
+}
+void INSTANCE::endFrame() {
+  Frame &currentFrame = frames[currentFrameIndex];
   vkCmdEndRenderPass(currentFrame.commandBuffer);
 
   CheckVkResult(vkEndCommandBuffer(currentFrame.commandBuffer));

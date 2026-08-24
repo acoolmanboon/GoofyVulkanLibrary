@@ -58,12 +58,6 @@ public:
     IndiceDataType indiceType;                                                                 ///< The type of data your indices are
     MeshBuffer::MemoryAllocation memoryAllocation = MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
-  /**
-   * @brief Creates a mesh buffer.
-   * @param device A reference to your Device.
-   * @param createinfo Mesh creation info.
-   */
-  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
 
   Mesh(const Mesh &other) = delete;            ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
   Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
@@ -80,6 +74,13 @@ public:
   friend class INSTANCE;
 
 private:
+  /**
+   * @brief Creates a mesh buffer.
+   * @param device A reference to your Device.
+   * @param createinfo Mesh creation info.
+   */
+  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
+
   VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
   VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
 
@@ -460,6 +461,7 @@ private:
   VkCommandPool commandPool;
 
   std::vector<Frame> frames;
+  uint32_t imageIndex;
 
   uint32_t currentFrameIndex = 0;
   uint32_t maxFramesInFlight;
@@ -474,8 +476,6 @@ private:
   std::vector<SHADER> InitializeShaderStages(std::vector<SHADER_STAGE> &stages);
 
 public:
-  std::vector<GFVL::Mesh> meshesToRender;
-
   bool running = true;
   int w = 0;
   int h = 0;
@@ -484,9 +484,11 @@ public:
 
   InputState inputState;
 
-  Mesh &createMesh(Mesh::CreateInfo createInfo);
+  Mesh createMesh(Mesh::CreateInfo createInfo);
   void pollInputs();
-  void frame();
+  void beginFrame();
+  void renderMesh(Mesh &mesh);
+  void endFrame();
   void setMouseLock(bool mouseLock); ///< True will lock the mouse into the window
 
   INSTANCE(

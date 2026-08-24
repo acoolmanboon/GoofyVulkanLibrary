@@ -337,7 +337,7 @@ int main() {
     }
   }
 
-  GFVL::Mesh &terrainMesh = GFVLinstance.createMesh( GFVL::Mesh::CreateInfo{
+  GFVL::Mesh terrainMesh = GFVLinstance.createMesh( GFVL::Mesh::CreateInfo{
     .verticeDataSize = terrain.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(terrain.size()),
     .verticeData = terrain.data(),
@@ -346,19 +346,12 @@ int main() {
 
   std::vector<vertice> cubeOFDeath;
   insertCube(glm::vec3(12.5f, sampleHeight(12.5f, -35.0f) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
-  GFVL::Mesh &cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{
+  GFVL::Mesh cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{
     .verticeDataSize = cubeOFDeath.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), 
     .verticeData = cubeOFDeath.data(), 
     .indiceType = GFVL::Mesh::IndiceDataType::NotDefined,
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
-
-  // debug
-  uint32_t verticeAmount = 0;
-  for (const GFVL::Mesh &mesh : GFVLinstance.meshesToRender) {
-    verticeAmount += mesh.size() / sizeof(vertice);
-  }
-  print("Vertices : " << verticeAmount)
 
   bool menu = false;
   bool flight = false;
@@ -436,7 +429,10 @@ int main() {
     camera.viewPos = position;
 
     cameraBinding.hasUpdated = true;
-    GFVLinstance.frame();
+    GFVLinstance.beginFrame();
+    GFVLinstance.renderMesh(cubeOfDeathMesh);
+    GFVLinstance.renderMesh(terrainMesh);
+    GFVLinstance.endFrame();
   }
 
   return 0;
