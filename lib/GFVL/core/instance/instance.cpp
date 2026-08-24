@@ -75,46 +75,10 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::
       vkCreateCommandPool(device.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
       "Failed to create command pool for Instance!");
 }
-void INSTANCE::pollInputs() {
-
-  this->inputState.mouseState.xDelta = 0;
-  this->inputState.mouseState.yDelta = 0;
-  this->inputState.mouseState.moved = false;
-  SDL_Event event;
-  for (KeyState &state : this->inputState.keycodeStates) {
-    state.isRepeated = true;
-  }
-  while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_EVENT_QUIT)
-      this->running = false;
-
-    if (event.type == SDL_EVENT_WINDOW_RESIZED || event.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
-      this->framebufferResized = true;
-
-    if (event.type == SDL_EVENT_KEY_DOWN) {
-      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.event = KeyEvent::Down, .isRepeated = false};
-    }
-
-    if (event.type == SDL_EVENT_KEY_UP) {
-      this->inputState.keycodeStates[static_cast<size_t>(event.key.scancode)] = {.event = KeyEvent::Up, .isRepeated = false};
-    }
-
-    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-      this->inputState.mouseButtonStates[static_cast<size_t>(event.button.button)] = {.event = KeyEvent::Down, .clicks = event.button.clicks};
-    }
-    if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-      this->inputState.mouseButtonStates[static_cast<size_t>(event.button.button)] = {.event = KeyEvent::Up, .clicks = event.button.clicks};
-    }
-
-    if (event.type == SDL_EVENT_MOUSE_MOTION) {
-      this->inputState.mouseState = {.x = event.motion.x, .y = event.motion.y, .xDelta = event.motion.xrel, .yDelta = event.motion.yrel, .moved = true};
-    }
-  }
-}
 void INSTANCE::beginFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
   currentFrame.updateUniformBuffers();
-  if (framebufferResized) {
+  if (inputState.framebufferResizedCallBack()) {
     vkDeviceWaitIdle(this->device.logicalDevice);
     this->swapchain.recreate(this->window, this->surface);
     this->framebuffer.recreate(this->swapchain, this->renderPass);
@@ -126,7 +90,6 @@ void INSTANCE::beginFrame() {
     for (int i = 0; i < swapchain.imageCount; ++i)
       renderFinishedSemaphores.emplace_back(device);
 
-    framebufferResized = false;
     SDL_GetWindowSizeInPixels(this->window, &this->w, &this->h);
     aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
   }

@@ -362,12 +362,12 @@ int main() {
 
   glm::vec3 position(0, 50, -25);
   glm::quat angle;
-  while (GFVLinstance.running) {
+  while (GFVLinstance.inputState.isRunning()) {
     uint64_t current_time = SDL_GetPerformanceCounter();
     delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
     last_time = current_time;
 
-    GFVLinstance.pollInputs();
+    GFVLinstance.inputState.pollInputs();
     if (GFVLinstance.inputState.isMouseMoved()) {
       GFVL::MouseState mouseState = GFVLinstance.inputState.getMouseState();
 

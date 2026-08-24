@@ -398,51 +398,34 @@ struct KeyState {
 
 class InputState {
 public:
-  KeyState getKeycodeState(Keycode keycode) {
-    return this->keycodeStates.at(static_cast<size_t>(keycode));
-  }
-  bool isKeyDown(Keycode keycode) {
-    return this->keycodeStates.at(static_cast<size_t>(keycode)).event == KeyEvent::Down;
-  }
-  bool isKeyUp(Keycode keycode) {
-    if (this->keycodeStates.at(static_cast<size_t>(keycode)).event == KeyEvent::Up) {
-      this->keycodeStates.at(static_cast<size_t>(keycode)).event = KeyEvent::None;
-      return true;
-    }
-    return false;
-  }
-  bool isKeyRepeated(Keycode keycode) {
-    return this->keycodeStates.at(static_cast<size_t>(keycode)).isRepeated;
-  }
+  KeyState getKeycodeState(Keycode keycode);
+  bool isKeyDown(Keycode keycode);
+  bool isKeyUp(Keycode keycode);
+  bool isKeyRepeated(Keycode keycode);
 
-  MouseButtonState getMouseButtonState(MouseButton button) {
-    return this->mouseButtonStates.at(static_cast<size_t>(button));
-  }
-  bool isMouseButtonDown(MouseButton button) {
-    return this->mouseButtonStates.at(static_cast<size_t>(button)).event == KeyEvent::Down;
-  }
-  bool isMouseButtonUp(MouseButton button) {
-    return this->mouseButtonStates.at(static_cast<size_t>(button)).event == KeyEvent::Up;
-  }
-  uint8_t getMouseButtonClicks(MouseButton button) {
-    return this->mouseButtonStates.at(static_cast<size_t>(button)).clicks;
-  }
+  MouseButtonState getMouseButtonState(MouseButton button);
+  bool isMouseButtonDown(MouseButton button);
+  bool isMouseButtonUp(MouseButton button);
+  uint8_t getMouseButtonClicks(MouseButton button);
 
-  MouseState getMouseState() {
-    return this->mouseState;
-  }
-  bool isMouseMoved() {
-    return this->mouseState.moved;
-  }
+  MouseState getMouseState();
+  bool isMouseMoved();
+  bool isRunning();
+  bool framebufferResizedCallBack();
+  
+  void pollInputs();
 
   InputState() : keycodeStates(Keycode::COUNT, KeyState{.event = KeyEvent::None, .isRepeated = false}), mouseButtonStates(MouseButton::Count, MouseButtonState{.event = KeyEvent::None, .clicks = 0}) {
   }
-  friend class INSTANCE;
 
+  friend class INSTANCE;
 private:
   MouseState mouseState;
   std::vector<KeyState> keycodeStates;
   std::vector<MouseButtonState> mouseButtonStates;
+
+  bool running = true;
+  bool framebufferResized = false;
 };
 
 class INSTANCE {
@@ -476,16 +459,13 @@ private:
   std::vector<SHADER> InitializeShaderStages(std::vector<SHADER_STAGE> &stages);
 
 public:
-  bool running = true;
   int w = 0;
   int h = 0;
   float aspectRatio = 0.0f;
-  bool framebufferResized = false;
 
   InputState inputState;
 
   Mesh createMesh(Mesh::CreateInfo createInfo);
-  void pollInputs();
   void beginFrame();
   void renderMesh(Mesh &mesh);
   void endFrame();
