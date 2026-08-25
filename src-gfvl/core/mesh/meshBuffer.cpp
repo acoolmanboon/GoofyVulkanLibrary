@@ -24,7 +24,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-MeshBuffer::MeshBuffer(DEVICE &device, const MeshBuffer::CreateInfo &createInfo) : device_(device),
+MeshBuffer::MeshBuffer(Device &device, const MeshBuffer::CreateInfo &createInfo) : device_(device),
                                                                                          allocator_(createInfo.allocator),
                                                                                          size_(createInfo.size),
                                                                                          memoryAllocation_(createInfo.memoryAllocation) {

@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-SHADER::SHADER(DEVICE &device, VkShaderStageFlagBits stage, const char *filename) : device(device) {
+SHADER::SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename) : device(device) {
   this->stage = stage;
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 

@@ -107,7 +107,7 @@ VkImageView createImageView(
 
 } // namespace
 
-Framebuffer::Framebuffer(DEVICE &device, Swapchain &swapchain, RENDERPASS &renderPass)
+Framebuffer::Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass)
     : device(device) {
 
   auto findDepthFormat = [&](VkPhysicalDevice phys) -> VkFormat {

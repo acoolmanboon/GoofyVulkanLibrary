@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-RENDERPASS::RENDERPASS(DEVICE &device, Swapchain &swapchain) : device(device) {
+RENDERPASS::RENDERPASS(Device &device, Swapchain &swapchain) : device(device) {
 
   VkAttachmentDescription colorAttachment{
       .format = swapchain.format,

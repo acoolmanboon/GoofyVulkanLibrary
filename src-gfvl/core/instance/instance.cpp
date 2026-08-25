@@ -54,7 +54,7 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::
 
   frames.reserve(applicationInfo.maxFramesInFlight);
   for (int i = 0; i < applicationInfo.maxFramesInFlight; i++) {
-    // Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
+    // Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
     frames.emplace_back(device, vmaAllocator, descriptorSetLayout.descriptorSetLayout, bindings);
   }
 

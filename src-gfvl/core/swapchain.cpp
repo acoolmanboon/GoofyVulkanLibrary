@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace GFVL;
 
 namespace GFVL {
-void pickFormat(DEVICE &device_, VkSurfaceKHR surface, VkFormat& format, VkColorSpaceKHR& colorSpace) {
+void pickFormat(Device &device_, VkSurfaceKHR surface, VkFormat& format, VkColorSpaceKHR& colorSpace) {
   std::vector<VkSurfaceFormatKHR> formats;
   uint32_t count = 0;
   CheckVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(device_.physicalDevice, surface, &count, nullptr));
@@ -46,7 +46,7 @@ void pickFormat(DEVICE &device_, VkSurfaceKHR surface, VkFormat& format, VkColor
     }
   }
 }
-VkPresentModeKHR pickPresentMode(DEVICE &device_, VkSurfaceKHR surface) {
+VkPresentModeKHR pickPresentMode(Device &device_, VkSurfaceKHR surface) {
   uint32_t count = 0;
 
   std::vector<VkPresentModeKHR> presentModes;
@@ -65,7 +65,7 @@ VkPresentModeKHR pickPresentMode(DEVICE &device_, VkSurfaceKHR surface) {
   }
   return presentMode;
 }
-Swapchain::Swapchain(DEVICE& device_, SDL_Window *window, VkSurfaceKHR surface) : device_(device_), presentMode(pickPresentMode(device_, surface)) {
+Swapchain::Swapchain(Device& device_, SDL_Window *window, VkSurfaceKHR surface) : device_(device_), presentMode(pickPresentMode(device_, surface)) {
     // giggity
     PRINT("Attempting to create swapchain");
 

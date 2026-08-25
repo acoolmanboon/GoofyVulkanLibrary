@@ -33,7 +33,7 @@ namespace GFVL {
  * @param device A GFVL device reference.
  * @param bindings The list of bindings to create a descriptor set layout for
  */
-DescriptorSetLayout::DescriptorSetLayout(DEVICE &device, const std::vector<UniformBufferBinding> &bindings) : device_(device),
+DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<UniformBufferBinding> &bindings) : device_(device),
                                                                                                               bindings_(bindings) {
   std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.reserve(this->bindings_.size());
