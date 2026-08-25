@@ -20,10 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <GFVL.hpp>
 #include "GFVL_core.hpp"
 #include "PerlinNoise.hpp"
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <random>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -34,6 +36,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define print(message) std::cout << message << "\n";
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
+// Please delete your repository ahh code
+constexpr unsigned int width = 700;
+constexpr unsigned int length = 700;
+
+// 1 world unit = 1 meter
+constexpr float spacing = 5.5f;
 
 // USER-DEFINED STUFF
 
@@ -123,6 +132,122 @@ void insertCube(glm::vec3 position, glm::vec3 color, glm::vec3 scale, std::vecto
 
   vertices.insert(vertices.end(), cube.begin(), cube.end());
 }
+
+float getNoise(float x, float y, int octaves, float frequency, float amplitude, float persistence, float lacunarity, float scale, const siv::PerlinNoise &perlinNoise) {
+  float totalHeight = 0.0f;
+
+  float currentFrequency = frequency;
+  float currentAmplitude = amplitude;
+
+  for (int i = 0; i < octaves; i++) {
+    float sampleX = (x / scale) * currentFrequency;
+    float sampleY = (y / scale) * currentFrequency;
+
+    totalHeight += perlinNoise.noise2D(sampleX, sampleY) * currentAmplitude;
+
+    currentFrequency *= lacunarity;
+    currentAmplitude *= persistence;
+  }
+
+  return totalHeight;
+}
+
+static float hash2D(int x, int y) {
+  uint32_t h = static_cast<uint32_t>(x) * 374761393u + static_cast<uint32_t>(y) * 668265263u;
+
+  h = (h ^ (h >> 13)) * 1274126177u;
+  h ^= h >> 16;
+
+  return static_cast<float>(h) / static_cast<float>(UINT32_MAX);
+}
+
+static float smoothStep(float edge0, float edge1, float x) {
+  x = std::clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+  return x * x * (3.0f - 2.0f * x);
+}
+
+float getHeight(float xA, float zA, siv::PerlinNoise perlinNoise) {
+  const float x = xA;
+  const float z = zA;
+
+  const float terrain =
+      getNoise(
+          x,
+          z,
+          4,
+          0.7f,
+          28.0f,
+          0.55f,
+          1.9f,
+          350.0f,
+          perlinNoise);
+
+  const float highlands =
+      getNoise(
+          x + 1000.0f,
+          z + 1000.0f,
+          3,
+          1.0f,
+          55.0f,
+          0.55f,
+          1.8f,
+          900.0f,
+          perlinNoise);
+
+  const float detail =
+      getNoise(
+          x - 500.0f,
+          z + 500.0f,
+          4,
+          1.5f,
+          8.0f,
+          0.55f,
+          2.1f,
+          90.0f,
+          perlinNoise);
+
+  return terrain + highlands + detail;
+}
+
+vertice makeVertice(
+    const glm::vec3 &pos,
+    const glm::vec3 &normal,
+    const siv::PerlinNoise &perlinNoise) {
+  vertice v{};
+
+  v.position[0] = pos.x;
+  v.position[1] = pos.y;
+  v.position[2] = pos.z;
+
+  v.normal[0] = normal.x;
+  v.normal[1] = normal.y;
+  v.normal[2] = normal.z;
+
+  const float noise = perlinNoise.noise2D(pos.x * 0.045f, pos.z * 0.045f);
+
+  const float slope = 1.0f - std::clamp(normal.y, 0.0f, 1.0f);
+
+  const float variation = noise * 0.055f - slope * 0.035f;
+
+  glm::vec3 color(0.42f + variation, 0.41f + variation, 0.38f + variation);
+
+  if (noise < -0.25f) {
+    color *= 0.78f;
+  }
+  if (noise > 0.35f) {
+    color *= 1.08f;
+  }
+
+  color.r = std::clamp(color.r, 0.0f, 1.0f);
+  color.g = std::clamp(color.g, 0.0f, 1.0f);
+  color.b = std::clamp(color.b, 0.0f, 1.0f);
+
+  v.color[0] = color.r;
+  v.color[1] = color.g;
+  v.color[2] = color.b;
+
+  return v;
+}
 int main() {
   if (!SDL_Init(SDL_INIT_VIDEO))
     throw std::runtime_error(SDL_GetError());
@@ -160,30 +285,11 @@ int main() {
   GFVL::APPLICATION_INFO appInfo = {
       .applicationName = "GoofyVLib example",
       .applicationVersion = 1,
-      .width = 600,
-      .height = 800,
-      .preferredGPU = GFVL::PREFERRED_GPU_PERFORMANCE};
+      .width = 800,
+      .height = 600,
+      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
 
   GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
-
-  // Please delete your repository ahh code
-  constexpr unsigned int width = 200;
-  constexpr unsigned int length = 200;
-
-  // 1 world unit = 1 meter
-  constexpr float spacing = 5.5f;
-  constexpr float scale = 4.0f;
-
-  constexpr float continentFrequency = 0.00225f; // ~2km features
-  constexpr float mountainFrequency = 0.00015f;  // ~650m mountain systems
-  constexpr float detailFrequency = 0.012f;      // ~100m detail
-  constexpr float colorFrequency = 0.002f;       // very large color regions
-
-  constexpr float continentAmplitude = -4.40f;
-  constexpr float mountainAmplitude = -6.20f;
-  constexpr float detailAmplitude = -3.3f;
-
-  constexpr float persistence = 0.25f;
 
   const siv::PerlinNoise::seed_type seed = 122u;
   const siv::PerlinNoise perlin(seed);
@@ -191,125 +297,6 @@ int main() {
   std::vector<vertice> terrain;
   terrain.reserve((width - 1) * (length - 1) * 6);
 
-  auto sampleHeight = [&](float xa, float za) -> float {
-    float x = xa * scale;
-    float z = za * scale;
-
-    double continents =
-        perlin.octave2D(
-            x * continentFrequency,
-            z * continentFrequency,
-            1,
-            persistence);
-
-    double ridges =
-        perlin.octave2D_01(
-            x * mountainFrequency,
-            z * mountainFrequency,
-            6,
-            0.67) *
-        mountainAmplitude;
-
-    ridges = powf(ridges, 3.0f);
-    // if (ridges < 0.4) ridges = 0;
-
-    double detail =
-        perlin.octave2D(
-            x * detailFrequency,
-            z * detailFrequency,
-            4,
-            0.45);
-
-    double craterNoise =
-        perlin.octave2D_01(
-            (x + 100) * 0.0035,
-            (z + 100) * 0.0035,
-            2,
-            0.6);
-
-    craterNoise = std::pow(craterNoise, 5.0);
-
-    float h =
-        static_cast<float>(
-            continents * continentAmplitude +
-            ridges +
-            detail * detailAmplitude +
-            craterNoise * 60);
-
-    return h;
-  };
-
-  auto makeVertex = [&](const glm::vec3 &pos, const glm::vec3 &normal) {
-    vertice v{};
-
-    v.position[0] = pos.x;
-    v.position[1] = pos.y;
-    v.position[2] = pos.z;
-
-    v.normal[0] = normal.x;
-    v.normal[1] = normal.y;
-    v.normal[2] = normal.z;
-
-    float biome =
-        static_cast<float>(
-            perlin.octave2D(
-                pos.x * colorFrequency,
-                pos.z * colorFrequency,
-                4,
-                0.55));
-
-    biome = glm::clamp(biome, 0.0f, 1.0f);
-
-    glm::vec3 darkBasalt(0.20f, 0.20f, 0.22f);
-    glm::vec3 basalt(0.34f, 0.34f, 0.36f);
-    glm::vec3 lightRock(0.55f, 0.55f, 0.58f);
-
-    glm::vec3 color;
-
-    if (biome < 0.35f) {
-      float t = biome / 0.35f;
-      color = glm::mix(darkBasalt, basalt, t);
-    } else {
-      float t = (biome - 0.35f) / 0.65f;
-      color = glm::mix(basalt, lightRock, t);
-    }
-
-    float elevation =
-        glm::clamp(pos.y / 200.0f, 0.0f, 1.0f);
-
-    color += glm::vec3(elevation * 0.08f);
-
-    float frost =
-        glm::smoothstep(
-            170.0f,
-            215.0f,
-            pos.y);
-
-    color = glm::mix(
-        color,
-        glm::vec3(0.93f, 0.93f, 0.95f),
-        frost);
-
-    float grain =
-        static_cast<float>(
-            perlin.octave2D(
-                pos.x * 0.03,
-                pos.z * 0.03,
-                2,
-                0.5));
-
-    grain = (grain - 0.5f) * 0.08f;
-
-    color += glm::vec3(grain);
-
-    color = glm::clamp(color, glm::vec3(0.0f), glm::vec3(1.0f));
-
-    v.color[0] = color.r;
-    v.color[1] = color.g;
-    v.color[2] = color.b;
-
-    return v;
-  };
 
   for (unsigned int z = 0; z < length - 1; ++z) {
     for (unsigned int x = 0; x < width - 1; ++x) {
@@ -319,21 +306,21 @@ int main() {
       float z0 = (static_cast<float>(z) - length * 0.5f) * spacing;
       float z1 = z0 + spacing;
 
-      glm::vec3 v00{x0, sampleHeight(x0, z0), z0};
-      glm::vec3 v10{x1, sampleHeight(x1, z0), z0};
-      glm::vec3 v01{x0, sampleHeight(x0, z1), z1};
-      glm::vec3 v11{x1, sampleHeight(x1, z1), z1};
+      glm::vec3 v00{x0, getHeight(x0, z0, perlin), z0};
+      glm::vec3 v10{x1, getHeight(x1, z0, perlin), z0};
+      glm::vec3 v01{x0, getHeight(x0, z1, perlin), z1};
+      glm::vec3 v11{x1, getHeight(x1, z1, perlin), z1};
 
       glm::vec3 n1 = glm::normalize(glm::cross(v01 - v00, v10 - v00));
       glm::vec3 n2 = glm::normalize(glm::cross(v11 - v10, v01 - v10));
 
-      terrain.push_back(makeVertex(v00, -n1));
-      terrain.push_back(makeVertex(v01, -n1));
-      terrain.push_back(makeVertex(v10, -n1));
+      terrain.push_back(makeVertice(v00, -n1, perlin));
+      terrain.push_back(makeVertice(v01, -n1, perlin));
+      terrain.push_back(makeVertice(v10, -n1, perlin));
 
-      terrain.push_back(makeVertex(v01, n2));
-      terrain.push_back(makeVertex(v11, n2));
-      terrain.push_back(makeVertex(v10, n2));
+      terrain.push_back(makeVertice(v01, n2, perlin));
+      terrain.push_back(makeVertice(v11, n2, perlin));
+      terrain.push_back(makeVertice(v10, n2, perlin));
     }
   }
 
@@ -345,7 +332,7 @@ int main() {
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
   std::vector<vertice> cubeOFDeath;
-  insertCube(glm::vec3(12.5f, sampleHeight(12.5f, -35.0f) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
+  insertCube(glm::vec3(12.5f, getHeight(12.5f, -35.0f, perlin) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
   GFVL::Mesh cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{
     .verticeDataSize = cubeOFDeath.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(cubeOFDeath.size()), 
@@ -414,7 +401,7 @@ int main() {
     }
 
     if (!flight)
-      position.y = sampleHeight(position.x, position.z) - 1.75;
+      position.y = getHeight(position.x, position.z, perlin) - 1.75;
     glm::mat4 proj = glm::perspectiveRH_ZO(
         glm::radians(90.0f),
         GFVLinstance.aspectRatio,
