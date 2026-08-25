@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using namespace GFVL;
 
-VkDeviceSize getDeviceVRAM(VkPhysicalDevice device) {
+VkDeviceSize Device::getDeviceVRAM(VkPhysicalDevice device) {
   VkPhysicalDeviceMemoryProperties memoryProperties{};
   vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
 
@@ -35,7 +35,7 @@ VkDeviceSize getDeviceVRAM(VkPhysicalDevice device) {
 
   return totalDedicatedMemory;
 }
-uint32_t getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference) {
+uint32_t Device::getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference) {
   VkPhysicalDeviceProperties properties{};
   vkGetPhysicalDeviceProperties(device, &properties);
 
@@ -66,7 +66,7 @@ uint32_t getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference) {
 
   return score;
 }
-bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex) {
+bool Device::enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex) {
   graphicsFamilyIndex = UINT32_MAX;
   presentFamilyIndex = UINT32_MAX;
 
@@ -101,7 +101,7 @@ bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint3
 
   return graphicsFamilyIndex != UINT32_MAX && presentFamilyIndex != UINT32_MAX;
 }
-VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device) {
+VkBool32 Device::hasRequiredDeviceExtensions(VkPhysicalDevice device) {
   uint32_t extensionCount = 0;
   CheckVkResult2(
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr),
@@ -153,7 +153,7 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
 }
 
 namespace GFVL {
-DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference) {
+Device::Device(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference) {
   uint32_t physicalDeviceCount = 0;
   CheckVkResult2(
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),
@@ -267,7 +267,7 @@ DEVICE::DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preferen
   CheckVkResult(vkCreateDevice(this->physicalDevice, &deviceInfo, nullptr, &this->logicalDevice));
   vkGetDeviceQueue(this->logicalDevice, this->graphicsFamilyIndex, 0, &this->graphicsQueue);
 }
-DEVICE::~DEVICE() {
+Device::~Device() {
   if (logicalDevice != VK_NULL_HANDLE) {
     vkDestroyDevice(logicalDevice, nullptr);
     logicalDevice = VK_NULL_HANDLE;

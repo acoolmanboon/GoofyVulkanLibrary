@@ -68,7 +68,7 @@ public:
   void addAttribute(VkFormat format, uint32_t offset, uint32_t binding);
 };
 
-class DEVICE {
+class Device {
 public:
   VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
   VkDevice logicalDevice = VK_NULL_HANDLE;
@@ -79,20 +79,25 @@ public:
 
   VkQueue graphicsQueue = {};
 
-  DEVICE(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
-  ~DEVICE();
+  Device(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
+  ~Device();
 
-  DEVICE(const DEVICE &) = delete;
-  DEVICE &operator=(const DEVICE &) = delete;
+  Device(const Device &) = delete;
+  Device &operator=(const Device &) = delete;
 
-  DEVICE(const DEVICE &&) = delete;
-  DEVICE &operator=(const DEVICE &&) = delete;
+  Device(const Device &&) = delete;
+  Device &operator=(const Device &&) = delete;
+private:
+  VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
+  uint32_t getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference);
+  bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex);
+  VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device);
 };
 
 class Semaphore {
 public:
   VkSemaphore semaphore = VK_NULL_HANDLE;
-  Semaphore(DEVICE &device) : device_(device) {
+  Semaphore(Device &device) : device_(device) {
     VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
     vkCreateSemaphore(this->device_.logicalDevice, &semaphoreInfo, nullptr, &this->semaphore);
   }
@@ -122,13 +127,13 @@ public:
   }
 
 private:
-  DEVICE &device_;
+  Device &device_;
 };
 
 class Fence {
 public:
   VkFence fence = VK_NULL_HANDLE;
-  Fence(DEVICE &device, VkFenceCreateFlags flags) : device_(device) {
+  Fence(Device &device, VkFenceCreateFlags flags) : device_(device) {
     VkFenceCreateInfo fenceInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = flags};
     vkCreateFence(this->device_.logicalDevice, &fenceInfo, nullptr, &this->fence);
   }
@@ -157,7 +162,7 @@ public:
   }
 
 private:
-  DEVICE &device_;
+  Device &device_;
 };
 
 class Swapchain {
@@ -176,7 +181,7 @@ public:
 
   void recreate(SDL_Window *window, VkSurfaceKHR surface);
 
-  Swapchain(DEVICE &device, SDL_Window *window, VkSurfaceKHR surface);
+  Swapchain(Device &device, SDL_Window *window, VkSurfaceKHR surface);
   ~Swapchain();
 
   Swapchain(const Swapchain &) = delete;
@@ -186,7 +191,7 @@ public:
   Swapchain &operator=(const Swapchain &&) = delete;
 
 private:
-  DEVICE &device_;
+  Device &device_;
 };
 
 class SHADER {
@@ -194,7 +199,7 @@ public:
   VkShaderModule shaderModule = {};
   VkShaderStageFlagBits stage;
 
-  SHADER(DEVICE &device, VkShaderStageFlagBits stage, const char *filename);
+  SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename);
   ~SHADER();
 
   SHADER(const SHADER &) = delete;
@@ -204,14 +209,14 @@ public:
   SHADER &operator=(SHADER &&other) noexcept;
 
 private:
-  DEVICE &device;
+  Device &device;
 };
 
 class RENDERPASS {
 public:
   VkRenderPass renderPass = {};
 
-  RENDERPASS(DEVICE &device, Swapchain &swapchain);
+  RENDERPASS(Device &device, Swapchain &swapchain);
   ~RENDERPASS();
 
   RENDERPASS(const RENDERPASS &) = delete;
@@ -221,7 +226,7 @@ public:
   RENDERPASS &operator=(const RENDERPASS &&) = delete;
 
 private:
-  DEVICE &device;
+  Device &device;
 };
 
 class PIPELINE {
@@ -229,7 +234,7 @@ public:
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 
-  PIPELINE(DEVICE &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+  PIPELINE(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
   ~PIPELINE();
 
   PIPELINE(const PIPELINE &) = delete;
@@ -239,7 +244,7 @@ public:
   PIPELINE &operator=(const PIPELINE &&) = delete;
 
 private:
-  DEVICE &device;
+  Device &device;
 };
 /**
  * @class Framebuffer
@@ -251,7 +256,7 @@ public:
   std::vector<VkFramebuffer> framebuffers;
 
   void recreate(Swapchain &swapchain, RENDERPASS &renderPass);
-  Framebuffer(DEVICE &device, Swapchain &swapchain, RENDERPASS &renderPass);
+  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass);
   ~Framebuffer();
 
   Framebuffer(const Framebuffer &) = delete;
@@ -261,7 +266,7 @@ public:
   Framebuffer &operator=(const Framebuffer &&) = delete;
 
 private:
-  DEVICE &device;
+  Device &device;
 
   VkImage depthImage{};
   VkDeviceMemory depthMemory{};
@@ -300,7 +305,7 @@ public:
    * @param device A reference to your Device.
    * @param createinfo The creation information of the vertex buffer.
    */
-  MeshBuffer(DEVICE &device, const CreateInfo &createInfo); ///< Creates a vertex buffer.
+  MeshBuffer(Device &device, const CreateInfo &createInfo); ///< Creates a vertex buffer.
 
   ~MeshBuffer(); ///< Destroys a vertex buffer and frees associated memory.
 
@@ -315,7 +320,7 @@ public:
   [[nodiscard]] MemoryAllocation memoryAllocation() const noexcept;
 
 private:
-  DEVICE &device_;
+  Device &device_;
   VmaAllocator allocator_;
 
   VkBuffer buffer_;
@@ -350,7 +355,7 @@ public:
 
   void updateUniformBuffers();
 
-  Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
+  Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
   ~Frame();
 
   Frame(const Frame &) = delete;
@@ -360,7 +365,7 @@ public:
   Frame &operator=(Frame &&) = delete; // reference member makes assignment awkward
 
 private:
-  DEVICE &device;
+  Device &device;
   VmaAllocator allocator;
   const std::vector<UniformBufferBinding> &bindings;
 };
@@ -373,7 +378,7 @@ class DescriptorSetLayout {
 public:
   VkDescriptorSetLayout descriptorSetLayout;
 
-  DescriptorSetLayout(DEVICE &device, const std::vector<UniformBufferBinding> &bindings);
+  DescriptorSetLayout(Device &device, const std::vector<UniformBufferBinding> &bindings);
   ~DescriptorSetLayout();
 
   DescriptorSetLayout(const DescriptorSetLayout &) = delete;
@@ -383,7 +388,7 @@ public:
   DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
 
 private:
-  DEVICE &device_;
+  Device &device_;
   const std::vector<UniformBufferBinding> &bindings_;
 };
 
@@ -394,6 +399,6 @@ void PrintVkResult(VkResult result);
 VkResult CheckVkResult(VkResult result);
 VkResult CheckVkResult2(VkResult result, const char *reason);
 uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
-void createBuffer(DEVICE &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+void createBuffer(Device &device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory);
 
 } // namespace GFVL

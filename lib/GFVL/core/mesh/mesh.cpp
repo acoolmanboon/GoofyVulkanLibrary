@@ -59,7 +59,7 @@ void *packData(size_t verticeDataSize, void* verticeData, size_t indiceDataSize,
   memcpy(reinterpret_cast<uint8_t*>(data) + verticeDataSize, indiceData, indiceDataSize);
   return data;
 }
-Mesh::Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool commandPool, VmaAllocator allocator) : device_(device),
+Mesh::Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool commandPool, VmaAllocator allocator) : device_(device),
                                                                                                               indiceDataSize(getIndiceDataSize(
                                                                                                                   createInfo.indiceType,
                                                                                                                   createInfo.indiceCount)),

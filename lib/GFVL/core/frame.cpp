@@ -68,7 +68,7 @@ void Frame::updateUniformBuffers() {
     memcpy(uniformBuffers[i].mappedMemory, bindings[i].ubo,  bindings[i].size);
   }
 }                 
-Frame::Frame(DEVICE &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
+Frame::Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings) : device(device),
                                                                                                                                                      bindings(bindings),
                                                                                                                                                      allocator(allocator),
                                                                                                                                                      imageAvailableSemaphore(device),

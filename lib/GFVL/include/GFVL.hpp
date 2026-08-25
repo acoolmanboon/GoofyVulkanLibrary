@@ -79,12 +79,12 @@ private:
    * @param device A reference to your Device.
    * @param createinfo Mesh creation info.
    */
-  Mesh(DEVICE &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
+  Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
 
   VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
   VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
 
-  const DEVICE &device_; ///< Stores the device reference.
+  const Device &device_; ///< Stores the device reference.
   VkDeviceSize indiceDataSize;
   VkDeviceSize indiceDataOffset;
   uint32_t indiceCount;
@@ -433,7 +433,7 @@ private:
   VkInstance instance;
   SDL_Window *window;
   VkSurfaceKHR surface;
-  DEVICE device;
+  Device device;
   VmaAllocator vmaAllocator;
   Swapchain swapchain;
   RENDERPASS renderPass;

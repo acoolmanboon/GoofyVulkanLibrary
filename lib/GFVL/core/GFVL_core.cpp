@@ -148,7 +148,7 @@ namespace GFVL {
    * @param bufferMemory Pointer to the device memory to create.
 
    */
-  void createBuffer(DEVICE& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
+  void createBuffer(Device& device, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer, VkDeviceMemory &bufferMemory) {
     VkBufferCreateInfo bufferInfo{
       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       .size = static_cast<VkDeviceSize>(size),
