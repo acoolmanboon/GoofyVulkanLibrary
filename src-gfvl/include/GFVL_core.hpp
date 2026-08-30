@@ -59,13 +59,10 @@ struct SHADER_STAGE {
   const char *filename;
 };
 
-class VertexLayout {
+struct VertexLayout {
 public:
   std::vector<VkVertexInputBindingDescription> bindings;
   std::vector<VkVertexInputAttributeDescription> attributes;
-
-  void addBinding(uint32_t binding, uint32_t  stride, VkVertexInputRate inputRate);
-  void addAttribute(VkFormat format, uint32_t offset, uint32_t binding);
 };
 
 class Device {

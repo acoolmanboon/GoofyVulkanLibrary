@@ -28,7 +28,7 @@ SHADER::SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if (!file.is_open())
-      THROW_EXCEPTION("failed to open file!");
+      THROW_EXCEPTION("failed to open file at path " << filename);
 
   size_t fileSize = (size_t)file.tellg();
   std::vector<char> buffer(fileSize);

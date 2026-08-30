@@ -270,12 +270,34 @@ int main() {
                                                                                                .shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT, // However, it's recommended to restrict the shader stage only to where it's actually used for optimization.
                                                                                                .ubo = &lighting});
 
-  GFVL::VertexLayout layout;
-  layout.addBinding(0, static_cast<uint32_t>(sizeof(vertice)), VK_VERTEX_INPUT_RATE_VERTEX);
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, position), 0);
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, normal), 0);
-  layout.addAttribute(VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertice, color), 0);
-
+  // Now we define the layout of the "vertice" struct to GFVL.
+  GFVL::VertexLayout layout = {
+    .bindings = {
+     {
+      .binding = 0,
+      .stride = static_cast<uint32_t>(sizeof(vertice)),
+      .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+     } 
+    },
+    .attributes = {
+      {
+        .location = offsetof(vertice, position),
+        .binding = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT
+      },
+      {
+        .location = offsetof(vertice, normal),
+        .binding = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT
+      },
+      {
+        .location = offsetof(vertice, color),
+        .binding = 0,
+        .format = VK_FORMAT_R32G32B32_SFLOAT
+      }
+    }
+  };
+  
   GFVL::APPLICATION_INFO appInfo = {
       .applicationName = "GoofyVLib example",
       .applicationVersion = 1,
