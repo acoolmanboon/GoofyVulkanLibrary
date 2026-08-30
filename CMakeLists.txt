@@ -10,4 +10,4 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_subdirectory("src-gfvl/")
-add_subdirectory("src/")
+add_subdirectory("examples/moon_example")
