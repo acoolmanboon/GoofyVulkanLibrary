@@ -89,6 +89,7 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
         PRINT("     Object Name " << currentObject.pObjectName);
     }
   }
+  std::cout << " \n";
 
   return VK_FALSE;
 }
