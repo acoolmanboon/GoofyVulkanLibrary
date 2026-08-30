@@ -159,6 +159,9 @@ std::vector<const char *> getEnabledLayers() {
 }
 
 VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
+  if (!SDL_Init(SDL_INIT_VIDEO))
+    THROW_EXCEPTION(SDL_GetError());
+
   VkApplicationInfo appInfo{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
       .pApplicationName = applicationInfo.applicationName,

@@ -237,16 +237,13 @@ vertice makeVertice(const glm::vec3 &pos, const glm::vec3 &normal, const siv::Pe
 }
 
 int main() {
-  if (!SDL_Init(SDL_INIT_VIDEO))
-    throw std::runtime_error(SDL_GetError());
-
   // This is where you tell GFVL where your shaders are. You need to compile the shader languages first.
   // I know that there are more shader stages available but for now I haven't learned that yet so I am only certain that it supports only a vertex and fragment shader for now.
   std::vector<GFVL::SHADER_STAGE> shaderStages = {
       {.flags = VK_SHADER_STAGE_VERTEX_BIT,
-       .filename = "src/vertex_shader.spv"},
+       .filename = "vertex_shader.spv"},
       {.flags = VK_SHADER_STAGE_FRAGMENT_BIT,
-       .filename = "src/fragment_shader.spv"}};
+       .filename = "fragment_shader.spv"}};
 
   // These are simply your data containers for the UBO data.
   CameraUBO camera = {
@@ -380,17 +377,18 @@ int main() {
     glm::vec3 forward = angle * glm::vec3(0, 0, -1);
     glm::vec3 right = angle * glm::vec3(1, 0, 0);
 
-    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::W))
-      position += forward * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
       lightBinding.hasUpdated = true;
     }
-    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S))
+
+        if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::W) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::UP))
+      position += forward * speed * delta_time;
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::DOWN) )
       position -= forward * speed * delta_time;
-    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::A))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::A) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::LEFT))
       position -= right * speed * delta_time;
-    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::D))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::D) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::RIGHT))
       position += right * speed * delta_time;
 
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::V) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::V)) {
