@@ -297,15 +297,18 @@ int main() {
       }
     }
   };
-  
-  GFVL::APPLICATION_INFO appInfo = {
-      .applicationName = "GoofyVLib example",
-      .applicationVersion = 1,
-      .width = 800,
-      .height = 600,
-      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING};
 
-  GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages);
+  // This defines our actual application information.
+  GFVL::APPLICATION_INFO appInfo = {
+      .applicationName = "GoofyVLib example", // For now, this just sets the window name. 
+      .applicationVersion = 1, // Arbitrary version number
+      .width = 800, // The starting width of the window.
+      .height = 600, // The starting height of the window
+      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING}; // Since this is a relatively lightweight scene, we choose power saving mode, which selects integrated graphics.
+
+  GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
+
+  // The GFVL initialization logic is done, so we make the map.
 
   const siv::PerlinNoise::seed_type seed = 122u;
   const siv::PerlinNoise perlin(seed);
@@ -340,13 +343,16 @@ int main() {
     }
   }
 
+  // With the vertice data made, we can send the data to GFVL to upload it as a mesh.
   GFVL::Mesh terrainMesh = GFVLinstance.createMesh( GFVL::Mesh::CreateInfo{
     .verticeDataSize = terrain.size() * sizeof(vertice),
     .verticeCount = static_cast<uint32_t>(terrain.size()),
     .verticeData = terrain.data(),
-    .indiceType = GFVL::Mesh::IndiceDataType::NotDefined,
-    .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
+    .indiceType = GFVL::Mesh::IndiceDataType::NotDefined, // Index buffers are NOT implemented yet.
+    .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly}); // This will upload the data directly to VRAM.
 
+  // We place the CUBE OF DEATH at the center of the map.
+  // This purely existed to check if GFVL could render more than one mesh at once.
   std::vector<vertice> cubeOFDeath;
   insertCube(glm::vec3(12.5f, getHeight(12.5f, -35.0f, perlin) - 5.0f, -35.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(10, 10, 10), cubeOFDeath);
   GFVL::Mesh cubeOfDeathMesh = GFVLinstance.createMesh(GFVL::Mesh::CreateInfo{
@@ -356,21 +362,26 @@ int main() {
     .indiceType = GFVL::Mesh::IndiceDataType::NotDefined,
     .memoryAllocation = GFVL::MeshBuffer::MemoryAllocation::DeviceOnly});
 
-  bool menu = false;
+  // Now this is the actual game logic.
+  bool menu = false; // This just tells us if the mouse is locked or not
   bool flight = false;
-  float speed = 1.0f;
+  float speed = 1.0f; // Set this to go faster / slower.
 
   uint64_t last_time = SDL_GetPerformanceCounter();
   float delta_time = 0.0; // In seconds
 
   glm::vec3 position(0, 50, -25);
   glm::quat angle;
-  while (GFVLinstance.inputState.isRunning()) {
+  while (GFVLinstance.inputState.isRunning()) { // Make sure to encase the while loop in the .isRunning check.
     uint64_t current_time = SDL_GetPerformanceCounter();
     delta_time = (double)(current_time - last_time) / (double)SDL_GetPerformanceFrequency();
     last_time = current_time;
 
-    GFVLinstance.inputState.pollInputs();
+    // The input logic. It should be pretty intuitive
+
+    GFVLinstance.inputState.pollInputs(); // We need to call pollInputs first in every frame to 
+
+    // We move the camera based on the mouse movement.
     if (GFVLinstance.inputState.isMouseMoved()) {
       GFVL::MouseState mouseState = GFVLinstance.inputState.getMouseState();
 
@@ -390,6 +401,7 @@ int main() {
       angle = glm::normalize(qYaw * qPitch);
     }
 
+    // This is the logic to handle mouse escape. We also ensure that the key is not repeated to avoid changing the mouse lock every frame.
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::ESCAPE) && !GFVLinstance.inputState.isKeyRepeated(GFVL::Keycode::ESCAPE)) {
       menu = !menu;
       GFVLinstance.setMouseLock(menu);
@@ -399,12 +411,15 @@ int main() {
     glm::vec3 forward = angle * glm::vec3(0, 0, -1);
     glm::vec3 right = angle * glm::vec3(1, 0, 0);
 
+    // This pretty much uses the same logic with inputs.
+
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::SPACE)) {
       lighting.lightPos = position;
+      // We don't have to update the light binding every frame, as it only moves when the player hits SPACE.
       lightBinding.hasUpdated = true;
     }
 
-        if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::W) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::UP))
+    if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::W) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::UP))
       position += forward * speed * delta_time;
     if (GFVLinstance.inputState.isKeyDown(GFVL::Keycode::S) || GFVLinstance.inputState.isKeyDown(GFVL::Keycode::DOWN) )
       position -= forward * speed * delta_time;
@@ -419,6 +434,8 @@ int main() {
 
     if (!flight)
       position.y = getHeight(position.x, position.z, perlin) - 1.75;
+
+    // We handle 3D projection logic here.
     glm::mat4 proj = glm::perspectiveRH_ZO(
         glm::radians(90.0f),
         GFVLinstance.aspectRatio,
@@ -432,7 +449,10 @@ int main() {
     camera.MVP = proj * view;
     camera.viewPos = position;
 
+    // This tells GFVL to update the camera buffer every frame.
     cameraBinding.hasUpdated = true;
+
+    // Now this is the actual logic. 4 lines for all of this!
     GFVLinstance.beginFrame();
     GFVLinstance.renderMesh(cubeOfDeathMesh);
     GFVLinstance.renderMesh(terrainMesh);

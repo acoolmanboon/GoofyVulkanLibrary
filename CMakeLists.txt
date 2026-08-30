@@ -9,5 +9,14 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
 endif()
 
-add_subdirectory("src-gfvl/")
-add_subdirectory("examples/moon_example")
+option(COMPILE_GFVL_LIBRARY "Compile the GFVL library." ON)
+if (COMPILE_GFVL_LIBRARY)
+    add_subdirectory("src-gfvl/")
+endif()
+
+option(COMPILE_ALL_EXAMPLES "Compile ALL examples." OFF)
+
+option(COMPILE_MOON_EXAMPLE "Compile the moon_example folder." OFF)
+if (COMPILE_ALL_EXAMPLES OR COMPILE_MOON_EXAMPLE)
+    add_subdirectory("examples/moon_example")
+endif()

@@ -1,11 +1,13 @@
 /build/
 /.cache/
+
 .clang-format
-/src/vertex_shader.spv
-/src/fragment_shader.spv
 run.bat
 html/
 latex/
+
 .vscode/launch.json
 .vscode/
-compileCommands.txt
+
+*.spv
+*.exe
