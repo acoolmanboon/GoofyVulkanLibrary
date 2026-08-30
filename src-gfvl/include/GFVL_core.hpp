@@ -27,18 +27,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace GFVL {
 class PIPELINE;
-enum PREFERRED_GPU {
-  PREFERRED_GPU_POWER_SAVING,
-  PREFERRED_GPU_PERFORMANCE,
+enum PreferredGPU {
+  PowerSaving,
+  Performance,
 };
 
-struct APPLICATION_INFO {
+struct AppInfo {
   const char *applicationName = "GFVL application";
   uint32_t applicationVersion = 1;
   int width = 800;
   int height = 600;
   uint32_t maxFramesInFlight = 2;
-  PREFERRED_GPU preferredGPU = PREFERRED_GPU_PERFORMANCE;
+  PreferredGPU preferredGPU = PreferredGPU::Performance;
 };
 
 /**
@@ -54,7 +54,7 @@ struct UniformBufferBinding {
   bool hasUpdated = true;                                        ///< Setting this to true tells GFVL to update the internal buffers. Set it to true after every change of the data.
 };
 
-struct SHADER_STAGE {
+struct ShaderStage {
   VkShaderStageFlagBits flags;
   const char *filename;
 };
@@ -76,7 +76,7 @@ public:
 
   VkQueue graphicsQueue = {};
 
-  Device(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference);
+  Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference);
   ~Device();
 
   Device(const Device &) = delete;
@@ -86,7 +86,7 @@ public:
   Device &operator=(const Device &&) = delete;
 private:
   VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
-  uint32_t getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference);
+  uint32_t getDeviceScore(VkPhysicalDevice device, PreferredGPU preference);
   bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex);
   VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device);
 };

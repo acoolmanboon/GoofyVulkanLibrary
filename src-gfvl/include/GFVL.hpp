@@ -71,7 +71,7 @@ public:
   [[nodiscard]] MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
   [[nodiscard]] uint32_t verticeCount() const noexcept;
 
-  friend class INSTANCE;
+  friend class Instance;
 
 private:
   /**
@@ -418,7 +418,7 @@ public:
   InputState() : keycodeStates(Keycode::COUNT, KeyState{.event = KeyEvent::None, .isRepeated = false}), mouseButtonStates(MouseButton::Count, MouseButtonState{.event = KeyEvent::None, .clicks = 0}) {
   }
 
-  friend class INSTANCE;
+  friend class Instance;
 private:
   MouseState mouseState;
   std::vector<KeyState> keycodeStates;
@@ -428,7 +428,7 @@ private:
   bool framebufferResized = false;
 };
 
-class INSTANCE {
+class Instance {
 private:
   VkInstance instance;
   SDL_Window *window;
@@ -454,9 +454,9 @@ private:
   std::vector<UniformBufferBinding> &bindings;
 
 private:
-  VkInstance InitializeVkInstance(APPLICATION_INFO applicationInfo);
+  VkInstance InitializeVkInstance(AppInfo applicationInfo);
   VkSurfaceKHR InitializeVkSurface();
-  std::vector<SHADER> InitializeShaderStages(std::vector<SHADER_STAGE> &stages);
+  std::vector<SHADER> InitializeShaderStages(std::vector<ShaderStage> &stages);
 
 public:
   int w = 0;
@@ -471,19 +471,19 @@ public:
   void endFrame();
   void setMouseLock(bool mouseLock); ///< True will lock the mouse into the window
 
-  INSTANCE(
-      APPLICATION_INFO applicationInfo,
+  Instance(
+      AppInfo applicationInfo,
       VertexLayout &layouts,
       std::vector<UniformBufferBinding> &bindings,
-      std::vector<SHADER_STAGE> &stages);
+      std::vector<ShaderStage> &stages);
 
-  ~INSTANCE();
+  ~Instance();
 
-  INSTANCE(const INSTANCE &) = delete;
-  INSTANCE &operator=(const INSTANCE &) = delete;
+  Instance(const Instance &) = delete;
+  Instance &operator=(const Instance &) = delete;
 
-  INSTANCE(INSTANCE &&) = delete;
-  INSTANCE &operator=(INSTANCE &&) = delete;
+  Instance(Instance &&) = delete;
+  Instance &operator=(Instance &&) = delete;
 };
 
 } // namespace GFVL

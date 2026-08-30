@@ -158,7 +158,7 @@ std::vector<const char *> getEnabledLayers() {
   return enabledLayers;
 }
 
-VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
+VkInstance Instance::InitializeVkInstance(AppInfo applicationInfo) {
   if (!SDL_Init(SDL_INIT_VIDEO))
     THROW_EXCEPTION(SDL_GetError());
 
@@ -231,16 +231,16 @@ VkInstance INSTANCE::InitializeVkInstance(APPLICATION_INFO applicationInfo) {
   return instance;
 }
 
-VkSurfaceKHR INSTANCE::InitializeVkSurface() {
+VkSurfaceKHR Instance::InitializeVkSurface() {
   VkSurfaceKHR surface;
   if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
     THROW_EXCEPTION(SDL_GetError());
   return surface;
 }
 
-std::vector<SHADER> INSTANCE::InitializeShaderStages(std::vector<SHADER_STAGE> &stages) {
+std::vector<SHADER> Instance::InitializeShaderStages(std::vector<ShaderStage> &stages) {
   std::vector<SHADER> shaders;
-  for (SHADER_STAGE &stage : stages) {
+  for (ShaderStage &stage : stages) {
     shaders.emplace_back(device, stage.flags, stage.filename);
   }
   return shaders;

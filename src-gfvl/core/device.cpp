@@ -35,7 +35,7 @@ VkDeviceSize Device::getDeviceVRAM(VkPhysicalDevice device) {
 
   return totalDedicatedMemory;
 }
-uint32_t Device::getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preference) {
+uint32_t Device::getDeviceScore(VkPhysicalDevice device, PreferredGPU preference) {
   VkPhysicalDeviceProperties properties{};
   vkGetPhysicalDeviceProperties(device, &properties);
 
@@ -43,11 +43,11 @@ uint32_t Device::getDeviceScore(VkPhysicalDevice device, PREFERRED_GPU preferenc
 
   switch (properties.deviceType) {
   case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-    score += preference == PREFERRED_GPU_PERFORMANCE ? 1000 : 100;
+    score += preference == PreferredGPU::Performance ? 1000 : 100;
     break;
 
   case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-    score += preference == PREFERRED_GPU_POWER_SAVING ? 1000 : 500;
+    score += preference == PreferredGPU::PowerSaving ? 1000 : 500;
     break;
 
   case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
@@ -153,7 +153,7 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
 }
 
 namespace GFVL {
-Device::Device(VkInstance instance, VkSurfaceKHR surface, PREFERRED_GPU preference) {
+Device::Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference) {
   uint32_t physicalDeviceCount = 0;
   CheckVkResult2(
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),

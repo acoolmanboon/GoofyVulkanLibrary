@@ -24,13 +24,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
-Mesh INSTANCE::createMesh(Mesh::CreateInfo createInfo) {
+Mesh Instance::createMesh(Mesh::CreateInfo createInfo) {
   return Mesh(device, createInfo, commandPool, vmaAllocator);
 }
-void INSTANCE::setMouseLock(bool mouseLock) {
+void Instance::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
 }
-INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<SHADER_STAGE> &stages) : instance(InitializeVkInstance(applicationInfo)),
+Instance::Instance(AppInfo applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<ShaderStage> &stages) : instance(InitializeVkInstance(applicationInfo)),
                                                                                                                                                                           window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
                                                                                                                                                                           surface(InitializeVkSurface()),
                                                                                                                                                                           device(this->instance, this->surface, applicationInfo.preferredGPU),
@@ -75,7 +75,7 @@ INSTANCE::INSTANCE(APPLICATION_INFO applicationInfo, VertexLayout &layout, std::
       vkCreateCommandPool(device.logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool),
       "Failed to create command pool for Instance!");
 }
-void INSTANCE::beginFrame() {
+void Instance::beginFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
   currentFrame.updateUniformBuffers();
   if (inputState.framebufferResizedCallBack()) {
@@ -149,7 +149,7 @@ void INSTANCE::beginFrame() {
 
   
 }
-void INSTANCE::renderMesh(Mesh &mesh) {
+void Instance::renderMesh(Mesh &mesh) {
   Frame &currentFrame = frames[currentFrameIndex];
   VkDeviceSize offset = 0;
   VkBuffer meshBuffer = mesh.meshBuffer_.buffer();
@@ -184,7 +184,7 @@ void INSTANCE::renderMesh(Mesh &mesh) {
         0);
   }
 }
-void INSTANCE::endFrame() {
+void Instance::endFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
   vkCmdEndRenderPass(currentFrame.commandBuffer);
 
@@ -230,7 +230,7 @@ void INSTANCE::endFrame() {
   }
   this->currentFrameIndex = (this->currentFrameIndex + 1) % this->maxFramesInFlight;
 }
-INSTANCE::~INSTANCE() {
+Instance::~Instance() {
   vkDeviceWaitIdle(device.logicalDevice);
   vkDestroyCommandPool(device.logicalDevice, commandPool, nullptr);
 }

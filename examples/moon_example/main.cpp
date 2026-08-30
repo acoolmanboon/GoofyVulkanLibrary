@@ -239,7 +239,7 @@ vertice makeVertice(const glm::vec3 &pos, const glm::vec3 &normal, const siv::Pe
 int main() {
   // This is where you tell GFVL where your shaders are. You need to compile the shader languages first.
   // I know that there are more shader stages available but for now I haven't learned that yet so I am only certain that it supports only a vertex and fragment shader for now.
-  std::vector<GFVL::SHADER_STAGE> shaderStages = {
+  std::vector<GFVL::ShaderStage> shaderStages = {
       {.flags = VK_SHADER_STAGE_VERTEX_BIT,
        .filename = "vertex_shader.spv"},
       {.flags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -281,32 +281,35 @@ int main() {
     },
     .attributes = {
       {
-        .location = offsetof(vertice, position),
+        .location = 0,
         .binding = 0,
-        .format = VK_FORMAT_R32G32B32_SFLOAT
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(vertice, position)
       },
       {
-        .location = offsetof(vertice, normal),
+        .location = 1,
         .binding = 0,
-        .format = VK_FORMAT_R32G32B32_SFLOAT
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(vertice, normal)
       },
       {
-        .location = offsetof(vertice, color),
+        .location = 2,
         .binding = 0,
-        .format = VK_FORMAT_R32G32B32_SFLOAT
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = offsetof(vertice, color)
       }
     }
   };
 
   // This defines our actual application information.
-  GFVL::APPLICATION_INFO appInfo = {
+  GFVL::AppInfo appInfo = {
       .applicationName = "GoofyVLib example", // For now, this just sets the window name. 
       .applicationVersion = 1, // Arbitrary version number
       .width = 800, // The starting width of the window.
       .height = 600, // The starting height of the window
-      .preferredGPU = GFVL::PREFERRED_GPU_POWER_SAVING}; // Since this is a relatively lightweight scene, we choose power saving mode, which selects integrated graphics.
+      .preferredGPU = GFVL::PreferredGPU::PowerSaving}; // Since this is a relatively lightweight scene, we choose power saving mode, which selects integrated graphics.
 
-  GFVL::INSTANCE GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
+  GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
 
   // The GFVL initialization logic is done, so we make the map.
 
