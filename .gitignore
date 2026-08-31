@@ -1,5 +1,6 @@
 /build/
 /.cache/
+.env
 
 .clang-format
 run.bat
@@ -8,6 +9,8 @@ latex/
 
 .vscode/launch.json
 .vscode/
+
+/examples/moon_example/moon_example
 
 *.spv
 *.exe
