@@ -158,6 +158,12 @@ std::vector<const char *> getEnabledLayers() {
   return enabledLayers;
 }
 
+uint32_t Instance::EnumerateSupportedVulkanVersion() {
+  uint32_t instanceVersion = VK_API_VERSION_1_0;
+  VulkanFunctionPointers::vkEnumerateInstanceVersion(&instanceVersion);
+  return instanceVersion;
+}
+
 VkInstance Instance::InitializeVkInstance(AppInfo applicationInfo) {
   if (!SDL_Init(SDL_INIT_VIDEO))
     THROW_EXCEPTION(SDL_GetError());

@@ -30,22 +30,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <GFVL_core.hpp>
 
 #define definePointer(name_) inline static PFN_##name_ name_
-#define initializePointer(name_, instance_)                                        \
-  name_ = reinterpret_cast<PFN_##name_>(vkGetInstanceProcAddr(instance_, #name_)); \
+#define initializePointer(name_)                                        \
+  name_ = reinterpret_cast<PFN_##name_>(vkGetInstanceProcAddr(instance, #name_)); \
   if (name_ == nullptr)                                                            \
     throw std::runtime_error("Failed to load function pointer PFN_" #name_ "!, are you sure it exists?")
 
 namespace GFVL {
 struct VulkanFunctionPointers {
+  definePointer(vkEnumerateInstanceVersion);
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
   definePointer(vkCreateDebugUtilsMessengerEXT);
   definePointer(vkSetDebugUtilsObjectNameEXT);
 #endif
 
   static void initialize(VkInstance instance) {
+    initializePointer(vkEnumerateInstanceVersion);
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
-    initializePointer(vkCreateDebugUtilsMessengerEXT, instance);
-    initializePointer(vkSetDebugUtilsObjectNameEXT, instance);
+    initializePointer(vkCreateDebugUtilsMessengerEXT);
+    initializePointer(vkSetDebugUtilsObjectNameEXT);
 #endif
   }
 };

@@ -454,6 +454,7 @@ private:
   std::vector<UniformBufferBinding> &bindings;
 
 private:
+  uint32_t EnumerateSupportedVulkanVersion();
   VkInstance InitializeVkInstance(AppInfo applicationInfo);
   VkSurfaceKHR InitializeVkSurface();
   std::vector<SHADER> InitializeShaderStages(std::vector<ShaderStage> &stages);
