@@ -75,7 +75,6 @@ void Instance::beginFrame() {
   if (inputState.framebufferResizedCallBack()) {
     vkDeviceWaitIdle(this->device.logicalDevice);
     this->swapchain.recreate(this->window, this->surface);
-    framebuffer.~Framebuffer();
     framebuffer = Framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator);
     this->swapchain.imageCount = this->swapchain.images.size();
 
