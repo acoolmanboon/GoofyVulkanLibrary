@@ -68,9 +68,7 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
   vkGetImageMemoryRequirements(device_.logicalDevice, image, &memReq);
 
   VmaAllocationCreateInfo allocationCreateInfo{
-      .flags = VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT |
-               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-      .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+      .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
   };
 
   CheckVkResult2(vmaCreateImage(allocator_, &imageCreateInfo,
