@@ -274,10 +274,10 @@ private:
   Device &device_;
   VmaAllocator allocator_;
 
+  VkFormat depthFormat_{};
   VkImage depthImage_{};
   VmaAllocation depthImageMemory_{};
   VkImageView depthImageView_{};
-  VkFormat depthFormat_{};
 };
 
 /**

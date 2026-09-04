@@ -64,9 +64,6 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED};
 
-  VkMemoryRequirements memReq;
-  vkGetImageMemoryRequirements(device_.logicalDevice, image, &memReq);
-
   VmaAllocationCreateInfo allocationCreateInfo{
       .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
   };
