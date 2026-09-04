@@ -64,10 +64,6 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED};
 
-  CheckVkResult2(
-      vkCreateImage(device_.logicalDevice, &imageCreateInfo, nullptr, &image),
-      "Failed to create a framebuffer depth image!");
-
   VkMemoryRequirements memReq;
   vkGetImageMemoryRequirements(device_.logicalDevice, image, &memReq);
 
@@ -77,13 +73,10 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
       .usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
   };
 
-  vmaCreateImage(
-    allocator_, 
-    &imageCreateInfo, 
-    &allocationCreateInfo, 
-    &image,
-    &imageMemory, 
-    nullptr);
+  CheckVkResult2(vmaCreateImage(allocator_, &imageCreateInfo,
+                                &allocationCreateInfo, &image, &imageMemory,
+                                nullptr),
+                 "Failed to create a framebuffer depth image!");
 
   return image;
 }
