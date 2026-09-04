@@ -267,6 +267,12 @@ Device::Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preferenc
   CheckVkResult(vkCreateDevice(this->physicalDevice, &deviceInfo, nullptr, &this->logicalDevice));
   vkGetDeviceQueue(this->logicalDevice, this->graphicsFamilyIndex, 0, &this->graphicsQueue);
 }
+bool Device::operator==(const Device &other) noexcept {
+  return this->logicalDevice == other.logicalDevice; 
+}
+bool Device::operator!=(const Device &other) noexcept {
+  return this->logicalDevice != other.logicalDevice;
+}
 Device::~Device() {
   if (logicalDevice != VK_NULL_HANDLE) {
     vkDestroyDevice(logicalDevice, nullptr);
