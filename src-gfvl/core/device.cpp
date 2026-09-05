@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
+#include "GFVL_enumFormatter.hpp"
 #include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
 
@@ -167,7 +168,7 @@ Device::Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preferenc
     "Failed to enumerate physical devices!");
 
   PRINT("Found " << physicalDeviceCount << " Vulkan-compatible devices.\n");
-
+  PRINT("Power setting : " << enumToString(preference));
   int bestScore = -1;
 
   for (const VkPhysicalDevice physicalDevice : physicalDevices) {

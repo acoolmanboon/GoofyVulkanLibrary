@@ -39,7 +39,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
     THROW_EXCEPTION("Attempted to convert raw value of " << static_cast<int>(value) << " of enum type " #type_ " but the raw value is not a valid enum value."); // ONLY use this if you have defined all possible cases
 
 #define returnDefault() \
-default : return ""; \
+default : return "Not defined"; \
   break;
 
 /*
@@ -58,6 +58,13 @@ typeString(MeshBuffer::MemoryAllocation) {
     returnCase(MeshBuffer::MemoryAllocation, HostVisible);
     returnCase(MeshBuffer::MemoryAllocation, DeviceOnly);
     returnError(MeshBuffer::MemoryAllocation, value);
+  }
+}
+typeString(PreferredGPU) {
+  switch (value) {
+    returnCase(PreferredGPU, Performance);
+    returnCase(PreferredGPU, PowerSaving);
+    returnError(PreferredGPU:, value);
   }
 }
 typeString(VkObjectType) {
