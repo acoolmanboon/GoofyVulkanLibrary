@@ -10,6 +10,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
 endif()
 
+find_package(glm CONFIG REQUIRED)
+
 # sources
 file(GLOB_RECURSE EXAMPLE_SOURCES
 	"*.cpp"
@@ -25,5 +27,6 @@ set_target_properties(moon_example PROPERTIES
 # link the executable
 target_link_libraries(moon_example PRIVATE
 	libgfvl
+	glm::glm
 	$<$<BOOL:$<TARGET_EXISTS:sanitizerflags>>:sanitizerflags>
 )

@@ -17,8 +17,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 // Settings for the map
-constexpr unsigned int mapWidth = 700; // The width of the map in tiles.
-constexpr unsigned int mapLength = 700; // The length of the map in tiles.
+constexpr unsigned int mapWidth = 250; // The width of the map in tiles.
+constexpr unsigned int mapLength = 250; // The length of the map in tiles.
 constexpr float tileSize = 5.5f; // The "size" of a tile. There isn't any defined real-world size for a tile.
 
 // Actual GFVL stuff
@@ -307,7 +307,7 @@ int main() {
       .applicationVersion = 1, // Arbitrary version number
       .width = 800, // The starting width of the window.
       .height = 600, // The starting height of the window
-      .preferredGPU = GFVL::PreferredGPU::PowerSaving}; // Since this is a relatively lightweight scene, we choose power saving mode, which selects integrated graphics.
+      .preferredGPU = GFVL::PreferredGPU::Performance}; 
 
   GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
 
