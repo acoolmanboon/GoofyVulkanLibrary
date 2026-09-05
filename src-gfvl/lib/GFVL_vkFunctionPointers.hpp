@@ -35,6 +35,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   if (name_ == nullptr)                                                            \
     throw std::runtime_error("Failed to load function pointer PFN_" #name_ "!, are you sure it exists?")
 
+#define initializePointerNoExcept(name_)                                        \
+  name_ = reinterpret_cast<PFN_##name_>(vkGetInstanceProcAddr(instance, #name_)); \
+  if (name_ == nullptr)                                                            \
+    std::cout << "Failed to load function pointer PFN_" #name_ "!, are you sure it exists? \n";
+
+
 namespace GFVL {
 struct VulkanFunctionPointers {
   definePointer(vkEnumerateInstanceVersion);
@@ -44,7 +50,7 @@ struct VulkanFunctionPointers {
 #endif
 
   static void initialize(VkInstance instance) {
-    initializePointer(vkEnumerateInstanceVersion);
+    initializePointerNoExcept(vkEnumerateInstanceVersion);
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
     initializePointer(vkCreateDebugUtilsMessengerEXT);
     initializePointer(vkSetDebugUtilsObjectNameEXT);
