@@ -29,70 +29,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace GFVL {
 
-/**
- * @brief Represents a single renderable object.
- * @details Meshes contain all of the data required to draw a single object. A mesh is not an object, it is simply used for graphical rendering, so you can render the same mesh over and over again.
- */
-class Mesh {
-public:
-  /**
-   * @brief Defines the type of data your indices are.
-   */
-  enum class IndiceDataType {
-    // add uint8 support later
-    NotDefined,
-    UInt16,
-    UInt32
-  };
+enum MouseButton : uint8_t {
+  Left = 0,
+  Middle = 1,
+  Right = 2,
+  Thumb1 = 3,
+  Thumb2 = 4,
+  Count = 5
+};
 
-  /**
-   * @brief Configuration for creating Mesh class.
-   */
-  struct CreateInfo {
-    VkDeviceSize verticeDataSize;     ///< Size of the vertice data in bytes
-    uint32_t verticeCount; ///< Vertice count of the mesh.
-    void *verticeData;     ///< Pointer to the raw mesh data.
+enum KeyEvent : uint8_t {
+  None = 0,
+  Down = 1,
+  Up = 2,
+};
 
-    uint32_t indiceCount;                                                                      ///< Indice count of the mesh
-    void *indiceData;                                                                          ///< Pointer to indice data
-    IndiceDataType indiceType;                                                                 ///< The type of data your indices are
-    MeshBuffer::MemoryAllocation memoryAllocation = MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
-  };
+struct MouseButtonState {
+  KeyEvent event;
+  uint8_t clicks;
+};
 
-  Mesh(const Mesh &other) = delete;            ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
-  Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
+struct MouseState {
+  float x;
+  float y;
+  float xDelta;
+  float yDelta;
+  bool moved;
+};
 
-  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will destroy the other object.
-  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will destroy the other object.
-
-  ~Mesh(); ///< Destroys mesh and associated info
-
-  [[nodiscard]] VkDeviceSize size() const noexcept;
-  [[nodiscard]] MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
-  [[nodiscard]] uint32_t verticeCount() const noexcept;
-
-  friend class Instance;
-
-private:
-  /**
-   * @brief Creates a mesh buffer.
-   * @param device A reference to your Device.
-   * @param createinfo Mesh creation info.
-   */
-  Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
-
-  VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
-  VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
-
-  const Device &device_; ///< Stores the device reference.
-  VkDeviceSize indiceDataSize;
-  VkDeviceSize indiceDataOffset;
-  uint32_t indiceCount;
-  VkIndexType indiceDataType;
-  
-  void *packedData;       //< temporary buffer, its immediately freed after use
-  MeshBuffer meshBuffer_; ///< The buffer containing the actual memory
-  uint32_t verticeCount_;
+struct KeyState {
+  KeyEvent event;
+  bool isRepeated;
 };
 
 enum Keycode : uint32_t {
@@ -363,37 +330,9 @@ enum Keycode : uint32_t {
 
   RESERVED = 400, /**< 400-500 reserved for dynamic keycodes */
 
-  COUNT = 512, /**< not a key, just marks the number of scancodes for array bounds */
+  COUNT = 512, /**< not a key, just marks the number of scancodes for array
+                  bounds */
 
-};
-enum MouseButton : uint8_t {
-  Left = 0,
-  Middle = 1,
-  Right = 2,
-  Thumb1 = 3,
-  Thumb2 = 4,
-  Count = 5
-};
-enum KeyEvent : uint8_t {
-  None = 0,
-  Down = 1,
-  Up = 2,
-};
-struct MouseButtonState {
-  KeyEvent event;
-  uint8_t clicks;
-};
-struct MouseState {
-  float x;
-  float y;
-  float xDelta;
-  float yDelta;
-  bool moved;
-};
-
-struct KeyState {
-  KeyEvent event;
-  bool isRepeated;
 };
 
 class InputState {
@@ -428,6 +367,86 @@ private:
   bool framebufferResized = false;
 };
 
+/**
+ * @brief Represents a single renderable object.
+ * @details Meshes contain all of the data required to draw a single object. A
+ * mesh is not an object, it is simply used for graphical rendering, so you can
+ * render the same mesh over and over again.
+ */
+class Mesh {
+public:
+  /**
+   * @brief Defines the type of data your indices are.
+   */
+  enum class IndiceDataType {
+    // add uint8 support later
+    NotDefined,
+    UInt16,
+    UInt32
+  };
+
+  /**
+   * @brief Configuration for creating Mesh class.
+   */
+  struct CreateInfo {
+    VkDeviceSize verticeDataSize; ///< Size of the vertice data in bytes
+    uint32_t verticeCount;        ///< Vertice count of the mesh.
+    void *verticeData;            ///< Pointer to the raw mesh data.
+
+    uint32_t indiceCount;      ///< Indice count of the mesh
+    void *indiceData;          ///< Pointer to indice data
+    IndiceDataType indiceType; ///< The type of data your indices are
+    MeshBuffer::MemoryAllocation memoryAllocation =
+        MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be
+                                                   ///< allocated in memory
+  };
+
+  Mesh(const Mesh &other) =
+      delete; ///< Meshes may not be copied since meshes cannot share the same
+              ///< Vulkan objects. It is recommended to just recreate a mesh
+              ///< with the same vertex data.
+  Mesh &operator=(const Mesh &other) =
+      delete; ///< Meshes may not be copied since meshes cannot share the same
+              ///< Vulkan objects. It is recommended to just recreate a mesh
+              ///< with the same vertex data.
+
+  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will
+                                 ///< destroy the other object.
+  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it
+                                 ///< will destroy the other object.
+
+  ~Mesh(); ///< Destroys mesh and associated info
+
+  [[nodiscard]] VkDeviceSize size() const noexcept;
+  [[nodiscard]] MeshBuffer::MemoryAllocation memoryAllocation() const noexcept;
+  [[nodiscard]] uint32_t verticeCount() const noexcept;
+
+  friend class Instance;
+
+private:
+  /**
+   * @brief Creates a mesh buffer.
+   * @param device A reference to your Device.
+   * @param createinfo Mesh creation info.
+   */
+  Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool,
+       VmaAllocator allocator); ///< Creates a mesh.
+
+  VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType,
+                                 uint32_t indiceCount);
+  VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
+
+  const Device &device_; ///< Stores the device reference.
+  VkDeviceSize indiceDataSize;
+  VkDeviceSize indiceDataOffset;
+  uint32_t indiceCount;
+  VkIndexType indiceDataType;
+
+  void *packedData;       //< temporary buffer, its immediately freed after use
+  MeshBuffer meshBuffer_; ///< The buffer containing the actual memory
+  uint32_t verticeCount_;
+};
+
 class Instance {
 private:
   VkInstance instance;
@@ -454,10 +473,12 @@ private:
   std::vector<UniformBufferBinding> &bindings;
 
 private:
-  uint32_t EnumerateSupportedVulkanVersion();
-  VkInstance InitializeVkInstance(AppInfo applicationInfo);
-  VkSurfaceKHR InitializeVkSurface();
-  std::vector<SHADER> InitializeShaderStages(std::vector<ShaderStage> &stages);
+  uint32_t enumerateSupportedVulkanVersion();
+  VmaAllocator initializeVmaAllocator();
+  VkInstance initializeVkInstance(AppInfo applicationInfo);
+  VkSurfaceKHR initializeVkSurface();
+  std::vector<SHADER> initializeShaderStages(std::vector<ShaderStage> &stages);
+  
 
 public:
   int w = 0;

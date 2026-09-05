@@ -150,6 +150,7 @@ std::vector<const char *> getEnabledInstanceExtensions() {
 
   return extensions;
 }
+
 std::vector<const char *> getEnabledLayers() {
   std::vector<const char *> enabledLayers;
 #ifdef GFVL_ENABLE_VK_VALIDATION_LAYERS
@@ -158,13 +159,25 @@ std::vector<const char *> getEnabledLayers() {
   return enabledLayers;
 }
 
-uint32_t Instance::EnumerateSupportedVulkanVersion() {
+VmaAllocator Instance::initializeVmaAllocator() {
+  VmaAllocator allocator;
+  VmaAllocatorCreateInfo allocatorCreateinfo{
+      .physicalDevice = device.physicalDevice,
+      .device = device.logicalDevice,
+      .instance = instance,
+      .vulkanApiVersion = VK_API_VERSION_1_4,
+  };
+  vmaCreateAllocator(&allocatorCreateinfo, &allocator);
+  return allocator;
+}
+
+uint32_t Instance::enumerateSupportedVulkanVersion() {
   uint32_t instanceVersion = VK_API_VERSION_1_0;
   VulkanFunctionPointers::vkEnumerateInstanceVersion(&instanceVersion);
   return instanceVersion;
 }
 
-VkInstance Instance::InitializeVkInstance(AppInfo applicationInfo) {
+VkInstance Instance::initializeVkInstance(AppInfo applicationInfo) {
   if (!SDL_Init(SDL_INIT_VIDEO))
     THROW_EXCEPTION(SDL_GetError());
 
@@ -237,14 +250,14 @@ VkInstance Instance::InitializeVkInstance(AppInfo applicationInfo) {
   return instance;
 }
 
-VkSurfaceKHR Instance::InitializeVkSurface() {
+VkSurfaceKHR Instance::initializeVkSurface() {
   VkSurfaceKHR surface;
   if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
     THROW_EXCEPTION(SDL_GetError());
   return surface;
 }
 
-std::vector<SHADER> Instance::InitializeShaderStages(std::vector<ShaderStage> &stages) {
+std::vector<SHADER> Instance::initializeShaderStages(std::vector<ShaderStage> &stages) {
   std::vector<SHADER> shaders;
   for (ShaderStage &stage : stages) {
     shaders.emplace_back(device, stage.flags, stage.filename);

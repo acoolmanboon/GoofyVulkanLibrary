@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
 
+#include "GFVL_core.hpp"
 #include <GFVL_definition.hpp>
 
 namespace GFVL {
@@ -84,6 +85,10 @@ public:
 
   Device(const Device &&) = delete;
   Device &operator=(const Device &&) = delete;
+
+  bool operator==(const Device &other) noexcept;
+  bool operator!=(const Device &other) noexcept;
+
 private:
   VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
   uint32_t getDeviceScore(VkPhysicalDevice device, PreferredGPU preference);
@@ -252,23 +257,27 @@ class Framebuffer {
 public:
   std::vector<VkFramebuffer> framebuffers;
 
-  void recreate(Swapchain &swapchain, RENDERPASS &renderPass);
-  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass);
+  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator);
   ~Framebuffer();
 
-  Framebuffer(const Framebuffer &) = delete;
-  Framebuffer &operator=(const Framebuffer &) = delete;
+  Framebuffer(const Framebuffer &other) = delete;
+  Framebuffer &operator=(const Framebuffer &other) = delete;
 
-  Framebuffer(const Framebuffer &&) = delete;
-  Framebuffer &operator=(const Framebuffer &&) = delete;
+  Framebuffer(Framebuffer &&other) noexcept;
+  Framebuffer &operator=(Framebuffer &&other);
 
 private:
-  Device &device;
+  VkFormat getDepthFormat();
+  VkImage createDepthImage(const Swapchain &swapchain, VmaAllocation &imageMemory);
+  VkImageView createDepthImageView();
 
-  VkImage depthImage{};
-  VkDeviceMemory depthMemory{};
-  VkImageView depthImageView{};
-  VkFormat depthFormat{};
+  Device &device_;
+  VmaAllocator allocator_;
+
+  VkFormat depthFormat_{};
+  VkImage depthImage_{};
+  VmaAllocation depthImageMemory_{};
+  VkImageView depthImageView_{};
 };
 
 /**

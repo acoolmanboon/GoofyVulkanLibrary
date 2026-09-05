@@ -30,25 +30,19 @@ Mesh Instance::createMesh(Mesh::CreateInfo createInfo) {
 void Instance::setMouseLock(bool mouseLock) {
   SDL_SetWindowRelativeMouseMode(window, mouseLock);
 }
-Instance::Instance(AppInfo applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<ShaderStage> &stages) : instance(InitializeVkInstance(applicationInfo)),
-                                                                                                                                                                          window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
-                                                                                                                                                                          surface(InitializeVkSurface()),
-                                                                                                                                                                          device(this->instance, this->surface, applicationInfo.preferredGPU),
-                                                                                                                                                                          swapchain(this->device, this->window, this->surface),
-                                                                                                                                                                          renderPass(this->device, this->swapchain),
-                                                                                                                                                                          shaderStages(InitializeShaderStages(stages)),
-                                                                                                                                                                          bindings(bindings),
-                                                                                                                                                                          descriptorSetLayout(device, bindings),
-                                                                                                                                                                          pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
-                                                                                                                                                                          framebuffer(this->device, this->swapchain, this->renderPass),
-                                                                                                                                                                          maxFramesInFlight(applicationInfo.maxFramesInFlight) {
-  VmaAllocatorCreateInfo allocatorCreateinfo{
-      .physicalDevice = device.physicalDevice,
-      .device = device.logicalDevice,
-      .instance = instance,
-      .vulkanApiVersion = VK_API_VERSION_1_4,
-  };
-  vmaCreateAllocator(&allocatorCreateinfo, &vmaAllocator);
+Instance::Instance(AppInfo applicationInfo, VertexLayout &layout, std::vector<UniformBufferBinding> &bindings, std::vector<ShaderStage> &stages) : instance(initializeVkInstance(applicationInfo)),
+                                                                                                                                                    window(SDL_CreateWindow(applicationInfo.applicationName, applicationInfo.width, applicationInfo.height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE)),
+                                                                                                                                                    surface(initializeVkSurface()),
+                                                                                                                                                    device(this->instance, this->surface, applicationInfo.preferredGPU),
+                                                                                                                                                    vmaAllocator(initializeVmaAllocator()),
+                                                                                                                                                    swapchain(this->device, this->window, this->surface),
+                                                                                                                                                    renderPass(this->device, this->swapchain),
+                                                                                                                                                    shaderStages(initializeShaderStages(stages)),
+                                                                                                                                                    bindings(bindings),
+                                                                                                                                                    descriptorSetLayout(device, bindings),
+                                                                                                                                                    pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
+                                                                                                                                                    framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator),
+                                                                                                                                                    maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);
 
@@ -81,7 +75,7 @@ void Instance::beginFrame() {
   if (inputState.framebufferResizedCallBack()) {
     vkDeviceWaitIdle(this->device.logicalDevice);
     this->swapchain.recreate(this->window, this->surface);
-    this->framebuffer.recreate(this->swapchain, this->renderPass);
+    framebuffer = Framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator);
     this->swapchain.imageCount = this->swapchain.images.size();
 
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
