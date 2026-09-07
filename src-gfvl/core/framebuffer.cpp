@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 #include <GFVL_definition.hpp>
+#include <GFVL_vkFunctionPointers.hpp>
 #include <GFVL_core.hpp>
 #include <cstddef>
 
@@ -73,6 +74,18 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
                                 nullptr),
                  "Failed to create a framebuffer depth image!");
 
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+  VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+      .pNext = nullptr,
+      .objectType = VK_OBJECT_TYPE_IMAGE,
+      .objectHandle = reinterpret_cast<uint64_t>(image),
+      .pObjectName = "VkImage in Framebuffer class"};
+  CheckVkResult2(
+      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
+      "Failed to set debug utils name for VkImage in Framebuffer class!");
+#endif
+
   return image;
 }
 
@@ -88,11 +101,24 @@ VkImageView Framebuffer::createDepthImageView() {
                            .baseArrayLayer = 0,
                            .layerCount = 1}};
 
-  VkImageView view;
+  VkImageView imageView;
   CheckVkResult2(
-      vkCreateImageView(device_.logicalDevice, &viewInfo, nullptr, &view),
+      vkCreateImageView(device_.logicalDevice, &viewInfo, nullptr, &imageView),
       "Failed to create framebuffer depth image view!");
-  return view;
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+  VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+      .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+      .pNext = nullptr,
+      .objectType = VK_OBJECT_TYPE_IMAGE_VIEW,
+      .objectHandle = reinterpret_cast<uint64_t>(imageView),
+      .pObjectName = "VkImageView in Framebuffer class"};
+  CheckVkResult2(
+      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
+      "Failed to set debug utils name for VkImageView in Framebuffer class!");
+#endif
+
+  return imageView;
 }
 
 Framebuffer::Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator) : device_(device),
@@ -120,6 +146,18 @@ Framebuffer::Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &rende
     CheckVkResult2(vkCreateFramebuffer(device.logicalDevice, &info, nullptr,
                                        &framebuffers[i]),
                    "Failed to create framebuffer!");
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+    VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .pNext = nullptr,
+        .objectType = VK_OBJECT_TYPE_FRAMEBUFFER,
+        .objectHandle = reinterpret_cast<uint64_t>(framebuffers[i]),
+        .pObjectName = "VkFramebuffer in Framebuffer class"};
+    CheckVkResult2(
+        VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
+        "Failed to set debug utils name for VkFramebuffer in Framebuffer class!");
+#endif
   }
 }
 Framebuffer::Framebuffer(Framebuffer &&other) noexcept : device_(other.device_),
