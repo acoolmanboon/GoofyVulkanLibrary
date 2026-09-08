@@ -36,12 +36,12 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout, std::vector<Un
                                                                                                                                                     device(this->instance, this->surface, applicationInfo.preferredGPU),
                                                                                                                                                     vmaAllocator(initializeVmaAllocator()),
                                                                                                                                                     swapchain(this->device, this->window, this->surface),
-                                                                                                                                                    renderPass(this->device, this->swapchain),
+                                                                                                                                                    renderPass(this->device, this->swapchain, device.depthFormat),
                                                                                                                                                     shaderStages(initializeShaderStages(stages)),
                                                                                                                                                     bindings(bindings),
                                                                                                                                                     descriptorSetLayout(device, bindings),
                                                                                                                                                     pipeline(this->device, this->swapchain, layout, this->shaderStages, this->renderPass, {descriptorSetLayout.descriptorSetLayout}),
-                                                                                                                                                    framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator),
+                                                                                                                                                    framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator, device.depthFormat),
                                                                                                                                                     maxFramesInFlight(applicationInfo.maxFramesInFlight) {
 
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);

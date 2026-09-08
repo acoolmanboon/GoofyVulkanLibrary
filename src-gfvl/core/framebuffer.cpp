@@ -1,6 +1,6 @@
 /*
-GoofyVulkanLibrary. A vulkan wrapper, designed to allow users to code Vulkan applications without high boilerplate.
-Copyright (C) 2026 acoolmanboon
+GoofyVulkanLibrary. A vulkan wrapper, designed to allow users to code Vulkan
+applications without high boilerplate. Copyright (C) 2026 acoolmanboon
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -16,40 +16,18 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
+#include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
 #include <GFVL_vkFunctionPointers.hpp>
-#include <GFVL_core.hpp>
 #include <cstddef>
+
 
 using namespace GFVL;
 
 namespace GFVL {
 
-VkFormat Framebuffer::getDepthFormat() {
-  std::vector<VkFormat> candidates = {
-  VK_FORMAT_D32_SFLOAT, // 32-bit flboating point, best if supported
-  VK_FORMAT_X8_D24_UNORM_PACK32, // 24-bit depth with 8 unused bit
-  VK_FORMAT_D16_UNORM, // 16-bit
-
-  // has depth but also stencil, i dont think we got stencils yet
-  VK_FORMAT_D32_SFLOAT_S8_UINT,
-  VK_FORMAT_D24_UNORM_S8_UINT,
-  VK_FORMAT_D16_UNORM_S8_UINT,
-  };
-
-  for (VkFormat format : candidates) {
-    VkFormatProperties props;
-    vkGetPhysicalDeviceFormatProperties(device_.physicalDevice, format, &props);
-
-    if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-      return format;
-  }
-
-  THROW_EXCEPTION("No depth format found.");
-}
-
-
-VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation &imageMemory) {
+VkImage Framebuffer::createDepthImage(const Swapchain &swapchain,
+                                      VmaAllocation &imageMemory) {
   VkImage image;
 
   VkImageCreateInfo imageCreateInfo{
@@ -82,7 +60,8 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain, VmaAllocation 
       .objectHandle = reinterpret_cast<uint64_t>(image),
       .pObjectName = "VkImage in Framebuffer class"};
   CheckVkResult2(
-      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
+      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(
+          device_.logicalDevice, &debugUtilsObjectNameInfo),
       "Failed to set debug utils name for VkImage in Framebuffer class!");
 #endif
 
@@ -114,18 +93,20 @@ VkImageView Framebuffer::createDepthImageView() {
       .objectHandle = reinterpret_cast<uint64_t>(imageView),
       .pObjectName = "VkImageView in Framebuffer class"};
   CheckVkResult2(
-      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
+      VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(
+          device_.logicalDevice, &debugUtilsObjectNameInfo),
       "Failed to set debug utils name for VkImageView in Framebuffer class!");
 #endif
 
   return imageView;
 }
 
-Framebuffer::Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator) : device_(device),
-                                                                                                                 allocator_(allocator),
-                                                                                                                 depthFormat_(getDepthFormat()),
-                                                                                                                 depthImage_(createDepthImage(swapchain, depthImageMemory_)),
-                                                                                                                 depthImageView_(createDepthImageView())
+Framebuffer::Framebuffer(Device &device, Swapchain &swapchain,
+                         RENDERPASS &renderPass, VmaAllocator allocator,
+                         VkFormat depthFormat)
+    : device_(device), allocator_(allocator), depthFormat_(depthFormat),
+      depthImage_(createDepthImage(swapchain, depthImageMemory_)),
+      depthImageView_(createDepthImageView())
 
 {
   framebuffers.resize(swapchain.imageViews.size());
@@ -154,19 +135,18 @@ Framebuffer::Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &rende
         .objectType = VK_OBJECT_TYPE_FRAMEBUFFER,
         .objectHandle = reinterpret_cast<uint64_t>(framebuffers[i]),
         .pObjectName = "VkFramebuffer in Framebuffer class"};
-    CheckVkResult2(
-        VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device_.logicalDevice, &debugUtilsObjectNameInfo),
-        "Failed to set debug utils name for VkFramebuffer in Framebuffer class!");
+    CheckVkResult2(VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(
+                       device_.logicalDevice, &debugUtilsObjectNameInfo),
+                   "Failed to set debug utils name for VkFramebuffer in "
+                   "Framebuffer class!");
 #endif
   }
 }
-Framebuffer::Framebuffer(Framebuffer &&other) noexcept : device_(other.device_),
-                                                         framebuffers(other.framebuffers),
-                                                         allocator_(other.allocator_),
-                                                         depthImage_(other.depthImage_),
-                                                         depthImageMemory_(other.depthImageMemory_),
-                                                         depthImageView_(other.depthImageView_),
-                                                         depthFormat_(other.depthFormat_) {
+Framebuffer::Framebuffer(Framebuffer &&other) noexcept
+    : device_(other.device_), framebuffers(other.framebuffers),
+      allocator_(other.allocator_), depthImage_(other.depthImage_),
+      depthImageMemory_(other.depthImageMemory_),
+      depthImageView_(other.depthImageView_), depthFormat_(other.depthFormat_) {
   other.framebuffers.clear();
   other.depthImage_ = nullptr;
   other.depthImageMemory_ = nullptr;
@@ -174,11 +154,12 @@ Framebuffer::Framebuffer(Framebuffer &&other) noexcept : device_(other.device_),
 }
 
 Framebuffer &Framebuffer::operator=(Framebuffer &&other) {
-  if (this == &other) 
+  if (this == &other)
     return *this;
-  
+
   if (this->device_ != other.device_)
-    THROW_EXCEPTION("Attempted to use move assignment operator on two frame buffers with different devices");
+    THROW_EXCEPTION("Attempted to use move assignment operator on two frame "
+                    "buffers with different devices");
 
   vkDeviceWaitIdle(device_.logicalDevice);
 
@@ -205,7 +186,7 @@ Framebuffer &Framebuffer::operator=(Framebuffer &&other) {
 
   this->depthImageView_ = other.depthImageView_;
   other.depthImageView_ = nullptr;
-  
+
   this->depthFormat_ = other.depthFormat_;
   return *this;
 }
@@ -214,7 +195,7 @@ Framebuffer::~Framebuffer() {
   vkDeviceWaitIdle(device_.logicalDevice);
 
   for (VkFramebuffer framebuffer : framebuffers)
-    if (framebuffer != nullptr) 
+    if (framebuffer != nullptr)
       vkDestroyFramebuffer(device_.logicalDevice, framebuffer, nullptr);
 
   if (depthImageView_)
@@ -223,4 +204,4 @@ Framebuffer::~Framebuffer() {
   if (depthImage_)
     vmaDestroyImage(allocator_, depthImage_, depthImageMemory_);
 }
-}
+} // namespace GFVL

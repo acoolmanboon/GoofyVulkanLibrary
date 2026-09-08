@@ -23,6 +23,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using namespace GFVL;
 
+VkFormat Device::getDepthFormat() {
+  std::vector<VkFormat> candidates = {
+      VK_FORMAT_D32_SFLOAT, // 32-bit flboating point, best if supported
+      VK_FORMAT_X8_D24_UNORM_PACK32, // 24-bit depth with 8 unused bit
+      VK_FORMAT_D16_UNORM,           // 16-bit
+
+      // has depth but also stencil, i dont think we got stencils yet
+      VK_FORMAT_D32_SFLOAT_S8_UINT,
+      VK_FORMAT_D24_UNORM_S8_UINT,
+      VK_FORMAT_D16_UNORM_S8_UINT,
+  };
+
+  for (VkFormat format : candidates) {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+
+    if (props.optimalTilingFeatures &
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
+      return format;
+  }
+
+  THROW_EXCEPTION("No depth format found.");
+}
 VkDeviceSize Device::getDeviceVRAM(VkPhysicalDevice device) {
   VkPhysicalDeviceMemoryProperties memoryProperties{};
   vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
@@ -154,7 +177,7 @@ std::vector<const char *> enumerateDeviceExtensions(VkPhysicalDevice device) {
 }
 
 namespace GFVL {
-Device::Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference) {
+Device::Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference) : depthFormat(getDepthFormat()) {
   uint32_t physicalDeviceCount = 0;
   CheckVkResult2(
     vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr),

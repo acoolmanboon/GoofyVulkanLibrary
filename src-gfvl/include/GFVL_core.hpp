@@ -76,6 +76,7 @@ public:
   uint32_t presentFamilyIndex = UINT32_MAX;
 
   VkQueue graphicsQueue = {};
+  VkFormat depthFormat;
 
   Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference);
   ~Device();
@@ -90,6 +91,7 @@ public:
   bool operator!=(const Device &other) noexcept;
 
 private:
+  VkFormat getDepthFormat();
   VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
   uint32_t getDeviceScore(VkPhysicalDevice device, PreferredGPU preference);
   bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex);
@@ -218,7 +220,7 @@ class RENDERPASS {
 public:
   VkRenderPass renderPass = {};
 
-  RENDERPASS(Device &device, Swapchain &swapchain);
+  RENDERPASS(Device &device, Swapchain &swapchain, VkFormat depthFormat);
   ~RENDERPASS();
 
   RENDERPASS(const RENDERPASS &) = delete;
@@ -257,7 +259,7 @@ class Framebuffer {
 public:
   std::vector<VkFramebuffer> framebuffers;
 
-  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator);
+  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator, VkFormat depthFormat);
   ~Framebuffer();
 
   Framebuffer(const Framebuffer &other) = delete;
@@ -267,7 +269,6 @@ public:
   Framebuffer &operator=(Framebuffer &&other);
 
 private:
-  VkFormat getDepthFormat();
   VkImage createDepthImage(const Swapchain &swapchain, VmaAllocation &imageMemory);
   VkImageView createDepthImageView();
 
