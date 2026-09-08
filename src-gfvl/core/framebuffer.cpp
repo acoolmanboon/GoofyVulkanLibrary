@@ -26,8 +26,7 @@ using namespace GFVL;
 
 namespace GFVL {
 
-VkImage Framebuffer::createDepthImage(const Swapchain &swapchain,
-                                      VmaAllocation &imageMemory) {
+VkImage Framebuffer::createDepthImage(const Swapchain &swapchain) {
   VkImage image;
 
   VkImageCreateInfo imageCreateInfo{
@@ -48,7 +47,7 @@ VkImage Framebuffer::createDepthImage(const Swapchain &swapchain,
   };
 
   CheckVkResult2(vmaCreateImage(allocator_, &imageCreateInfo,
-                                &allocationCreateInfo, &image, &imageMemory,
+                                &allocationCreateInfo, &image, &depthImageMemory_,
                                 nullptr),
                  "Failed to create a framebuffer depth image!");
 
@@ -105,7 +104,7 @@ Framebuffer::Framebuffer(Device &device, Swapchain &swapchain,
                          RENDERPASS &renderPass, VmaAllocator allocator,
                          VkFormat depthFormat)
     : device_(device), allocator_(allocator), depthFormat_(depthFormat),
-      depthImage_(createDepthImage(swapchain, depthImageMemory_)),
+      depthImage_(createDepthImage(swapchain)),
       depthImageView_(createDepthImageView())
 
 {

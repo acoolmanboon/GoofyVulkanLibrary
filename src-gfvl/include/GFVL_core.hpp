@@ -68,12 +68,12 @@ public:
 
 class Device {
 public:
-  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-  VkDevice logicalDevice = VK_NULL_HANDLE;
   VkDeviceSize videoMemory = 0;
 
   uint32_t graphicsFamilyIndex = UINT32_MAX;
   uint32_t presentFamilyIndex = UINT32_MAX;
+  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkDevice logicalDevice = VK_NULL_HANDLE;
 
   VkQueue graphicsQueue = {};
   VkFormat depthFormat;
@@ -87,15 +87,19 @@ public:
   Device(const Device &&) = delete;
   Device &operator=(const Device &&) = delete;
 
-  bool operator==(const Device &other) noexcept;
-  bool operator!=(const Device &other) noexcept;
+  bool operator==(const Device &other) const noexcept;
+  bool operator!=(const Device &other) const noexcept;
 
 private:
-  VkFormat getDepthFormat();
+  VkPhysicalDevice getPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference);
+  VkDevice createDevice();
+  VkQueue getGraphicsQueue();
   VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
   uint32_t getDeviceScore(VkPhysicalDevice device, PreferredGPU preference);
   bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex);
   VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device);
+
+  VkFormat getDepthFormat();
 };
 
 class Semaphore {
@@ -269,15 +273,15 @@ public:
   Framebuffer &operator=(Framebuffer &&other);
 
 private:
-  VkImage createDepthImage(const Swapchain &swapchain, VmaAllocation &imageMemory);
+  VkImage createDepthImage(const Swapchain &swapchain);
   VkImageView createDepthImageView();
 
   Device &device_;
   VmaAllocator allocator_;
 
   VkFormat depthFormat_{};
-  VkImage depthImage_{};
   VmaAllocation depthImageMemory_{};
+  VkImage depthImage_{};
   VkImageView depthImageView_{};
 };
 
