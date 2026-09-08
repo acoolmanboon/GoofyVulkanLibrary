@@ -68,14 +68,15 @@ public:
 
 class Device {
 public:
-  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-  VkDevice logicalDevice = VK_NULL_HANDLE;
   VkDeviceSize videoMemory = 0;
 
   uint32_t graphicsFamilyIndex = UINT32_MAX;
   uint32_t presentFamilyIndex = UINT32_MAX;
+  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkDevice logicalDevice = VK_NULL_HANDLE;
 
   VkQueue graphicsQueue = {};
+  VkFormat depthFormat;
 
   Device(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference);
   ~Device();
@@ -86,14 +87,19 @@ public:
   Device(const Device &&) = delete;
   Device &operator=(const Device &&) = delete;
 
-  bool operator==(const Device &other) noexcept;
-  bool operator!=(const Device &other) noexcept;
+  bool operator==(const Device &other) const noexcept;
+  bool operator!=(const Device &other) const noexcept;
 
 private:
+  VkPhysicalDevice getPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, PreferredGPU preference);
+  VkDevice createDevice();
+  VkQueue getGraphicsQueue();
   VkDeviceSize getDeviceVRAM(VkPhysicalDevice device);
   uint32_t getDeviceScore(VkPhysicalDevice device, PreferredGPU preference);
   bool enumerateQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t &graphicsFamilyIndex, uint32_t &presentFamilyIndex);
   VkBool32 hasRequiredDeviceExtensions(VkPhysicalDevice device);
+
+  VkFormat getDepthFormat();
 };
 
 class Semaphore {
@@ -218,7 +224,7 @@ class RENDERPASS {
 public:
   VkRenderPass renderPass = {};
 
-  RENDERPASS(Device &device, Swapchain &swapchain);
+  RENDERPASS(Device &device, Swapchain &swapchain, VkFormat depthFormat);
   ~RENDERPASS();
 
   RENDERPASS(const RENDERPASS &) = delete;
@@ -257,7 +263,7 @@ class Framebuffer {
 public:
   std::vector<VkFramebuffer> framebuffers;
 
-  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator);
+  Framebuffer(Device &device, Swapchain &swapchain, RENDERPASS &renderPass, VmaAllocator allocator, VkFormat depthFormat);
   ~Framebuffer();
 
   Framebuffer(const Framebuffer &other) = delete;
@@ -267,16 +273,15 @@ public:
   Framebuffer &operator=(Framebuffer &&other);
 
 private:
-  VkFormat getDepthFormat();
-  VkImage createDepthImage(const Swapchain &swapchain, VmaAllocation &imageMemory);
+  VkImage createDepthImage(const Swapchain &swapchain);
   VkImageView createDepthImageView();
 
   Device &device_;
   VmaAllocator allocator_;
 
   VkFormat depthFormat_{};
-  VkImage depthImage_{};
   VmaAllocation depthImageMemory_{};
+  VkImage depthImage_{};
   VkImageView depthImageView_{};
 };
 

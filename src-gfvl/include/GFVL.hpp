@@ -30,12 +30,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 namespace GFVL {
 
 enum MouseButton : uint8_t {
-  Left = 0,
-  Middle = 1,
-  Right = 2,
-  Thumb1 = 3,
-  Thumb2 = 4,
-  Count = 5
+  Left = 1,
+  Middle = 2,
+  Right = 3,
+  Thumb1 = 4,
+  Thumb2 = 5,
+  Count = 5,
 };
 
 enum KeyEvent : uint8_t {

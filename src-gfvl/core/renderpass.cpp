@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-RENDERPASS::RENDERPASS(Device &device, Swapchain &swapchain) : device(device) {
+RENDERPASS::RENDERPASS(Device &device, Swapchain &swapchain, VkFormat depthFormat) : device(device) {
 
   VkAttachmentDescription colorAttachment{
       .format = swapchain.format,
@@ -36,7 +36,7 @@ RENDERPASS::RENDERPASS(Device &device, Swapchain &swapchain) : device(device) {
       .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
 
   VkAttachmentDescription depthAttachment{
-      .format = VK_FORMAT_D32_SFLOAT,
+      .format = depthFormat,
       .samples = VK_SAMPLE_COUNT_1_BIT,
       .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
       .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,

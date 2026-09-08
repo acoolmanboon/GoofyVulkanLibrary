@@ -125,7 +125,7 @@ PIPELINE::PIPELINE(Device &device, Swapchain &swapchain, VertexLayout &layout, s
   VkGraphicsPipelineCreateInfo pipelineInfo{
       .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 
-      .stageCount = 2,
+      .stageCount = static_cast<uint32_t>(shaderStages.size()),
       .pStages = stages.data(),
 
       .pVertexInputState = &vertexInputInfo,

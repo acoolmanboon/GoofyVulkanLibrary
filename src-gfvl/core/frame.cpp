@@ -164,7 +164,8 @@ Frame::Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descr
  
 }
 Frame::~Frame() {
-  vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
+  if (descriptorPool)
+    vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);
 
   vkDestroyCommandPool(device.logicalDevice, commandPool, nullptr);
 
