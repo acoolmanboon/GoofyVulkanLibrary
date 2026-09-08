@@ -125,8 +125,8 @@ void Instance::beginFrame() {
   vkCmdBeginRenderPass(currentFrame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   vkCmdBindPipeline(currentFrame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline.pipeline);
-
-  vkCmdBindDescriptorSets(currentFrame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &currentFrame.descriptorSet, 0, nullptr);
+  if (currentFrame.descriptorSet)
+    vkCmdBindDescriptorSets(currentFrame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipelineLayout, 0, 1, &currentFrame.descriptorSet, 0, nullptr);
   VkViewport viewport{
       .x = 0.0f,
       .y = 0.0f,

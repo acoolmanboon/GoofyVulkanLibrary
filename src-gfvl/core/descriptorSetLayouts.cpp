@@ -35,6 +35,10 @@ namespace GFVL {
  */
 DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<UniformBufferBinding> &bindings) : device_(device),
                                                                                                               bindings_(bindings) {
+  if (bindings.size() == 0) {
+    descriptorSetLayout = VK_NULL_HANDLE;
+    return;
+  }
   std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
   descriptorSetLayoutBindings.reserve(this->bindings_.size());
 
@@ -84,6 +88,7 @@ DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) noexcept :
 }
 
 DescriptorSetLayout::~DescriptorSetLayout() {
-  vkDestroyDescriptorSetLayout(device_.logicalDevice, descriptorSetLayout, nullptr);
+  if (descriptorSetLayout)
+    vkDestroyDescriptorSetLayout(device_.logicalDevice, descriptorSetLayout, nullptr);
 }
 } // namespace GFVL

@@ -46,6 +46,8 @@ void Frame::createCommandPool() {
       "Failed to allocate command buffers in Frame creation!");
 }
 void Frame::createDescriptorPool(uint32_t descriptorCount) {
+  if (descriptorCount == 0)
+    return;
   VkDescriptorPoolSize poolSize{
       .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
       .descriptorCount = descriptorCount};
@@ -61,6 +63,8 @@ void Frame::createDescriptorPool(uint32_t descriptorCount) {
       "Failed to create descriptor pool in Frame creation!");
 }
 void Frame::updateUniformBuffers() {
+  if (bindings.size() == 0)
+    return;
   for (size_t i = 0; i < bindings.size(); i++) {
     if (!bindings[i].hasUpdated)
       continue;
@@ -77,78 +81,87 @@ Frame::Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descr
   createCommandPool();
   createDescriptorPool(static_cast<uint32_t>(bindings.size()));
 
-  VkDescriptorSetAllocateInfo allocation{
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      .descriptorPool = descriptorPool,
-      .descriptorSetCount = 1,
-      .pSetLayouts = &descriptorSetLayout};
+  if (bindings.size() != 0) {
+    VkDescriptorSetAllocateInfo allocation{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptorSetLayout};
 
-  CheckVkResult2(
-      vkAllocateDescriptorSets(device.logicalDevice, &allocation, &descriptorSet),
-      "Failed to allocate descriptor sets in Frame creation!");
+    CheckVkResult2(vkAllocateDescriptorSets(device.logicalDevice, &allocation,
+                                            &descriptorSet),
+                   "Failed to allocate descriptor sets in Frame creation!");
 
-  uniformBuffers.reserve(bindings.size());
+    uniformBuffers.reserve(bindings.size());
 
-  for (const UniformBufferBinding &binding : bindings) {
-    ASSERTIF(binding.ubo == nullptr, "UniformBufferBinding ubo cannot be nullptr!");
-    ASSERTIF(binding.size == 0, "UniformBufferBinding size cannot be 0 bytes!");
-    ASSERTIF(binding.shaderStage == 0, "UniformBufferBinding shader stage has no flags! This should not be possible unless it is explicitly initialized as such.");
-    ASSERTIF(binding.arrayCount == 0, "UniformBufferBinding array count is 0. This should not be possible unless you explicitly initialized it to 0.");
-    ASSERTIF(binding.arrayCount != 1, "UniformBufferBinding array count being 1 is only implemented.");
-    // this may or may not work
-    FrameUniformBuffer uniformBuffer{};
+    for (const UniformBufferBinding &binding : bindings) {
+      ASSERTIF(binding.ubo == nullptr,
+               "UniformBufferBinding ubo cannot be nullptr!");
+      ASSERTIF(binding.size == 0,
+               "UniformBufferBinding size cannot be 0 bytes!");
+      ASSERTIF(binding.shaderStage == 0,
+               "UniformBufferBinding shader stage has no flags! This should "
+               "not be possible unless it is explicitly initialized as such.");
+      ASSERTIF(binding.arrayCount == 0,
+               "UniformBufferBinding array count is 0. This should not be "
+               "possible unless you explicitly initialized it to 0.");
+      ASSERTIF(binding.arrayCount != 1,
+               "UniformBufferBinding array count being 1 is only implemented.");
+      // this may or may not work
+      FrameUniformBuffer uniformBuffer{};
 
-    VkBufferCreateInfo bufferCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = binding.size,
-        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
+      VkBufferCreateInfo bufferCreateInfo{
+          .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+          .size = binding.size,
+          .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+          .sharingMode = VK_SHARING_MODE_EXCLUSIVE};
 
-    VmaAllocationCreateInfo allocationCreateInfo{
-        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO};
+      VmaAllocationCreateInfo allocationCreateInfo{
+          .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                   VMA_ALLOCATION_CREATE_MAPPED_BIT,
+          .usage = VMA_MEMORY_USAGE_AUTO};
 
-    VmaAllocationInfo allocationInfo{};
+      VmaAllocationInfo allocationInfo{};
 
-    CheckVkResult2(vmaCreateBuffer(
-                       allocator,
-                       &bufferCreateInfo,
-                       &allocationCreateInfo,
-                       &uniformBuffer.buffer,
-                       &uniformBuffer.allocation,
-                       &allocationInfo),
-                   "Failed to create frame uniform buffer!");
+      CheckVkResult2(
+          vmaCreateBuffer(allocator, &bufferCreateInfo, &allocationCreateInfo,
+                          &uniformBuffer.buffer, &uniformBuffer.allocation,
+                          &allocationInfo),
+          "Failed to create frame uniform buffer!");
 
-    uniformBuffer.mappedMemory = allocationInfo.pMappedData;
+      uniformBuffer.mappedMemory = allocationInfo.pMappedData;
 
-    memcpy(uniformBuffer.mappedMemory, binding.ubo, binding.size);
+      memcpy(uniformBuffer.mappedMemory, binding.ubo, binding.size);
 
-    uniformBuffers.emplace_back(uniformBuffer);
+      uniformBuffers.emplace_back(uniformBuffer);
+    }
+    std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bindings.size());
+
+    for (size_t i = 0; i < bindings.size(); i++) {
+      descriptorBufferInfos[i] = {.buffer = uniformBuffers[i].buffer,
+                                  .offset = 0,
+                                  .range = bindings[i].size};
+    }
+
+    std::vector<VkWriteDescriptorSet> writes;
+    writes.reserve(bindings.size());
+
+    for (size_t descriptorBufferInfoIndex = 0;
+         descriptorBufferInfoIndex < bindings.size();
+         descriptorBufferInfoIndex++) {
+      writes.push_back(VkWriteDescriptorSet{
+          .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+          .dstSet = descriptorSet,
+          .dstBinding = bindings[descriptorBufferInfoIndex].binding,
+          .descriptorCount = bindings[descriptorBufferInfoIndex].arrayCount,
+          .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+          .pBufferInfo = &descriptorBufferInfos[descriptorBufferInfoIndex]});
+    }
+
+    vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(),
+                           0, nullptr);
   }
-  std::vector<VkDescriptorBufferInfo> descriptorBufferInfos(bindings.size());
-
-  for (size_t i = 0; i < bindings.size(); i++) {
-    descriptorBufferInfos[i] = {
-        .buffer = uniformBuffers[i].buffer,
-        .offset = 0,
-        .range = bindings[i].size};
-  }
-
-  std::vector<VkWriteDescriptorSet> writes;
-  writes.reserve(bindings.size());
-
-  for (size_t descriptorBufferInfoIndex = 0; descriptorBufferInfoIndex < bindings.size(); descriptorBufferInfoIndex++) {
-    writes.push_back(
-        VkWriteDescriptorSet{
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = descriptorSet,
-            .dstBinding = bindings[descriptorBufferInfoIndex].binding,
-            .descriptorCount = bindings[descriptorBufferInfoIndex].arrayCount,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pBufferInfo = &descriptorBufferInfos[descriptorBufferInfoIndex]});
-  }
-
-  vkUpdateDescriptorSets(device.logicalDevice, writes.size(), writes.data(), 0, nullptr);
+ 
 }
 Frame::~Frame() {
   vkDestroyDescriptorPool(device.logicalDevice, descriptorPool, nullptr);

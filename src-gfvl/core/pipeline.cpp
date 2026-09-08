@@ -45,6 +45,13 @@ PIPELINE::PIPELINE(Device &device, Swapchain &swapchain, VertexLayout &layout, s
       .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
       .pDynamicStates = dynamicStates.data()};
 
+  for (int i = 0; i < descriptorSetLayouts.size(); i++) {
+    if (descriptorSetLayouts[i] == VK_NULL_HANDLE) {
+        std::swap(descriptorSetLayouts[i], descriptorSetLayouts.back());
+        descriptorSetLayouts.pop_back();
+    }
+  } 
+
   VkPipelineLayoutCreateInfo info{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
