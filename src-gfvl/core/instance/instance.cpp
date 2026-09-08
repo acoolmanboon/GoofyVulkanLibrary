@@ -75,7 +75,7 @@ void Instance::beginFrame() {
   if (inputState.framebufferResizedCallBack()) {
     vkDeviceWaitIdle(this->device.logicalDevice);
     this->swapchain.recreate(this->window, this->surface);
-    framebuffer = Framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator);
+    framebuffer = Framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator, device.depthFormat);
     this->swapchain.imageCount = this->swapchain.images.size();
 
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
