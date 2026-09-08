@@ -20,3 +20,8 @@ option(COMPILE_MOON_EXAMPLE "Compile the moon_example folder." OFF)
 if (COMPILE_ALL_EXAMPLES OR COMPILE_MOON_EXAMPLE)
     add_subdirectory("examples/moon_example")
 endif()
+
+option(COMPILE_TRIANGLE_EXAMPLE "Compile the triangle_example folder." OFF)
+if (COMPILE_ALL_EXAMPLES OR COMPILE_TRIANGLE_EXAMPLE)
+    add_subdirectory("examples/triangle_example")
+endif()
