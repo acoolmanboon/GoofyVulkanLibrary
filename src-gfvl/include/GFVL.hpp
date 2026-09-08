@@ -35,6 +35,7 @@ enum MouseButton : uint8_t {
   Right = 3,
   Thumb1 = 4,
   Thumb2 = 5,
+  Count = 5,
 };
 
 enum KeyEvent : uint8_t {
