@@ -356,11 +356,11 @@ public:
   Semaphore imageAvailableSemaphore;
   Fence gpuFinishedFence;
 
-  VkCommandPool commandPool;
-  VkCommandBuffer commandBuffer;
+  VkCommandPool commandPool = VK_NULL_HANDLE;
+  VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
-  VkDescriptorPool descriptorPool;
-  VkDescriptorSet descriptorSet; // turn into a std::vector for many sets of UBOs, for now, no.
+  VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+  VkDescriptorSet descriptorSet = VK_NULL_HANDLE; // turn into a std::vector for many sets of UBOs, for now, no.
 
   std::vector<FrameUniformBuffer> uniformBuffers;
 
@@ -387,7 +387,7 @@ private:
  */
 class DescriptorSetLayout {
 public:
-  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
 
   DescriptorSetLayout(Device &device, const std::vector<UniformBufferBinding> &bindings);
   ~DescriptorSetLayout();
