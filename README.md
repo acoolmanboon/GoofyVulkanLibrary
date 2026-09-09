@@ -1,7 +1,8 @@
 # Goofy Vulkan Library
 I'll probably run out of motivation to finish this.
 
-GoofyVulkanLibrary is a library designed to wrap Vulkan, it's just for quick and dirty applications using Vulkan
+GoofyVulkanLibrary is a library designed to abstract complicated Vulkan boilerplate into a small C++ library, bridging the gap between just writing straight Vulkan and getting on a game engine, or for developers who prefer to have a bare-bones environment.
+Currently, the behaviour is quite fixed, but it is planned for the user to have more granular control when needed.
 To compile this, use CMake. You will also have to compile the shaders yourself though
 
 This library uses the Vulkan Memory Allocator (VMA) to handle memory allocation.
