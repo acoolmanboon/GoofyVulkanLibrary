@@ -27,7 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <GFVL_definition.hpp>
 
 namespace GFVL {
-class PIPELINE;
+class Pipeline;
 enum PreferredGPU {
   PowerSaving,
   Performance,
@@ -237,19 +237,19 @@ private:
   Device &device;
 };
 
-class PIPELINE {
+class Pipeline {
 public:
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 
-  PIPELINE(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
-  ~PIPELINE();
+  Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+  ~Pipeline();
 
-  PIPELINE(const PIPELINE &) = delete;
-  PIPELINE &operator=(const PIPELINE &) = delete;
+  Pipeline(const Pipeline &) = delete;
+  Pipeline &operator=(const Pipeline &) = delete;
 
-  PIPELINE(const PIPELINE &&) = delete;
-  PIPELINE &operator=(const PIPELINE &&) = delete;
+  Pipeline(const Pipeline &&) = delete;
+  Pipeline &operator=(const Pipeline &&) = delete;
 
 private:
   Device &device;
