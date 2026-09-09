@@ -56,7 +56,7 @@ int main() {
       .applicationVersion = 1, // Arbitrary version number
       .width = 800, // The starting width of the window.
       .height = 600, // The starting height of the window
-      .preferredGPU = GFVL::PreferredGPU::Performance}; 
+      .preferredGPU = GFVL::PreferredGPU::PowerSaving}; 
 
   GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
 
