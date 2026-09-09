@@ -24,9 +24,9 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts) : device(device) {
+  PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << descriptorSetLayouts.size() << " layouts.");
   std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
   size_t index = 0;
-  PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << descriptorSetLayouts.size() << " layouts.");
   for (const SHADER& shader : shaderStages) {
     stages[index] = VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -35,13 +35,14 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
         .pName = "main"};
     index++;
   }
-  PRINT("Indexed all shader stages!");
+
   std::vector<VkDynamicState> dynamicStates = {
       VK_DYNAMIC_STATE_VIEWPORT, // add more as needed,do later
       VK_DYNAMIC_STATE_SCISSOR};
 
   VkPipelineDynamicStateCreateInfo dynamicState{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+      .flags = 0,
       .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
       .pDynamicStates = dynamicStates.data()};
 
@@ -57,8 +58,10 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
       .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
       .pSetLayouts = descriptorSetLayouts.data()};
 
-  CheckVkResult(vkCreatePipelineLayout(device.logicalDevice, &info, nullptr, &this->pipelineLayout));
-  PRINT("Created pipeline layout");
+  CheckVkResult2(
+    vkCreatePipelineLayout(device.logicalDevice, &info, nullptr, &this->pipelineLayout),
+    "Failed to create pipeline layout!");
+
   // vertex input
   VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -141,7 +144,9 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
       .renderPass = renderPass.renderPass,
       .subpass = 0};
 
-  CheckVkResult(vkCreateGraphicsPipelines(device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &this->pipeline));
+  CheckVkResult2(
+    vkCreateGraphicsPipelines(device.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &this->pipeline),
+    "Failed to create pipeline layout!");
   PRINT("Created graphics pipeline!");
 }
     Pipeline::~Pipeline() {

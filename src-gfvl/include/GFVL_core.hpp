@@ -239,6 +239,12 @@ private:
 
 class Pipeline {
 public:
+  struct ViewportCreateInfo {
+    bool isDynamic; //
+  };
+  struct CreateInfo {
+
+  };
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 

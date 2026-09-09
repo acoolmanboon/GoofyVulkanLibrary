@@ -138,9 +138,6 @@ void Instance::beginFrame() {
 
   VkRect2D scissor{.offset = {0, 0}, .extent = swapchain.extent}; // this just cuts off rendering if not in swapchain
   vkCmdSetScissor(currentFrame.commandBuffer, 0, 1, &scissor);
-  VkDeviceSize offsets[] = {0};
-
-
   
 }
 void Instance::renderMesh(Mesh &mesh) {

@@ -396,24 +396,14 @@ public:
     uint32_t indiceCount;      ///< Indice count of the mesh
     void *indiceData;          ///< Pointer to indice data
     IndiceDataType indiceType; ///< The type of data your indices are
-    MeshBuffer::MemoryAllocation memoryAllocation =
-        MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be
-                                                   ///< allocated in memory
+    MeshBuffer::MemoryAllocation memoryAllocation = MeshBuffer::MemoryAllocation::HostVisible; ///< How this mesh will be allocated in memory
   };
 
-  Mesh(const Mesh &other) =
-      delete; ///< Meshes may not be copied since meshes cannot share the same
-              ///< Vulkan objects. It is recommended to just recreate a mesh
-              ///< with the same vertex data.
-  Mesh &operator=(const Mesh &other) =
-      delete; ///< Meshes may not be copied since meshes cannot share the same
-              ///< Vulkan objects. It is recommended to just recreate a mesh
-              ///< with the same vertex data.
+  Mesh(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
+  Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
 
-  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will
-                                 ///< destroy the other object.
-  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it
-                                 ///< will destroy the other object.
+  Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will destroy the other object.
+  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will destroy the other object.
 
   ~Mesh(); ///< Destroys mesh and associated info
 
@@ -458,7 +448,7 @@ private:
   RENDERPASS renderPass;
   std::vector<SHADER> shaderStages;
   DescriptorSetLayout descriptorSetLayout;
-  PIPELINE pipeline;
+  Pipeline pipeline;
   Framebuffer framebuffer;
   VkCommandPool commandPool;
 
