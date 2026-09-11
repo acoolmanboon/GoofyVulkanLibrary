@@ -248,8 +248,8 @@ public:
     Default, ///< Default. Culling enabled with counterclockwise winding.
   };
   struct CreateInfo {
-    RasterizerPreset rasterizerPreset = Default;
-    VkPipelineRasterizationStateCreateInfo rasterizerCreateInfoOverrides = {
+    RasterizerPreset rasterizerPreset { Default };
+    VkPipelineRasterizationStateCreateInfo rasterizerCreateInfoOverrides {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = UINT32_MAX,

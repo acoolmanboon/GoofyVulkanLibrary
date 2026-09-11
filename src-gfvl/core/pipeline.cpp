@@ -44,6 +44,7 @@ VkPipelineRasterizationStateCreateInfo Pipeline::getrasterizerCreateInfoOverride
                 .depthBiasClamp = 0.0f,
                 .depthBiasSlopeFactor = 0.0f,
                 .lineWidth = 1.0f};
+            break;
         default:
             THROW_EXCEPTION("Invalid Rasterizer Preset!");
     }
