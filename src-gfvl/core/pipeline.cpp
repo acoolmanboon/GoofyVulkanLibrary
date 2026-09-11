@@ -18,12 +18,54 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
+#include <cstdint>
 
 using namespace GFVL;
 
+#define REPLACE_IF_NOT_EQUAL_TO(target, member, value) if (overrides.member != value) target.member = overrides.member
+#define REPLACE_IF_NOT_NAN(target, member) if (!std::isnan(overrides.member)) target.member = overrides.member
 // USER-DEFINED STUFF
 namespace GFVL {
-Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts) : device(device) {
+VkPipelineRasterizationStateCreateInfo Pipeline::getrasterizerCreateInfoOverridesFromConfig(Pipeline::RasterizerPreset preset, VkPipelineRasterizationStateCreateInfo overrides) {
+    VkPipelineRasterizationStateCreateInfo rasterizerCreateInfo = {};
+    switch(preset) {
+        case(RasterizerPreset::Default):
+            rasterizerCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0, 
+                .depthClampEnable = VK_FALSE,
+                .rasterizerDiscardEnable = VK_FALSE,
+                .polygonMode = VK_POLYGON_MODE_FILL,
+                .cullMode = VK_CULL_MODE_BACK_BIT,
+                .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+                .depthBiasEnable = VK_FALSE,
+                .depthBiasConstantFactor = 0.0f,
+                .depthBiasClamp = 0.0f,
+                .depthBiasSlopeFactor = 0.0f,
+                .lineWidth = 1.0f};
+            break;
+        default:
+            THROW_EXCEPTION("Invalid Rasterizer Preset!");
+    }
+
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, pNext, nullptr);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, flags, UINT32_MAX);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, depthBiasEnable, UINT32_MAX);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, rasterizerDiscardEnable, UINT32_MAX);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, polygonMode, VK_POLYGON_MODE_MAX_ENUM);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, cullMode, VK_CULL_MODE_FLAG_BITS_MAX_ENUM);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, frontFace, VK_FRONT_FACE_MAX_ENUM);
+    REPLACE_IF_NOT_EQUAL_TO(rasterizerCreateInfo, depthBiasEnable, UINT32_MAX);
+
+    REPLACE_IF_NOT_NAN(rasterizerCreateInfo, depthBiasConstantFactor);
+    REPLACE_IF_NOT_NAN(rasterizerCreateInfo, depthBiasClamp);
+    REPLACE_IF_NOT_NAN(rasterizerCreateInfo, depthBiasSlopeFactor);
+    REPLACE_IF_NOT_NAN(rasterizerCreateInfo, lineWidth);
+    
+    return rasterizerCreateInfo;
+}
+Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts, Pipeline::CreateInfo createInfo) : device(device) {
   PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << descriptorSetLayouts.size() << " layouts.");
   std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
   size_t index = 0;
@@ -84,15 +126,7 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
       .scissorCount = 1};
 
   // rasterizer
-  VkPipelineRasterizationStateCreateInfo rasterizer{
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-      .depthClampEnable = VK_FALSE,
-      .rasterizerDiscardEnable = VK_FALSE,
-      .polygonMode = VK_POLYGON_MODE_FILL,
-      .cullMode = VK_CULL_MODE_BACK_BIT, // VK_CULL_MODE_BACK_BIT
-      .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-      .depthBiasEnable = VK_FALSE,
-      .lineWidth = 1.0f};
+  VkPipelineRasterizationStateCreateInfo rasterizer = getrasterizerCreateInfoOverridesFromConfig(createInfo.rasterizerPreset, createInfo.rasterizerCreateInfoOverrides);
 
   // multisampling
   // me
