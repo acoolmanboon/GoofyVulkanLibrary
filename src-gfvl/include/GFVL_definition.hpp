@@ -24,10 +24,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <utility>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -73,3 +75,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   } while (false)
 
 #define GFVL_VERSION 1 // internal application name
+#define SIGNALING_NAN std::numeric_limits<float>::signaling_NaN()

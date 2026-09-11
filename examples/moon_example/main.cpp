@@ -11,6 +11,7 @@
 
 #include <GFVL.hpp>
 #include <vulkan/vulkan_core.h>
+#include "GFVL_core.hpp"
 #include "PerlinNoise.hpp"
 
 // GLM uses OpenGL standards where depth is -1 to 1 but this makes it fit Vulkan specifications.
@@ -309,7 +310,8 @@ int main() {
       .height = 600, // The starting height of the window
       .preferredGPU = GFVL::PreferredGPU::Performance}; 
 
-  GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
+  GFVL::Pipeline::CreateInfo pipelineCreateInfo;
+  GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages, pipelineCreateInfo); // With our initialization logic done, we create the instance.
 
   // The GFVL initialization logic is done, so we make the map.
 
