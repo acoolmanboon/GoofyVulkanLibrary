@@ -1,4 +1,7 @@
 // this is just an example script so use it anywhere
+// GLM uses OpenGL standards where depth is -1 to 1 but this makes it fit Vulkan
+// specifications.
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <cstddef>
 #include <cstdint>
@@ -13,9 +16,6 @@
 #include <vulkan/vulkan_core.h>
 #include "GFVL_core.hpp"
 #include "PerlinNoise.hpp"
-
-// GLM uses OpenGL standards where depth is -1 to 1 but this makes it fit Vulkan specifications.
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 // Settings for the map
 constexpr unsigned int mapWidth = 250; // The width of the map in tiles.
