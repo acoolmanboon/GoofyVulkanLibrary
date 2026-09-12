@@ -403,7 +403,7 @@ public:
   Mesh &operator=(const Mesh &other) = delete; ///< Meshes may not be copied since meshes cannot share the same Vulkan objects. It is recommended to just recreate a mesh with the same vertex data.
 
   Mesh(Mesh &&other) = default;  ///< Move constructor, allowed but it will destroy the other object.
-  Mesh &operator=(Mesh &&other); ///< Move assignment operator, allowed but it will destroy the other object.
+  Mesh &operator=(Mesh &&other) = delete; ///< Move assignment operator, allowed but it will destroy the other object.
 
   ~Mesh(); ///< Destroys mesh and associated info
 
@@ -413,20 +413,13 @@ public:
 
   friend class Instance;
 
-private:
-  /**
-   * @brief Creates a mesh buffer.
-   * @param device A reference to your Device.
-   * @param createinfo Mesh creation info.
-   */
-  Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool,
-       VmaAllocator allocator); ///< Creates a mesh.
 
-  VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType,
-                                 uint32_t indiceCount);
+  Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
+
+  VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
   VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
 
-  const Device &device_; ///< Stores the device reference.
+  Device &device_; ///< Stores the device reference.
   VkDeviceSize indiceDataSize;
   VkDeviceSize indiceDataOffset;
   uint32_t indiceCount;

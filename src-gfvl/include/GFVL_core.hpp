@@ -214,7 +214,7 @@ public:
   SHADER &operator=(const SHADER &) = delete;
 
   SHADER(SHADER &&other) noexcept;
-  SHADER &operator=(SHADER &&other) noexcept;
+  SHADER &operator=(SHADER &&other) = delete;
 
 private:
   Device &device;
