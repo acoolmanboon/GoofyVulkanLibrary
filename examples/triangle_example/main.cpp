@@ -56,9 +56,10 @@ int main() {
       .applicationVersion = 1, // Arbitrary version number
       .width = 800, // The starting width of the window.
       .height = 600, // The starting height of the window
-      .preferredGPU = GFVL::PreferredGPU::PowerSaving}; 
+      .preferredGPU = GFVL::PreferredGPU::PowerSaving};
 
-  GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages); // With our initialization logic done, we create the instance.
+  GFVL::Pipeline::CreateInfo pipelineCreateInfo;
+  GFVL::Instance GFVLinstance(appInfo, layout, bindings, shaderStages, pipelineCreateInfo); // With our initialization logic done, we create the instance.
 
   std::vector<vertice> triangle = {
       {.position = {0.0f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},

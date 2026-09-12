@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <GFVL_definition.hpp>
+#include <cstdint>
 
 namespace GFVL {
 class Pipeline;
@@ -238,16 +239,37 @@ private:
 
 class Pipeline {
 public:
-  struct ViewportCreateInfo {
-    bool isDynamic; //
+  // struct ViewportCreateInfo {
+  //   bool isDynamic; //
+  // };
+
+  enum RasterizerPreset {
+    Default, ///< Default. Culling enabled with counterclockwise winding.
   };
   struct CreateInfo {
-
+    RasterizerPreset rasterizerPreset { Default };
+    VkPipelineRasterizationStateCreateInfo rasterizerCreateInfoOverrides {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = UINT32_MAX,
+        .depthClampEnable = UINT32_MAX,
+        .rasterizerDiscardEnable = UINT32_MAX,
+        .polygonMode = VK_POLYGON_MODE_MAX_ENUM,
+        .cullMode = VK_CULL_MODE_FLAG_BITS_MAX_ENUM,
+        .frontFace = VK_FRONT_FACE_MAX_ENUM,
+        .depthBiasEnable = UINT32_MAX,
+        .depthBiasConstantFactor = SIGNALING_NAN,
+        .depthBiasClamp = SIGNALING_NAN,
+        .depthBiasSlopeFactor = SIGNALING_NAN,
+        .lineWidth = SIGNALING_NAN};
   };
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline = {};
 
-  Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+  Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout,
+           std::vector<SHADER> &shaderStages, RENDERPASS &renderPass,
+           std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
+           Pipeline::CreateInfo createInfo);
   ~Pipeline();
 
   Pipeline(const Pipeline &) = delete;
@@ -258,6 +280,7 @@ public:
 
 private:
   Device &device;
+  VkPipelineRasterizationStateCreateInfo getrasterizerCreateInfoOverridesFromConfig(Pipeline::RasterizerPreset preset, VkPipelineRasterizationStateCreateInfo overrides);
 };
 /**
  * @class Framebuffer

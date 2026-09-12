@@ -487,7 +487,7 @@ public:
       AppInfo applicationInfo,
       VertexLayout &layouts,
       std::vector<UniformBufferBinding> &bindings,
-      std::vector<ShaderStage> &stages);
+      std::vector<ShaderStage> &stages, Pipeline::CreateInfo pipelineCreateInfo);
 
   ~Instance();
 

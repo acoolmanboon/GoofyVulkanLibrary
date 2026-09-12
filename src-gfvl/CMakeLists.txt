@@ -32,7 +32,7 @@ target_include_directories(libgfvl PRIVATE
 )
 
 # linking
-target_link_libraries(libgfvl PRIVATE
+target_link_libraries(libgfvl PUBLIC
     SDL3::SDL3
     Vulkan::Vulkan
 )
