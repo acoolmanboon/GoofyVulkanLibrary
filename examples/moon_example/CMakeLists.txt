@@ -18,8 +18,9 @@ file(GLOB_RECURSE EXAMPLE_SOURCES
 	"*.hpp"
 )
 
-# executable declaration
+# executable declarationdd
 add_executable(moon_example ${EXAMPLE_SOURCES})
+target_compile_options(moon_example PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(moon_example PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )

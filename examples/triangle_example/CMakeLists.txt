@@ -18,6 +18,7 @@ file(GLOB_RECURSE EXAMPLE_SOURCES
 
 # executable declaration
 add_executable(triangle_example ${EXAMPLE_SOURCES})
+target_compile_options(triangle_example PRIVATE -Wall -Wextra -Wpedantic)
 set_target_properties(triangle_example PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )

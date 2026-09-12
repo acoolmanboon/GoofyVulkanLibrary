@@ -30,7 +30,7 @@ target_include_directories(libgfvl PUBLIC
 target_include_directories(libgfvl PRIVATE 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
 )
-
+target_compile_options(libgfvl PRIVATE -Wall -Wextra -Wpedantic)
 # linking
 target_link_libraries(libgfvl PUBLIC
     SDL3::SDL3
