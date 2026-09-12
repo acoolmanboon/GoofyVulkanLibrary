@@ -97,10 +97,10 @@ void InputState::pollInputs() {
     }
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-      mouseButtonStates[static_cast<size_t>(event.button.button)] = {.event = KeyEvent::Down, .clicks = event.button.clicks};
+      mouseButtonStates[static_cast<size_t>(event.button.button) - 1] = {.event = KeyEvent::Down, .clicks = event.button.clicks};
     }
     if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-      mouseButtonStates[static_cast<size_t>(event.button.button)] = {.event = KeyEvent::Up, .clicks = event.button.clicks};
+      mouseButtonStates[static_cast<size_t>(event.button.button) - 1] = {.event = KeyEvent::Up, .clicks = event.button.clicks};
     }
 
     if (event.type == SDL_EVENT_MOUSE_MOTION) {

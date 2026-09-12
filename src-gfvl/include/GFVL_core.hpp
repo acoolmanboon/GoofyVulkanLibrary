@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
 
-#include "GFVL_core.hpp"
 #include <GFVL_definition.hpp>
 
 namespace GFVL {
