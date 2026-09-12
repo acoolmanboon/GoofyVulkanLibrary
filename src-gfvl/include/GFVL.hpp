@@ -453,7 +453,7 @@ private:
   std::vector<Semaphore> renderFinishedSemaphores;
   std::vector<VkFence> imagesInFlightFence;
 
-  std::vector<UniformBufferBinding> &bindings;
+  std::vector<UniformBufferBinding> bindings;
 
 private:
   uint32_t enumerateSupportedVulkanVersion();
