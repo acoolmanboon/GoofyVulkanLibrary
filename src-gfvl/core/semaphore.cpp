@@ -16,22 +16,35 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
+#include <GFVL_vkFunctionPointers.hpp>
 
 using namespace GFVL;
 
-// USER-DEFINED STUFF
 namespace GFVL {
   Semaphore::Semaphore(Device &device) : device_(device) {
-    VkSemaphoreCreateInfo semaphoreInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+    VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+                                        .pNext = nullptr,
+                                        .flags = 0};
     CheckVkResult2(
-      vkCreateSemaphore(this->device_.logicalDevice, &semaphoreInfo, nullptr,&this->semaphore),
+      vkCreateSemaphore(device_.logicalDevice, &semaphoreInfo, nullptr,&semaphore),
       "Failed to create semaphore!");
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+    VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .pNext = nullptr,
+        .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        .objectHandle = reinterpret_cast<uint64_t>(semaphore),
+        .pObjectName = "VkSemaphore of Semaphore object"};
+    CheckVkResult2(
+        VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
+        "Failed to set debug utils name for VkSemaphore of Semaphore object!");
+#endif
   }
 
-  Semaphore::Semaphore(Semaphore &&other) noexcept : device_(other.device_), semaphore(other.semaphore) {
+  Semaphore::Semaphore(Semaphore &&other) noexcept : semaphore(other.semaphore), device_(other.device_) {
     other.semaphore = VK_NULL_HANDLE;
   };
   Semaphore& Semaphore::operator=(Semaphore &&other) {
@@ -48,7 +61,7 @@ namespace GFVL {
   }
 
   Semaphore::~Semaphore() {
-    if (this->semaphore != VK_NULL_HANDLE)
-      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
+    if (semaphore != VK_NULL_HANDLE)
+      vkDestroySemaphore(device_.logicalDevice, semaphore, nullptr);
   } 
 }

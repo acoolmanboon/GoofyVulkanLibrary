@@ -16,22 +16,35 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 */
-#include <GFVL_definition.hpp>
 #include <GFVL_core.hpp>
+#include <GFVL_definition.hpp>
+#include <GFVL_vkFunctionPointers.hpp>
 
 using namespace GFVL;
 
-// USER-DEFINED STUFF
 namespace GFVL {
   Fence::Fence(Device &device, VkFenceCreateFlags flags) : device_(device) {
     VkFenceCreateInfo fenceInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+                                .pNext = nullptr,
                                 .flags = flags};
     CheckVkResult2(
-      vkCreateFence(this->device_.logicalDevice, &fenceInfo, nullptr, &this->fence),
+      vkCreateFence(device_.logicalDevice, &fenceInfo, nullptr, &fence),
       "Failed to create fence!");
+
+#ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
+    VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .pNext = nullptr,
+        .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+        .objectHandle = reinterpret_cast<uint64_t>(fence),
+        .pObjectName = "VkFence of Fence object"};
+    CheckVkResult2(
+        VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
+        "Failed to set debug utils name for VkFence of Fence object!");
+#endif
   }
 
-  Fence::Fence(Fence &&other) noexcept : device_(other.device_), fence(other.fence) {
+  Fence::Fence(Fence &&other) noexcept : fence(other.fence), device_(other.device_) {
     other.fence = VK_NULL_HANDLE;
   };
 
@@ -49,7 +62,7 @@ namespace GFVL {
   }
 
   Fence::~Fence() {
-    if (this->fence != VK_NULL_HANDLE)
-      vkDestroyFence(device_.logicalDevice, this->fence, nullptr);
+    if (fence != VK_NULL_HANDLE)
+      vkDestroyFence(device_.logicalDevice, fence, nullptr);
   }
 }
