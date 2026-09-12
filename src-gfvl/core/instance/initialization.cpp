@@ -93,19 +93,22 @@ VkBool32 vulkanDebugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEX
 
   return VK_FALSE;
 }
+
 namespace GFVL {
+#ifdef GFVL_ENABLE_VK_VALIDATION_LAYERS
 std::vector<VkValidationFeatureEnableEXT> getEnabledValidationFeatures() {
   std::vector<VkValidationFeatureEnableEXT> enables = {VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT};
 
-#ifdef GFVL_ENABLE_VK_CORE_VALIDATION
-  enables.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
-#endif
-#ifdef GFVL_ENABLE_VK_GPU_ASSISTED_VALIDATION
-  enables.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
-#endif
+  #ifdef GFVL_ENABLE_VK_CORE_VALIDATION
+    enables.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+  #endif
+  #ifdef GFVL_ENABLE_VK_GPU_ASSISTED_VALIDATION
+    enables.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
+  #endif
 
   return enables;
 }
+#endif
 
 std::vector<const char *> getEnabledInstanceExtensions() {
   uint32_t SDLinstanceExtensionCount = 0;
@@ -189,7 +192,6 @@ VkInstance Instance::initializeVkInstance(AppInfo applicationInfo) {
       .engineVersion = GFVL_VERSION,
       .apiVersion = VK_API_VERSION_1_4};
 
-  std::vector<VkValidationFeatureEnableEXT> enabledValidationFeatures = getEnabledValidationFeatures();
   std::vector<const char *> enabledInstanceExtensions = getEnabledInstanceExtensions();
   std::vector<const char *> enabledLayers = getEnabledLayers();
 
@@ -210,7 +212,9 @@ VkInstance Instance::initializeVkInstance(AppInfo applicationInfo) {
   debugUtilsMessengerCreateInfoPointer = &debugUtilsMessengerCreateInfo;
 
 #endif
-
+void* featuresPointer = nullptr;
+#ifdef GFVL_ENABLE_VK_VALIDATION_LAYERS
+  std::vector<VkValidationFeatureEnableEXT> enabledValidationFeatures = getEnabledValidationFeatures();
   VkValidationFeaturesEXT features = {
       .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
       .pNext = nullptr,
@@ -218,10 +222,11 @@ VkInstance Instance::initializeVkInstance(AppInfo applicationInfo) {
       .pEnabledValidationFeatures = enabledValidationFeatures.data(),
       .disabledValidationFeatureCount = 0,
       .pDisabledValidationFeatures = nullptr};
-
+  featuresPointer = &features;
+#endif
   VkInstanceCreateInfo instanceCreationInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-      .pNext = &features,
+      .pNext = featuresPointer,
       .flags = 0,
       .pApplicationInfo = &appInfo,
       .enabledLayerCount = static_cast<uint32_t>(enabledLayers.size()),
