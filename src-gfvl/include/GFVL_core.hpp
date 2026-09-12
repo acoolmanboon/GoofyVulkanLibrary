@@ -105,34 +105,15 @@ private:
 class Semaphore {
 public:
   VkSemaphore semaphore = VK_NULL_HANDLE;
-  Semaphore(Device &device) : device_(device) {
-    VkSemaphoreCreateInfo semaphoreInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-    vkCreateSemaphore(this->device_.logicalDevice, &semaphoreInfo, nullptr, &this->semaphore);
-  }
+  Semaphore(Device &device);
 
   Semaphore(const Semaphore &) = delete;
   Semaphore &operator=(const Semaphore &) = delete;
 
-  Semaphore(Semaphore &&other) noexcept : device_(other.device_), semaphore(other.semaphore) {
-    other.semaphore = VK_NULL_HANDLE;
-  };
-  Semaphore &operator=(Semaphore &&other) {
-    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices");
-    if (this == &other)
-      return *this;
+  Semaphore(Semaphore &&other) noexcept;
+  Semaphore &operator=(Semaphore &&other);
 
-    if (this->semaphore != VK_NULL_HANDLE) {
-      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
-    }
-    this->semaphore = other.semaphore;
-    other.semaphore = VK_NULL_HANDLE;
-    return *this;
-  }
-
-  ~Semaphore() {
-    if (this->semaphore != VK_NULL_HANDLE)
-      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
-  }
+  ~Semaphore();
 
 private:
   Device &device_;
@@ -141,33 +122,16 @@ private:
 class Fence {
 public:
   VkFence fence = VK_NULL_HANDLE;
-  Fence(Device &device, VkFenceCreateFlags flags) : device_(device) {
-    VkFenceCreateInfo fenceInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = flags};
-    vkCreateFence(this->device_.logicalDevice, &fenceInfo, nullptr, &this->fence);
-  }
+  Fence(Device &device, VkFenceCreateFlags flags);
+
   Fence(const Fence &) = delete;
   Fence &operator=(const Fence &) = delete;
 
-  Fence(Fence &&other) noexcept : device_(other.device_), fence(other.fence) {
-    other.fence = VK_NULL_HANDLE;
-  };
-  Fence &operator=(Fence &&other) {
-    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices");
-    if (this == &other)
-      return *this;
+  Fence(Fence &&other) noexcept;
+  Fence &operator=(Fence &&other);
 
-    if (this->fence != VK_NULL_HANDLE) {
-      vkDestroyFence(this->device_.logicalDevice, this->fence, nullptr);
-    }
-    this->fence = other.fence;
-    other.fence = VK_NULL_HANDLE;
-    return *this;
-  }
-
-  ~Fence() {
-    if (this->fence != VK_NULL_HANDLE)
-      vkDestroyFence(this->device_.logicalDevice, this->fence, nullptr);
-  }
+  ~Fence();
+  
 
 private:
   Device &device_;
