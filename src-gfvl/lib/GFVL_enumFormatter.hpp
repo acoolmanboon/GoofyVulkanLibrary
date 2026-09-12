@@ -31,8 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define returnCase(type_, case_) \
   case (type_::case_):           \
-    return #case_;               \
-    break;
+    return #case_;               
 
 #define returnError(type_, value) \
   default:                        \
@@ -64,7 +63,7 @@ typeString(PreferredGPU) {
   switch (value) {
     returnCase(PreferredGPU, Performance);
     returnCase(PreferredGPU, PowerSaving);
-    returnError(PreferredGPU:, value);
+    returnError(PreferredGPU, value);
   }
 }
 typeString(VkObjectType) {
