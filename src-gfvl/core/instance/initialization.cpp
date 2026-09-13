@@ -261,12 +261,4 @@ VkSurfaceKHR Instance::initializeVkSurface() {
     THROW_EXCEPTION(SDL_GetError());
   return surface;
 }
-
-std::vector<SHADER> Instance::initializeShaderStages(std::vector<ShaderStage> &stages) {
-  std::vector<SHADER> shaders;
-  for (ShaderStage &stage : stages) {
-    shaders.emplace_back(device, stage.flags, stage.filename);
-  }
-  return shaders;
-}
 } // namespace GFVL

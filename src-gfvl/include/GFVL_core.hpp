@@ -55,11 +55,6 @@ struct UniformBufferBinding {
   bool hasUpdated = true;                                        ///< Setting this to true tells GFVL to update the internal buffers. Set it to true after every change of the data.
 };
 
-struct ShaderStage {
-  VkShaderStageFlagBits flags;
-  const char *filename;
-};
-
 struct VertexLayout {
 public:
   std::vector<VkVertexInputBindingDescription> bindings;
@@ -119,7 +114,7 @@ public:
   Semaphore &operator=(Semaphore &&other);
 
   ~Semaphore();
-  
+
 private:
   Device &device_;
   VkSemaphore semaphore_ { VK_NULL_HANDLE };
@@ -177,19 +172,24 @@ private:
   Device &device_;
 };
 
-class SHADER {
+struct ShaderStage {
+  VkShaderStageFlagBits flags;
+  const char *filename;
+};
+
+class Shader {
 public:
   VkShaderModule shaderModule = VK_NULL_HANDLE;
   VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 
-  SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename);
-  ~SHADER();
+  Shader(Device &device, VkShaderStageFlagBits stage, const char *filename);
+  ~Shader();
 
-  SHADER(const SHADER &) = delete;
-  SHADER &operator=(const SHADER &) = delete;
+  Shader(const Shader &) = delete;
+  Shader &operator=(const Shader &) = delete;
 
-  SHADER(SHADER &&other) noexcept;
-  SHADER &operator=(SHADER &&other) = delete;
+  Shader(Shader &&other) noexcept;
+  Shader &operator=(Shader &&other) = delete;
 
 private:
   Device &device;
@@ -242,7 +242,7 @@ public:
   VkPipeline pipeline = {};
 
   Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout,
-           std::vector<SHADER> &shaderStages, RENDERPASS &renderPass,
+           std::vector<Shader> &shaderStages, RENDERPASS &renderPass,
            std::vector<VkDescriptorSetLayout> descriptorSetLayouts,
            Pipeline::CreateInfo createInfo);
   ~Pipeline();

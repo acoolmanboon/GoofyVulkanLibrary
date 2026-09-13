@@ -23,7 +23,7 @@ using namespace GFVL;
 
 // USER-DEFINED STUFF
 namespace GFVL {
-SHADER::SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename) : device(device) {
+Shader::Shader(Device &device, VkShaderStageFlagBits stage, const char *filename) : device(device) {
   this->stage = stage;
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -38,15 +38,17 @@ SHADER::SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename
 
   VkShaderModuleCreateInfo shaderCreationInfo{
       .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = 0,
       .codeSize = buffer.size(),
       .pCode = reinterpret_cast<const uint32_t *>(buffer.data())};
   CheckVkResult(vkCreateShaderModule(device.logicalDevice, &shaderCreationInfo, nullptr, &this->shaderModule));
   PRINT("succesfully created shader!");
 }
-SHADER::SHADER(SHADER &&other) noexcept : device(other.device), shaderModule(other.shaderModule), stage(other.stage) {
+Shader::Shader(Shader &&other) noexcept : shaderModule(other.shaderModule), stage(other.stage), device(other.device) {
   other.shaderModule = VK_NULL_HANDLE; // this just prevents the vulkan shader module from being destroyed
 }
-SHADER::~SHADER() {
+Shader::~Shader() {
   if (shaderModule != VK_NULL_HANDLE) {
     vkDestroyShaderModule(device.logicalDevice, shaderModule, nullptr);
   }

@@ -54,13 +54,13 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);
 
   frames.reserve(applicationInfo.maxFramesInFlight);
-  for (int i = 0; i < applicationInfo.maxFramesInFlight; i++) {
+  for (uint32_t i = 0; i < applicationInfo.maxFramesInFlight; i++) {
     // Frame(Device &device, VmaAllocator allocator, VkDescriptorSetLayout descriptorSetLayout, const std::vector<UniformBufferBinding> &bindings);
     frames.emplace_back(device, vmaAllocator, descriptorSetLayout.descriptorSetLayout, bindings);
   }
 
   renderFinishedSemaphores.reserve(swapchain.imageCount);
-  for (int i = 0; i < swapchain.imageCount; i++) {
+  for (uint32_t i = 0; i < swapchain.imageCount; i++) {
     renderFinishedSemaphores.emplace_back(device);
   }
 
@@ -69,6 +69,7 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
 
   VkCommandPoolCreateInfo commandPoolCreateInfo{
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .pNext = nullptr,
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
       .queueFamilyIndex = device.graphicsFamilyIndex};
 
@@ -90,7 +91,7 @@ void Instance::beginFrame() {
     imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount, 0);
     renderFinishedSemaphores.clear();
     renderFinishedSemaphores.reserve(swapchain.imageCount);
-    for (int i = 0; i < swapchain.imageCount; ++i)
+    for (uint32_t i = 0; i < swapchain.imageCount; ++i)
       renderFinishedSemaphores.emplace_back(device);
 
     SDL_GetWindowSizeInPixels(this->window, &this->w, &this->h);
@@ -113,16 +114,20 @@ void Instance::beginFrame() {
 
   CheckVkResult(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
-  VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+  VkCommandBufferBeginInfo beginInfo{
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    .pNext = nullptr,
+    .flags = 0,
+    .pInheritanceInfo = nullptr};
   CheckVkResult(vkBeginCommandBuffer(currentFrame.commandBuffer, &beginInfo));
 
-  VkClearValue clearColor{.color = {0.05f, 0.05f, 0.05f, 1.0f}};
   VkClearValue clearValues[2]{};
   clearValues[0].color = {{0.05f, 0.05f, 0.05f, 1.0f}};
   clearValues[1].depthStencil = {1.0f, 0};
 
   VkRenderPassBeginInfo renderPassInfo{
       .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+      .pNext = nullptr,
       .renderPass = this->renderPass.renderPass,
       .framebuffer = this->framebuffer.framebuffers[imageIndex],
       .renderArea = {
@@ -197,6 +202,7 @@ void Instance::endFrame() {
 
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .pNext = nullptr,
       .waitSemaphoreCount = 1,
       .pWaitSemaphores = waitSemaphores,
       .pWaitDstStageMask = waitStages,
@@ -211,11 +217,13 @@ void Instance::endFrame() {
 
   VkPresentInfoKHR presentInfo{
       .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+      .pNext = nullptr,
       .waitSemaphoreCount = 1,
       .pWaitSemaphores = signalSemaphores,
       .swapchainCount = 1,
       .pSwapchains = swapchains,
-      .pImageIndices = &imageIndex};
+      .pImageIndices = &imageIndex,
+      .pResults = nullptr};
 
   CheckVkResult(vkQueuePresentKHR(this->device.graphicsQueue, &presentInfo));
 
