@@ -28,15 +28,15 @@ namespace GFVL {
                                 .pNext = nullptr,
                                 .flags = flags};
     CheckVkResult2(
-      vkCreateFence(device_.logicalDevice, &fenceInfo, nullptr, &fence),
-      "Failed to create fence!");
+      vkCreateFence(device_.logicalDevice, &fenceInfo, nullptr, &fence_),
+      "Failed to create fence_!");
 
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
     VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
         .pNext = nullptr,
-        .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        .objectHandle = reinterpret_cast<uint64_t>(fence),
+        .objectType = VK_OBJECT_TYPE_FENCE,
+        .objectHandle = reinterpret_cast<uint64_t>(fence_),
         .pObjectName = "VkFence of Fence object"};
     CheckVkResult2(
         VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
@@ -44,8 +44,8 @@ namespace GFVL {
 #endif
   }
 
-  Fence::Fence(Fence &&other) noexcept : fence(other.fence), device_(other.device_) {
-    other.fence = VK_NULL_HANDLE;
+  Fence::Fence(Fence &&other) noexcept : device_(other.device_), fence_(other.fence_) {
+    other.fence_ = VK_NULL_HANDLE;
   };
 
   Fence& Fence::operator=(Fence &&other) {
@@ -53,16 +53,16 @@ namespace GFVL {
     if (this == &other)
       return *this;
 
-    if (this->fence != VK_NULL_HANDLE)
-      vkDestroyFence(this->device_.logicalDevice, this->fence, nullptr);
+    if (this->fence_ != VK_NULL_HANDLE)
+      vkDestroyFence(this->device_.logicalDevice, this->fence_, nullptr);
     
-    this->fence = other.fence;
-    other.fence = VK_NULL_HANDLE;
+    this->fence_ = other.fence_;
+    other.fence_ = VK_NULL_HANDLE;
     return *this;
   }
 
   Fence::~Fence() {
-    if (fence != VK_NULL_HANDLE)
-      vkDestroyFence(device_.logicalDevice, fence, nullptr);
+    if (fence_ != VK_NULL_HANDLE)
+      vkDestroyFence(device_.logicalDevice, fence_, nullptr);
   }
 }

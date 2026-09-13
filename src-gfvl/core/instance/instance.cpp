@@ -43,13 +43,13 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
       vmaAllocator(initializeVmaAllocator()),
       swapchain(this->device, this->window, this->surface),
       renderPass(this->device, this->swapchain, device.depthFormat),
-      shaderStages(initializeShaderStages(stages)), bindings(bindings),
-      descriptorSetLayout(device, bindings),
+      shaderStages(initializeShaderStages(stages)), descriptorSetLayout(device, bindings),
       pipeline(this->device, this->swapchain, layout, this->shaderStages,
                this->renderPass, {descriptorSetLayout.descriptorSetLayout}, pipelineCreateInfo),
       framebuffer(this->device, this->swapchain, this->renderPass, vmaAllocator,
                   device.depthFormat),
-      maxFramesInFlight(applicationInfo.maxFramesInFlight) {
+      maxFramesInFlight(applicationInfo.maxFramesInFlight),
+      bindings(bindings) {
 
   this->imagesInFlightFence = std::vector<VkFence>(this->swapchain.imageCount);
 
@@ -78,6 +78,8 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
 }
 void Instance::beginFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
+  VkFence currentFrameFence = currentFrame.gpuFinishedFence.fence();
+
   currentFrame.updateUniformBuffers();
   if (inputState.framebufferResizedCallBack()) {
     vkDeviceWaitIdle(this->device.logicalDevice);
@@ -95,8 +97,8 @@ void Instance::beginFrame() {
     aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
   }
 
-  vkWaitForFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence, VK_TRUE, UINT64_MAX);
-  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore, VK_NULL_HANDLE, &imageIndex));
+  vkWaitForFences(this->device.logicalDevice, 1, &currentFrameFence, VK_TRUE, UINT64_MAX);
+  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore(), VK_NULL_HANDLE, &imageIndex));
   if (imagesInFlightFence[imageIndex] != VK_NULL_HANDLE) {
     vkWaitForFences(
         this->device.logicalDevice,
@@ -106,8 +108,8 @@ void Instance::beginFrame() {
         UINT64_MAX);
   }
 
-  imagesInFlightFence[imageIndex] = currentFrame.gpuFinishedFence.fence;
-  vkResetFences(this->device.logicalDevice, 1, &currentFrame.gpuFinishedFence.fence);
+  imagesInFlightFence[imageIndex] = currentFrameFence;
+  vkResetFences(this->device.logicalDevice, 1, &currentFrameFence);
 
   CheckVkResult(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
@@ -184,13 +186,14 @@ void Instance::renderMesh(Mesh &mesh) {
 }
 void Instance::endFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
+  VkFence currentFrameFence = currentFrame.gpuFinishedFence.fence();
   vkCmdEndRenderPass(currentFrame.commandBuffer);
 
   CheckVkResult(vkEndCommandBuffer(currentFrame.commandBuffer));
 
-  VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.semaphore};
+  VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.semaphore()};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex].semaphore};
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex].semaphore()};
 
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -202,7 +205,7 @@ void Instance::endFrame() {
       .signalSemaphoreCount = 1,
       .pSignalSemaphores = signalSemaphores};
 
-  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, currentFrame.gpuFinishedFence.fence));
+  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, currentFrameFence));
 
   VkSwapchainKHR swapchains[] = {this->swapchain.swapchain};
 
@@ -219,7 +222,7 @@ void Instance::endFrame() {
   vkWaitForFences(
       this->device.logicalDevice,
       1,
-      &currentFrame.gpuFinishedFence.fence,
+      &currentFrameFence,
       VK_TRUE,
       UINT64_MAX);
 

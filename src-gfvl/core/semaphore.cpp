@@ -28,15 +28,15 @@ namespace GFVL {
                                         .pNext = nullptr,
                                         .flags = 0};
     CheckVkResult2(
-      vkCreateSemaphore(device_.logicalDevice, &semaphoreInfo, nullptr,&semaphore),
-      "Failed to create semaphore!");
+      vkCreateSemaphore(device_.logicalDevice, &semaphoreInfo, nullptr, &semaphore_),
+      "Failed to create semaphore_!");
 
 #ifdef GFVL_ENABLE_VK_DEBUG_UTILS_EXTENSION
     VkDebugUtilsObjectNameInfoEXT debugUtilsObjectNameInfo = {
         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
         .pNext = nullptr,
-        .objectType = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-        .objectHandle = reinterpret_cast<uint64_t>(semaphore),
+        .objectType = VK_OBJECT_TYPE_SEMAPHORE,
+        .objectHandle = reinterpret_cast<uint64_t>(semaphore_),
         .pObjectName = "VkSemaphore of Semaphore object"};
     CheckVkResult2(
         VulkanFunctionPointers::vkSetDebugUtilsObjectNameEXT(device.logicalDevice, &debugUtilsObjectNameInfo),
@@ -44,24 +44,24 @@ namespace GFVL {
 #endif
   }
 
-  Semaphore::Semaphore(Semaphore &&other) noexcept : semaphore(other.semaphore), device_(other.device_) {
-    other.semaphore = VK_NULL_HANDLE;
+  Semaphore::Semaphore(Semaphore &&other) noexcept : device_(other.device_), semaphore_(other.semaphore_) {
+    other.semaphore_ = VK_NULL_HANDLE;
   };
   Semaphore& Semaphore::operator=(Semaphore &&other) {
-    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore with different devices");
+    ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore_ with different devices");
     if (this == &other)
       return *this;
 
-    if (this->semaphore != VK_NULL_HANDLE) {
-      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore, nullptr);
+    if (this->semaphore_ != VK_NULL_HANDLE) {
+      vkDestroySemaphore(this->device_.logicalDevice, this->semaphore_, nullptr);
     }
-    this->semaphore = other.semaphore;
-    other.semaphore = VK_NULL_HANDLE;
+    this->semaphore_ = other.semaphore_;
+    other.semaphore_ = VK_NULL_HANDLE;
     return *this;
   }
 
   Semaphore::~Semaphore() {
-    if (semaphore != VK_NULL_HANDLE)
-      vkDestroySemaphore(device_.logicalDevice, semaphore, nullptr);
+    if (semaphore_ != VK_NULL_HANDLE)
+      vkDestroySemaphore(device_.logicalDevice, semaphore_, nullptr);
   } 
 }

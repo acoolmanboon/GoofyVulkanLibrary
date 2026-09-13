@@ -102,9 +102,14 @@ private:
   VkFormat getDepthFormat();
 };
 
+/**
+ * @brief Encapsulates a VkSemaphore object.
+ * 
+ */
 class Semaphore {
 public:
-  VkSemaphore semaphore = VK_NULL_HANDLE;
+  VkSemaphore semaphore() const noexcept { return semaphore_; }
+
   Semaphore(Device &device);
 
   Semaphore(const Semaphore &) = delete;
@@ -114,14 +119,20 @@ public:
   Semaphore &operator=(Semaphore &&other);
 
   ~Semaphore();
-
+  
 private:
   Device &device_;
+  VkSemaphore semaphore_ { VK_NULL_HANDLE };
 };
 
+/**
+ * @brief Encapsulates a VkFence object.
+ * 
+ */
 class Fence {
 public:
-  VkFence fence = VK_NULL_HANDLE;
+  VkFence fence() const noexcept { return fence_; }
+
   Fence(Device &device, VkFenceCreateFlags flags);
 
   Fence(const Fence &) = delete;
@@ -131,10 +142,10 @@ public:
   Fence &operator=(Fence &&other);
 
   ~Fence();
-  
 
 private:
   Device &device_;
+  VkFence fence_ { VK_NULL_HANDLE };
 };
 
 class Swapchain {
@@ -168,8 +179,8 @@ private:
 
 class SHADER {
 public:
-  VkShaderModule shaderModule = {};
-  VkShaderStageFlagBits stage;
+  VkShaderModule shaderModule = VK_NULL_HANDLE;
+  VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
 
   SHADER(Device &device, VkShaderStageFlagBits stage, const char *filename);
   ~SHADER();
