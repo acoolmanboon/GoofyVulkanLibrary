@@ -240,11 +240,11 @@ vertice makeVertice(const glm::vec3 &pos, const glm::vec3 &normal, const siv::Pe
 int main() {
   // This is where you tell GFVL where your shaders are. You need to compile the shader languages first.
   // I know that there are more shader stages available but for now I haven't learned that yet so I am only certain that it supports only a vertex and fragment shader for now.
-  std::vector<GFVL::ShaderStage> shaderStages = {
-      {.flags = VK_SHADER_STAGE_VERTEX_BIT,
-       .filename = "vertex_shader.vert.spv"},
-      {.flags = VK_SHADER_STAGE_FRAGMENT_BIT,
-       .filename = "fragment_shader.frag.spv"}};
+  std::vector<GFVL::Shader::CreateInfo> shaderStages = {
+      {.stage = VK_SHADER_STAGE_VERTEX_BIT,
+       .fileName = "vertex_shader.vert.spv"},
+      {.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+       .fileName = "fragment_shader.frag.spv"}};
 
   // These are simply your data containers for the UBO data.
   CameraUBO camera = {

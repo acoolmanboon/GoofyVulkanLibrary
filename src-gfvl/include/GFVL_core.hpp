@@ -97,10 +97,6 @@ private:
   VkFormat getDepthFormat();
 };
 
-/**
- * @brief Encapsulates a VkSemaphore object.
- * 
- */
 class Semaphore {
 public:
   VkSemaphore semaphore() const noexcept { return semaphore_; }
@@ -120,10 +116,6 @@ private:
   VkSemaphore semaphore_ { VK_NULL_HANDLE };
 };
 
-/**
- * @brief Encapsulates a VkFence object.
- * 
- */
 class Fence {
 public:
   VkFence fence() const noexcept { return fence_; }
@@ -172,27 +164,29 @@ private:
   Device &device_;
 };
 
-struct ShaderStage {
-  VkShaderStageFlagBits flags;
-  const char *filename;
-};
-
 class Shader {
 public:
-  VkShaderModule shaderModule = VK_NULL_HANDLE;
-  VkShaderStageFlagBits stage = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+  struct CreateInfo {
+    VkShaderStageFlagBits stage { VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM };
+    std::string fileName { "" };
+  };
 
-  Shader(Device &device, VkShaderStageFlagBits stage, const char *filename);
+  VkShaderModule shaderModule() const noexcept { return shaderModule_; }
+  VkShaderStageFlagBits stage() const noexcept { return stage_; }
+
+  Shader(Device &device, CreateInfo createInfo);
   ~Shader();
 
   Shader(const Shader &) = delete;
   Shader &operator=(const Shader &) = delete;
 
   Shader(Shader &&other) noexcept;
-  Shader &operator=(Shader &&other) = delete;
+  Shader &operator=(Shader &&other);
 
 private:
-  Device &device;
+  Device &device_;
+  VkShaderModule shaderModule_ { VK_NULL_HANDLE };
+  VkShaderStageFlagBits stage_ { VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM };
 };
 
 class RENDERPASS {

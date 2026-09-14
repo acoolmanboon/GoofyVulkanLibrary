@@ -47,6 +47,7 @@ namespace GFVL {
   Semaphore::Semaphore(Semaphore &&other) noexcept : device_(other.device_), semaphore_(other.semaphore_) {
     other.semaphore_ = VK_NULL_HANDLE;
   };
+  
   Semaphore& Semaphore::operator=(Semaphore &&other) {
     ASSERTIF(this->device_.logicalDevice != other.device_.logicalDevice, "Attempted to copy semaphore_ with different devices");
     if (this == &other)

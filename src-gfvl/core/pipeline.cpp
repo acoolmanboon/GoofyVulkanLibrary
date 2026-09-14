@@ -72,8 +72,9 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
   for (const Shader& shader : shaderStages) {
     stages[index] = VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = shader.stage,
-        .module = shader.shaderModule,
+        .pNext = nullptr,
+        .stage = shader.stage(),
+        .module = shader.shaderModule(),
         .pName = "main"};
     index++;
   }

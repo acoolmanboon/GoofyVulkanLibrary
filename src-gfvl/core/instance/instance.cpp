@@ -32,7 +32,7 @@ void Instance::setMouseLock(bool mouseLock) {
 }
 Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
                    std::vector<UniformBufferBinding> &bindings,
-                   std::vector<ShaderStage> &stages,
+                   std::vector<Shader::CreateInfo> &stages,
                    Pipeline::CreateInfo pipelineCreateInfo)
     : instance(initializeVkInstance(applicationInfo)),
       window(SDL_CreateWindow(applicationInfo.applicationName,
