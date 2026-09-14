@@ -99,7 +99,7 @@ private:
 
 class Semaphore {
 public:
-  VkSemaphore semaphore() const noexcept { return semaphore_; }
+  [[nodiscard]] VkSemaphore semaphore() const noexcept { return semaphore_; }
 
   Semaphore(Device &device);
 
@@ -118,7 +118,7 @@ private:
 
 class Fence {
 public:
-  VkFence fence() const noexcept { return fence_; }
+  [[nodiscard]] VkFence fence() const noexcept { return fence_; }
 
   Fence(Device &device, VkFenceCreateFlags flags);
 
@@ -171,8 +171,8 @@ public:
     std::string fileName { "" };
   };
 
-  VkShaderModule shaderModule() const noexcept { return shaderModule_; }
-  VkShaderStageFlagBits stage() const noexcept { return stage_; }
+  [[nodiscard]] VkShaderModule shaderModule() const noexcept { return shaderModule_; }
+  [[nodiscard]] VkShaderStageFlagBits stage() const noexcept { return stage_; }
 
   Shader(Device &device, CreateInfo createInfo);
   ~Shader();
