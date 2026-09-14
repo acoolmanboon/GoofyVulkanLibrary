@@ -1,5 +1,6 @@
 // this is just an example script so use it anywhere
 
+#include "GFVL_core.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -18,11 +19,11 @@ struct vertice {
 int main() {
   // This is where you tell GFVL where your shaders are. You need to compile the shader languages first.
   // I know that there are more shader stages available but for now I haven't learned that yet so I am only certain that it supports only a vertex and fragment shader for now.
-  std::vector<GFVL::ShaderStage> shaderStages = {
-      {.flags = VK_SHADER_STAGE_VERTEX_BIT,
-       .filename = "vertex_shader.vert.spv"},
-      {.flags = VK_SHADER_STAGE_FRAGMENT_BIT,
-       .filename = "fragment_shader.frag.spv"}};
+  std::vector<GFVL::Shader::CreateInfo> shaderStages = {
+      {.stage = VK_SHADER_STAGE_VERTEX_BIT,
+       .fileName = "vertex_shader.vert.spv"},
+      {.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+       .fileName = "fragment_shader.frag.spv"}};
 
   std::vector<GFVL::UniformBufferBinding> bindings;
   // Now we define the layout of the "vertice" struct to GFVL.

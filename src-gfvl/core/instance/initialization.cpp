@@ -255,18 +255,19 @@ void* featuresPointer = nullptr;
   return instance;
 }
 
+std::vector<Shader> Instance::initializeShaderStages(std::vector<Shader::CreateInfo> &stages) {
+  std::vector<Shader> shaders;
+  shaders.reserve(stages.size());
+  for (const Shader::CreateInfo &createInfo : stages) {
+    shaders.emplace_back(device, createInfo);
+  }
+  return shaders;
+} 
+
 VkSurfaceKHR Instance::initializeVkSurface() {
   VkSurfaceKHR surface;
   if (!SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface))
     THROW_EXCEPTION(SDL_GetError());
   return surface;
-}
-
-std::vector<SHADER> Instance::initializeShaderStages(std::vector<ShaderStage> &stages) {
-  std::vector<SHADER> shaders;
-  for (ShaderStage &stage : stages) {
-    shaders.emplace_back(device, stage.flags, stage.filename);
-  }
-  return shaders;
 }
 } // namespace GFVL

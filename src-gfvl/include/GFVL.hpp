@@ -439,7 +439,7 @@ private:
   VmaAllocator vmaAllocator;
   Swapchain swapchain;
   RENDERPASS renderPass;
-  std::vector<SHADER> shaderStages;
+  std::vector<Shader> shaderStages;
   DescriptorSetLayout descriptorSetLayout;
   Pipeline pipeline;
   Framebuffer framebuffer;
@@ -460,7 +460,7 @@ private:
   VmaAllocator initializeVmaAllocator();
   VkInstance initializeVkInstance(AppInfo applicationInfo);
   VkSurfaceKHR initializeVkSurface();
-  std::vector<SHADER> initializeShaderStages(std::vector<ShaderStage> &stages);
+  std::vector<Shader> initializeShaderStages(std::vector<Shader::CreateInfo> &stages);
   
 
 public:
@@ -480,7 +480,7 @@ public:
       AppInfo applicationInfo,
       VertexLayout &layouts,
       std::vector<UniformBufferBinding> &bindings,
-      std::vector<ShaderStage> &stages, Pipeline::CreateInfo pipelineCreateInfo);
+      std::vector<Shader::CreateInfo> &stages, Pipeline::CreateInfo pipelineCreateInfo);
 
   ~Instance();
 

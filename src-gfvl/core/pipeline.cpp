@@ -65,15 +65,16 @@ VkPipelineRasterizationStateCreateInfo Pipeline::getrasterizerCreateInfoOverride
     
     return rasterizerCreateInfo;
 }
-Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<SHADER> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts, Pipeline::CreateInfo createInfo) : device(device) {
+Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, std::vector<Shader> &shaderStages, RENDERPASS &renderPass, std::vector<VkDescriptorSetLayout> descriptorSetLayouts, Pipeline::CreateInfo createInfo) : device(device) {
   PRINT("Attempting to create pipeline with " << shaderStages.size() << " shader stages and " << descriptorSetLayouts.size() << " layouts.");
   std::vector<VkPipelineShaderStageCreateInfo> stages(shaderStages.size());
   size_t index = 0;
-  for (const SHADER& shader : shaderStages) {
+  for (const Shader& shader : shaderStages) {
     stages[index] = VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = shader.stage,
-        .module = shader.shaderModule,
+        .pNext = nullptr,
+        .stage = shader.stage(),
+        .module = shader.shaderModule(),
         .pName = "main"};
     index++;
   }
