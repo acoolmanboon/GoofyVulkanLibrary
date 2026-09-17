@@ -61,6 +61,18 @@ namespace GFVL {
     return *this;
   }
 
+  void Fence::wait() const {
+    CheckVkResult2(
+      vkWaitForFences(device_.logicalDevice, 1, &fence_, VK_TRUE, UINT64_MAX),
+      "Failed to wait for VkFences!");
+  }
+
+  void Fence::reset() const {
+    CheckVkResult2(
+      vkResetFences(device_.logicalDevice, 1, &fence_),
+      "Failed to reset fence!");
+  }
+
   Fence::~Fence() {
     if (fence_ != VK_NULL_HANDLE)
       vkDestroyFence(device_.logicalDevice, fence_, nullptr);

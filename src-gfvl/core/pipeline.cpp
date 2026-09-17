@@ -73,9 +73,11 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
     stages[index] = VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = nullptr,
+        .flags = 0,
         .stage = shader.stage(),
         .module = shader.shaderModule(),
-        .pName = "main"};
+        .pName = "main",
+        .pSpecializationInfo = nullptr};
     index++;
   }
 
@@ -85,6 +87,7 @@ Pipeline::Pipeline(Device &device, Swapchain &swapchain, VertexLayout &layout, s
 
   VkPipelineDynamicStateCreateInfo dynamicState{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+      .pNext = nullptr,
       .flags = 0,
       .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
       .pDynamicStates = dynamicStates.data()};

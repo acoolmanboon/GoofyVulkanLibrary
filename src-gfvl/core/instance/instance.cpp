@@ -79,7 +79,6 @@ Instance::Instance(AppInfo applicationInfo, VertexLayout &layout,
 }
 void Instance::beginFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
-  VkFence currentFrameFence = currentFrame.gpuFinishedFence.fence();
 
   currentFrame.updateUniformBuffers();
   if (inputState.framebufferResizedCallBack()) {
@@ -98,8 +97,8 @@ void Instance::beginFrame() {
     aspectRatio = static_cast<float>(this->w) / static_cast<float>(this->h);
   }
 
-  vkWaitForFences(this->device.logicalDevice, 1, &currentFrameFence, VK_TRUE, UINT64_MAX);
-  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.semaphore(), VK_NULL_HANDLE, &imageIndex));
+  currentFrame.gpuFinishedFence.wait();
+  CheckVkResult(vkAcquireNextImageKHR(this->device.logicalDevice, this->swapchain.swapchain, UINT64_MAX, currentFrame.imageAvailableSemaphore.handle(), VK_NULL_HANDLE, &imageIndex));
   if (imagesInFlightFence[imageIndex] != VK_NULL_HANDLE) {
     vkWaitForFences(
         this->device.logicalDevice,
@@ -109,8 +108,8 @@ void Instance::beginFrame() {
         UINT64_MAX);
   }
 
-  imagesInFlightFence[imageIndex] = currentFrameFence;
-  vkResetFences(this->device.logicalDevice, 1, &currentFrameFence);
+  imagesInFlightFence[imageIndex] = currentFrame.gpuFinishedFence.handle();
+  currentFrame.gpuFinishedFence.reset();
 
   CheckVkResult(vkResetCommandBuffer(currentFrame.commandBuffer, 0));
 
@@ -191,14 +190,13 @@ void Instance::renderMesh(Mesh &mesh) {
 }
 void Instance::endFrame() {
   Frame &currentFrame = frames[currentFrameIndex];
-  VkFence currentFrameFence = currentFrame.gpuFinishedFence.fence();
   vkCmdEndRenderPass(currentFrame.commandBuffer);
 
   CheckVkResult(vkEndCommandBuffer(currentFrame.commandBuffer));
 
-  VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.semaphore()};
+  VkSemaphore waitSemaphores[] = {currentFrame.imageAvailableSemaphore.handle()};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex].semaphore()};
+  VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex].handle()};
 
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -211,7 +209,7 @@ void Instance::endFrame() {
       .signalSemaphoreCount = 1,
       .pSignalSemaphores = signalSemaphores};
 
-  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, currentFrameFence));
+  CheckVkResult(vkQueueSubmit(this->device.graphicsQueue, 1, &submitInfo, currentFrame.gpuFinishedFence.handle()));
 
   VkSwapchainKHR swapchains[] = {this->swapchain.swapchain};
 
@@ -226,13 +224,7 @@ void Instance::endFrame() {
       .pResults = nullptr};
 
   CheckVkResult(vkQueuePresentKHR(this->device.graphicsQueue, &presentInfo));
-
-  vkWaitForFences(
-      this->device.logicalDevice,
-      1,
-      &currentFrameFence,
-      VK_TRUE,
-      UINT64_MAX);
+  currentFrame.gpuFinishedFence.wait();
 
   for (UniformBufferBinding &binding : bindings) {
     binding.hasUpdated = false;

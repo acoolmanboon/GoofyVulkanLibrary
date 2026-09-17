@@ -99,7 +99,7 @@ private:
 
 class Semaphore {
 public:
-  [[nodiscard]] VkSemaphore semaphore() const noexcept { return semaphore_; }
+  [[nodiscard]] VkSemaphore handle() const noexcept { return semaphore_; }
 
   Semaphore(Device &device);
 
@@ -118,7 +118,10 @@ private:
 
 class Fence {
 public:
-  [[nodiscard]] VkFence fence() const noexcept { return fence_; }
+  [[nodiscard]] VkFence handle() const noexcept { return fence_; }
+
+  void wait() const;
+  void reset() const;
 
   Fence(Device &device, VkFenceCreateFlags flags);
 
@@ -168,7 +171,7 @@ class Shader {
 public:
   struct CreateInfo {
     VkShaderStageFlagBits stage { VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM };
-    std::string fileName { "" };
+    std::string fileName { "No file name provided!" };
   };
 
   [[nodiscard]] VkShaderModule shaderModule() const noexcept { return shaderModule_; }
