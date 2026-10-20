@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <GFVL_core.hpp>
 #include <GFVL_definition.hpp>
+#include <cstddef>
 
 using namespace GFVL;
 
@@ -31,6 +32,8 @@ MeshBuffer::MeshBuffer(Device &device, const MeshBuffer::CreateInfo &createInfo)
   if (memoryAllocation_ == MemoryAllocation::HostVisible) {
     VkBufferCreateInfo bufferCreateInfo{
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
         .size = static_cast<VkDeviceSize>(size_),
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -61,8 +64,6 @@ MeshBuffer::MeshBuffer(Device &device, const MeshBuffer::CreateInfo &createInfo)
         "Failed to map vertex buffer!");
 
     memcpy(data_, createInfo.data, size_);
-
-    vmaUnmapMemory(allocator_, bufferMemory_);
   } else if (memoryAllocation_ == MemoryAllocation::DeviceOnly) {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAllocation;
@@ -231,16 +232,10 @@ MeshBuffer &MeshBuffer::operator=(MeshBuffer &&other) {
 
   return *this;
 }
-VkBuffer MeshBuffer::buffer() const noexcept {
-    return buffer_;
-}
-VkDeviceSize MeshBuffer::size() const noexcept {
-  return size_;
-}
-MeshBuffer::MemoryAllocation MeshBuffer::memoryAllocation() const noexcept {
-    return memoryAllocation_;
-}
+
 MeshBuffer::~MeshBuffer() {
+    if (memoryAllocation_ == MemoryAllocation::HostVisible)
+      vmaUnmapMemory(allocator_, bufferMemory_);
   vmaDestroyBuffer(allocator_, buffer_, bufferMemory_);
 }
 } // namespace GFVL

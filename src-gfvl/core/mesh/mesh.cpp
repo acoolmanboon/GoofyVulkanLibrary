@@ -27,7 +27,6 @@ using namespace GFVL;
 // USER-DEFINED STUFF
 namespace GFVL {
 VkDeviceSize Mesh::getIndiceDataSize(Mesh::IndiceDataType indiceDataType, uint32_t indiceCount) {
-  VkDeviceSize indiceDataSize = 0;
   switch(indiceDataType) {
     case(Mesh::IndiceDataType::NotDefined):
       return 0;

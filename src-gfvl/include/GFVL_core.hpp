@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <GFVL_definition.hpp>
+#include <GFVL_enumFormatter.hpp>
 #include <cstdint>
 
 namespace GFVL {
@@ -326,9 +327,13 @@ public:
   MeshBuffer(MeshBuffer &&other) noexcept;   ///< Move constructor, allowed but it will unbind vulkan resources of old object.
   MeshBuffer &operator=(MeshBuffer &&other); ///< Move assignment operator, allowed but it will unbind vulkan resources of old object.
 
-  [[nodiscard]] VkDeviceSize size() const noexcept;
-  [[nodiscard]] VkBuffer buffer() const noexcept;
-  [[nodiscard]] MemoryAllocation memoryAllocation() const noexcept;
+  [[nodiscard]] VkDeviceSize size() const noexcept { return size_; };
+  [[nodiscard]] VkBuffer buffer() const noexcept { return buffer_; };
+  [[nodiscard]] MemoryAllocation memoryAllocation() const noexcept { return memoryAllocation_; };
+  [[nodiscard]] void *data() const {
+    ASSERTIF(memoryAllocation_ != MemoryAllocation::HostVisible, "Cannot get data pointer for mesh");
+    return data_;
+  };
 
 private:
   Device &device_;

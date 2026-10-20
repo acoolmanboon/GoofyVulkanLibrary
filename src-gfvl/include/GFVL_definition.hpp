@@ -68,10 +68,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define ASSERTIF(statement, message)               \
   do {                                             \
     if (statement) {                               \
-      std::ostringstream oss;                      \
-      oss << "[GFVL] Error! Reason : " << message; \
-      throw std::runtime_error(oss.str());         \
+      THROW_EXCEPTION(message);                     \
     };                                             \
+  } while (false)
+
+#define WARNIF(statement, message)                                           \
+  do {                                                                         \
+    if (statement) {                                                           \
+      THROW_WARNING(message);                                                 \
+    };                                                                         \
   } while (false)
 
 #define GFVL_VERSION 1 // internal application name

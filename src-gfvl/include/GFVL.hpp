@@ -415,7 +415,7 @@ public:
 
 
   Mesh(Device &device, const CreateInfo &createInfo, VkCommandPool comamndPool, VmaAllocator allocator); ///< Creates a mesh.
-
+private:
   VkDeviceSize getIndiceDataSize(IndiceDataType indiceDataType, uint32_t indiceCount);
   VkIndexType getIndiceDataType(Mesh::IndiceDataType indiceDataType);
 
@@ -480,7 +480,8 @@ public:
       AppInfo applicationInfo,
       VertexLayout &layouts,
       std::vector<UniformBufferBinding> &bindings,
-      std::vector<Shader::CreateInfo> &stages, Pipeline::CreateInfo pipelineCreateInfo);
+      std::vector<Shader::CreateInfo> &stages, 
+      Pipeline::CreateInfo pipelineCreateInfo);
 
   ~Instance();
 

@@ -201,7 +201,7 @@ VkPhysicalDevice Device::getPhysicalDevice(VkInstance instance, VkSurfaceKHR sur
                  "Failed to enumerate physical devices!");
 
   PRINT("Found " << physicalDeviceCount << " Vulkan-compatible devices.\n");
-  PRINT("Power setting : " << enumToString(preference));
+  //PRINT("Power setting : " << enumToString(preference));
   int bestScore = -1;
 
   for (const VkPhysicalDevice physicalDevice : physicalDevices) {
